@@ -1729,6 +1729,16 @@ def make_summary_bar(all_data: dict, timeframe: str = "90-Day") -> go.Figure:
         for x in items
     ]
 
+    # Calculate ample buffer so that "outside" percentage labels on negative bars NEVER collide with Y-axis tickers
+    min_pct = min(vals) if vals else 0.0
+    max_pct = max(vals) if vals else 0.0
+
+    pad_left  = max(abs(min_pct) * 0.40, 8.0)
+    pad_right = max(abs(max_pct) * 0.25, 8.0)
+
+    x_min = min(-12.0, min_pct - pad_left)
+    x_max = max(12.0, max_pct + pad_right)
+
     fig = go.Figure(go.Bar(
         x=vals,
         y=labels,
@@ -1759,19 +1769,20 @@ def make_summary_bar(all_data: dict, timeframe: str = "90-Day") -> go.Figure:
             zeroline=False,
             color=MUTED_SLATE,
             linecolor=BORDER_COLOR,
-            autorange=True,
+            range=[x_min, x_max],
             fixedrange=True,
         ),
         yaxis=dict(
             gridcolor=GRID_COLOR,
             color=TEXT_DARK,
+            tickfont=dict(size=11, color=TEXT_DARK),
             linecolor=BORDER_COLOR,
             autorange="reversed",
             categoryorder="array",
             categoryarray=labels,
             fixedrange=True,
         ),
-        margin=dict(l=80, r=45, t=20, b=40),
+        margin=dict(l=68, r=36, t=20, b=40),
         height=max(420, len(labels) * 24 + 60),
     )
     return fig

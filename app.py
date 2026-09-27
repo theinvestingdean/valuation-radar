@@ -291,6 +291,11 @@ st.markdown(
             color: #B91C1C;
             border: 1px solid #FECACA;
         }}
+        .badge-na {{
+            background-color: #F3F4F6;
+            color: #374151;
+            border: 1px solid #E5E7EB;
+        }}
         .metric-badge {{
             display: inline-flex;
             align-items: center;
@@ -550,22 +555,22 @@ st.markdown(
             border-color: #FDE047 !important;
         }}
         /* Active / Selected Toggle Button - Exact Match with Stock Tickers */
-        div[data-testid="stButtonGroup"] button[data-selected],
+        div[data-testid="stButtonGroup"] button[data-selected="true"],
         div[data-testid="stButtonGroup"] button[aria-checked="true"],
         div[data-testid="stButtonGroup"] button[aria-selected="true"],
         div[data-testid="stButtonGroup"] button[aria-pressed="true"],
         div[data-testid="stButtonGroup"] button[data-checked="true"],
-        div[data-testid="stSegmentedControl"] button[data-selected],
+        div[data-testid="stSegmentedControl"] button[data-selected="true"],
         div[data-testid="stSegmentedControl"] button[aria-checked="true"],
         div[data-testid="stSegmentedControl"] button[aria-selected="true"],
         div[data-testid="stSegmentedControl"] button[aria-pressed="true"],
         div[data-testid="stSegmentedControl"] button[data-checked="true"],
-        .stButtonGroup button[data-selected],
+        .stButtonGroup button[data-selected="true"],
         .stButtonGroup button[aria-checked="true"],
         .stButtonGroup button[aria-selected="true"],
         .stButtonGroup button[aria-pressed="true"],
         .stButtonGroup button[data-checked="true"],
-        button[data-variant="segmented_control"][data-selected],
+        button[data-variant="segmented_control"][data-selected="true"],
         button[data-variant="segmented_control"][aria-checked="true"],
         button[data-variant="segmented_control"][aria-pressed="true"] {{
             background-color: #FDE047 !important;
@@ -576,24 +581,54 @@ st.markdown(
             border-radius: 6px !important;
             box-shadow: 0 1px 2px rgba(234, 179, 8, 0.20) !important;
         }}
-        div[data-testid="stButtonGroup"] button[data-selected] *,
+        div[data-testid="stButtonGroup"] button[data-selected="true"] *,
         div[data-testid="stButtonGroup"] button[aria-checked="true"] *,
         div[data-testid="stButtonGroup"] button[aria-selected="true"] *,
         div[data-testid="stButtonGroup"] button[aria-pressed="true"] *,
-        div[data-testid="stSegmentedControl"] button[data-selected] *,
+        div[data-testid="stSegmentedControl"] button[data-selected="true"] *,
         div[data-testid="stSegmentedControl"] button[aria-checked="true"] *,
         div[data-testid="stSegmentedControl"] button[aria-selected="true"] *,
         div[data-testid="stSegmentedControl"] button[aria-pressed="true"] *,
-        .stButtonGroup button[data-selected] *,
+        .stButtonGroup button[data-selected="true"] *,
         .stButtonGroup button[aria-checked="true"] *,
         .stButtonGroup button[aria-selected="true"] *,
         .stButtonGroup button[aria-pressed="true"] *,
-        button[data-variant="segmented_control"][data-selected] *,
+        button[data-variant="segmented_control"][data-selected="true"] *,
         button[data-variant="segmented_control"][aria-checked="true"] *,
         button[data-variant="segmented_control"][aria-pressed="true"] * {{
             color: #1F2937 !important;
             -webkit-text-fill-color: #1F2937 !important;
             font-weight: 700 !important;
+        }}
+
+        /* Explicit Unselected Toggle Button Styling */
+        div[data-testid="stButtonGroup"] button[data-selected="false"],
+        div[data-testid="stButtonGroup"] button[aria-checked="false"],
+        div[data-testid="stSegmentedControl"] button[data-selected="false"],
+        div[data-testid="stSegmentedControl"] button[aria-checked="false"],
+        div[data-testid="stSegmentedControl"] button[aria-pressed="false"],
+        .stButtonGroup button[data-selected="false"],
+        .stButtonGroup button[aria-checked="false"],
+        button[data-variant="segmented_control"][data-selected="false"],
+        button[data-variant="segmented_control"][aria-checked="false"] {{
+            background-color: #FFFFFF !important;
+            border: 1px solid #E2E8F0 !important;
+            color: #475569 !important;
+            -webkit-text-fill-color: #475569 !important;
+            font-weight: 600 !important;
+            box-shadow: none !important;
+        }}
+        div[data-testid="stButtonGroup"] button[data-selected="false"] *,
+        div[data-testid="stButtonGroup"] button[aria-checked="false"] *,
+        div[data-testid="stSegmentedControl"] button[data-selected="false"] *,
+        div[data-testid="stSegmentedControl"] button[aria-checked="false"] *,
+        .stButtonGroup button[data-selected="false"] *,
+        .stButtonGroup button[aria-checked="false"] *,
+        button[data-variant="segmented_control"][data-selected="false"] *,
+        button[data-variant="segmented_control"][aria-checked="false"] * {{
+            color: #475569 !important;
+            -webkit-text-fill-color: #475569 !important;
+            font-weight: 600 !important;
         }}
 
         /* 📸 Save Card Social Media Export Button */
@@ -744,6 +779,31 @@ st.markdown(
             pointer-events: auto !important;
         }}
 
+        /* ── Smooth Scrolling for Anchor Jumps ── */
+        html {{
+            scroll-behavior: smooth !important;
+        }}
+
+        /* ── Custom Thin Scrollbar for Highlights & Signals Trackers ── */
+        .custom-signals-scroll {{
+            scrollbar-width: thin !important;
+            scrollbar-color: #CBD5E1 #F1F5F9 !important;
+        }}
+        .custom-signals-scroll::-webkit-scrollbar {{
+            width: 4px !important;
+        }}
+        .custom-signals-scroll::-webkit-scrollbar-track {{
+            background: #F1F5F9 !important;
+            border-radius: 4px !important;
+        }}
+        .custom-signals-scroll::-webkit-scrollbar-thumb {{
+            background: #CBD5E1 !important;
+            border-radius: 4px !important;
+        }}
+        .custom-signals-scroll::-webkit-scrollbar-thumb:hover {{
+            background: #94A3B8 !important;
+        }}
+
         /* ── Section divider ── */
         hr {{
             border-color: {BORDER_COLOR} !important;
@@ -768,6 +828,23 @@ st.markdown(
                 min-width: 100% !important;
                 flex: 1 1 100% !important;
                 margin-bottom: 14px !important;
+            }}
+            /* Executive Market Highlights cards: stack cleanly into 1 full-width column on mobile */
+            div[data-testid="stHorizontalBlock"]:has(.highlights-card) {{
+                flex-direction: column !important;
+                display: flex !important;
+                gap: 10px !important;
+            }}
+            div[data-testid="stHorizontalBlock"]:has(.highlights-card) > div[data-testid="column"] {{
+                width: 100% !important;
+                min-width: 100% !important;
+                flex: 1 1 100% !important;
+                margin-bottom: 0 !important;
+            }}
+            /* Collapse quick-find spacer on mobile */
+            .qf-spacer {{
+                display: none !important;
+                height: 0 !important;
             }}
             /* Clean edge padding on mobile phones for maximum chart width */
             .block-container {{
@@ -826,6 +903,18 @@ st.markdown(
             .expand-chart-btn:active {{
                 background-color: #FDE047 !important;
                 transform: scale(0.97);
+            }}
+
+            /* Expand dialog to near-full screen on mobile */
+            div[data-testid="stDialog"] div[role="dialog"] {{
+                width: 96vw !important;
+                max-width: 96vw !important;
+                height: 94vh !important;
+                max-height: 94vh !important;
+                margin: 2vh auto !important;
+                padding: 10px 8px !important;
+                border-radius: 12px !important;
+                overflow-y: auto !important;
             }}
         }}
 
@@ -968,11 +1057,14 @@ def make_metric_tile_html(
     val_color: str = "#0F172A",
     subtext_color: str = "#64748B",
     inline_badge_html: str | None = None,
+    badge_style: str | None = None,
 ) -> str:
     """Generate standardized, uniform KPI mini-box HTML."""
     badge_html = ""
-    if badge_text and badge_class:
-        badge_html = f'<span class="metric-badge {badge_class}" style="white-space: nowrap;">{badge_text}</span>'
+    if badge_text:
+        style_attr = f' style="white-space: nowrap; {badge_style}"' if badge_style else ' style="white-space: nowrap;"'
+        cls_attr = f' class="metric-badge {badge_class}"' if badge_class else ' class="metric-badge"'
+        badge_html = f'<span{cls_attr}{style_attr}>{badge_text}</span>'
 
     inline_html = f"{inline_badge_html}" if inline_badge_html else ""
 
@@ -1849,16 +1941,193 @@ def badge_html(status: str) -> str:
     return f'<span class="badge {css}">● {status}</span>'
 
 
-def make_market_highlights_banner_html(visible_data: dict, timeframe: str = "90-Day") -> str:
+def send_telegram_alert(bot_token: str, chat_id: str, message: str) -> tuple[bool, str]:
     """
-    Render Executive Market Highlights Banner directly below top chart and KPI counters.
-    Displays:
-      • Basket Breadth (% of tracked assets trading above active corridor median)
-      • Top Value Opportunities (2 tickers at deepest discounts / lowest Z-Scores)
-      • Most Overextended (2 tickers trading furthest above upper corridor boundary / highest Z-Scores)
+    Sends an instant push notification via the official Telegram Bot API.
+    Supports HTML parsing mode and returns (success: bool, status_message: str).
+    """
+    token = (bot_token or "").strip()
+    chat = (chat_id or "").strip()
+    if not token or not chat:
+        return False, "Missing Telegram Bot Token or Chat ID."
+    try:
+        url = f"https://api.telegram.org/bot{token}/sendMessage"
+        payload = {
+            "chat_id": chat,
+            "text": message,
+            "parse_mode": "HTML",
+            "disable_web_page_preview": True,
+        }
+        res = requests.post(url, json=payload, timeout=8)
+        data = res.json()
+        if data.get("ok"):
+            return True, "Telegram alert sent successfully!"
+        else:
+            return False, f"Telegram API Error: {data.get('description', 'Unknown error')}"
+    except Exception as ex:
+        return False, f"Telegram Connection Error: {ex}"
+
+
+def send_email_alert(
+    smtp_server: str,
+    smtp_port: int,
+    sender_email: str,
+    sender_password: str,
+    receiver_email: str,
+    subject: str,
+    body_html: str,
+) -> tuple[bool, str]:
+    """
+    Sends an HTML email alert via Python smtplib with STARTTLS encryption.
+    Returns (success: bool, status_message: str).
+    """
+    server = (smtp_server or "").strip()
+    sender = (sender_email or "").strip()
+    pwd = (sender_password or "").strip()
+    receiver = (receiver_email or "").strip()
+    if not server or not sender or not pwd or not receiver:
+        return False, "Missing SMTP Server, Sender, Password, or Receiver Email."
+    try:
+        import smtplib
+        from email.mime.multipart import MIMEMultipart
+        from email.mime.text import MIMEText
+
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = sender
+        msg["To"] = receiver
+
+        part = MIMEText(body_html, "html")
+        msg.attach(part)
+
+        port = int(smtp_port) if smtp_port else 587
+        if port == 465:
+            with smtplib.SMTP_SSL(server, port, timeout=10) as s:
+                s.login(sender, pwd)
+                s.sendmail(sender, receiver, msg.as_string())
+        else:
+            with smtplib.SMTP(server, port, timeout=10) as s:
+                s.starttls()
+                s.login(sender, pwd)
+                s.sendmail(sender, receiver, msg.as_string())
+        return True, "Email alert sent successfully!"
+    except Exception as ex:
+        return False, f"Email Delivery Error: {ex}"
+
+
+def check_and_dispatch_signal_alerts(all_data: dict, timeframe: str = "90-Day") -> list[str]:
+    """
+    Scans tracked equities for tactical entry signals (DCA, DEEPLY OVERSOLD, CAPITULATION)
+    triggered on the latest market bars (last 1-2 trading days).
+    Uses st.session_state['dispatched_alerts'] cache to strictly prevent duplicate alerts.
+    """
+    if not st.session_state.get("alerts_enabled", False):
+        return []
+
+    if "dispatched_alerts" not in st.session_state:
+        st.session_state["dispatched_alerts"] = set()
+
+    alerts_sent = []
+
+    for tk, d in all_data.items():
+        if d.get("error"):
+            continue
+        hist = d.get("hist", pd.DataFrame())
+        if hist.empty:
+            continue
+        signals = d.get("tactical_signals", [])
+        if not signals:
+            continue
+
+        trading_dates = list(hist.index)
+        latest_ts = pd.Timestamp(trading_dates[-1])
+        recent_window = set(trading_dates[-2:])
+
+        for sig_ts, sig_low, sig_label, sig_color in signals:
+            sig_pdt = pd.Timestamp(sig_ts)
+            if sig_ts in recent_window or sig_pdt in recent_window:
+                date_str = sig_pdt.strftime("%Y-%m-%d")
+                dedup_key = f"{tk}_{sig_label}_{date_str}"
+
+                if dedup_key not in st.session_state["dispatched_alerts"]:
+                    cur_price = d.get("price_current", sig_low)
+                    pct_diff = d.get("diff_1y" if timeframe == "1-Year" else "diff_90d", 0.0)
+
+                    if "CAPITULATION" in sig_label or "CRASH" in sig_label:
+                        canonical_label = "CAPITULATION"
+                        emoji = "🚨"
+                    elif "DEEPLY" in sig_label or "OVERSOLD" in sig_label or "VALUE" in sig_label:
+                        canonical_label = "DEEPLY OVERSOLD"
+                        emoji = "⚡"
+                    else:
+                        canonical_label = "DCA"
+                        emoji = "🎯"
+
+                    channel = st.session_state.get("alert_channel", "Telegram Bot")
+                    success = False
+
+                    if channel == "Telegram Bot":
+                        token = st.session_state.get("tg_bot_token", "").strip()
+                        chat_id = st.session_state.get("tg_chat_id", "").strip()
+                        if token and chat_id:
+                            tg_msg = (
+                                f"{emoji} <b>VALUATION RADAR SIGNAL TRIGGERED</b>\n\n"
+                                f"🎯 <b>Equity:</b> <code>{tk}</code> ({d.get('name', tk)})\n"
+                                f"⚡ <b>Signal:</b> <b>{canonical_label}</b>\n"
+                                f"💵 <b>Current Price:</b> ${cur_price:.2f}\n"
+                                f"📊 <b>Corridor Deviation:</b> {pct_diff:+.1f}%\n"
+                                f"📅 <b>Bar Date:</b> {date_str}\n\n"
+                                f"<i>The Stock Valuation Radar • @theinvestingdean</i>"
+                            )
+                            success, _ = send_telegram_alert(token, chat_id, tg_msg)
+                    else:
+                        smtp_srv = st.session_state.get("email_smtp_server", "smtp.gmail.com").strip()
+                        smtp_p = int(st.session_state.get("email_smtp_port", 587))
+                        sender = st.session_state.get("email_sender", "").strip()
+                        pwd = st.session_state.get("email_password", "").strip()
+                        rcvr = st.session_state.get("email_receiver", "").strip()
+                        if sender and pwd and rcvr:
+                            sub = f"{emoji} Valuation Radar Alert: {tk} triggered [{canonical_label}]"
+                            html_body = f"""
+                            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 520px; border: 1px solid #E2E8F0; border-radius: 10px; padding: 20px; background: #FFFFFF;">
+                              <div style="border-bottom: 2px solid #EAB308; padding-bottom: 10px; margin-bottom: 14px;">
+                                <h2 style="margin: 0; color: #0F172A; font-size: 1.25rem;">The Stock Valuation Radar</h2>
+                                <span style="font-size: 0.80rem; color: #854D0E; font-weight: 700;">Tactical Entry Notification</span>
+                              </div>
+                              <p style="font-size: 1.05rem; color: #1E293B;">
+                                <b>{tk}</b> has flashed a tactical <b>{canonical_label}</b> signal!
+                              </p>
+                              <table style="width: 100%; border-collapse: collapse; font-size: 0.90rem; margin: 14px 0;">
+                                <tr><td style="color: #64748B; padding: 4px 0;">Signal:</td><td style="font-weight: 700; color: #0F172A;">{canonical_label}</td></tr>
+                                <tr><td style="color: #64748B; padding: 4px 0;">Price:</td><td style="font-weight: 700; color: #0F172A;">${cur_price:.2f}</td></tr>
+                                <tr><td style="color: #64748B; padding: 4px 0;">Corridor Deviation:</td><td style="font-weight: 700; color: #0F172A;">{pct_diff:+.1f}%</td></tr>
+                                <tr><td style="color: #64748B; padding: 4px 0;">Bar Date:</td><td style="color: #0F172A;">{date_str}</td></tr>
+                              </table>
+                              <div style="margin-top: 20px; padding-top: 10px; border-top: 1px dashed #E2E8F0; font-size: 0.75rem; color: #94A3B8;">
+                                Automated alert by @theinvestingdean
+                              </div>
+                            </div>
+                            """
+                            success, _ = send_email_alert(smtp_srv, smtp_p, sender, pwd, rcvr, sub, html_body)
+
+                    if success:
+                        st.session_state["dispatched_alerts"].add(dedup_key)
+                        alerts_sent.append(f"{tk} [{canonical_label}]")
+
+    return alerts_sent
+
+
+def render_executive_market_highlights(visible_data: dict, timeframe: str = "90-Day") -> None:
+    """
+    Renders Executive Market Highlights using native st.columns() for full desktop
+    and mobile responsiveness:
+      1. Basket Breadth (% of tracked assets trading above active corridor median)
+      2. Top Value Opportunities (lowest % vs average, strict semantic thresholds, no Z-Scores)
+      3. Most Overextended (highest % vs average, strict semantic thresholds, no Z-Scores)
+      4. Recent Tactical Signals (dynamically lists all tickers without limit, vertically scrollable)
     """
     if not visible_data:
-        return ""
+        return
 
     total_count = len(visible_data)
     count_overstretched = 0
@@ -1868,19 +2137,6 @@ def make_market_highlights_banner_html(visible_data: dict, timeframe: str = "90-
     for tk, d in visible_data.items():
         if d.get("error"):
             continue
-        hist = d.get("hist", pd.DataFrame())
-
-        # Z-score based on timeframe: use 1Y (Z252) or 90D/50D (Z50)
-        if timeframe == "1-Year" and "Z252" in hist.columns:
-            z_series = hist["Z252"].dropna()
-        else:
-            z_col = "Z50" if "Z50" in hist.columns else ("Z16" if "Z16" in hist.columns else None)
-            z_series = hist[z_col].dropna() if z_col else pd.Series(dtype=float)
-
-        z_val = float(z_series.iloc[-1]) if len(z_series) else np.nan
-        if np.isnan(z_val):
-            z_val = d.get("z_1y" if timeframe == "1-Year" else "z_90d", np.nan)
-
         if d.get("pe_mode"):
             cur = d.get("pe_current", np.nan)
             mid = d.get("pe_mid_1y" if timeframe == "1-Year" else "pe_mid_90d", d.get("pe_mid", np.nan))
@@ -1900,78 +2156,207 @@ def make_market_highlights_banner_html(visible_data: dict, timeframe: str = "90-
 
         items.append({
             "ticker": tk,
-            "z": z_val,
             "diff": pct_diff,
         })
 
     overstretched_pct = (count_overstretched / total_count * 100.0) if total_count > 0 else 0.0
-
-    # Top Value Opportunities (lowest Z-Scores)
-    valid_z = [x for x in items if not np.isnan(x["z"])]
-    valid_z_sorted = sorted(valid_z, key=lambda x: x["z"])
-    top_value = valid_z_sorted[:2]
-
-    # Most Overextended (highest Z-Scores)
-    top_overextended = sorted(valid_z, key=lambda x: x["z"], reverse=True)[:2]
-
-    val_snippets = []
-    for item in top_value:
-        tk = item["ticker"]
-        z = item["z"]
-        diff = item["diff"]
-        val_snippets.append(
-            f'<div style="margin-top: 6px; display: flex; align-items: center; justify-content: space-between;">'
-            f'  <div><b style="color: #0F172A; font-size: 0.95rem;">{tk}</b> <span class="metric-badge badge-attractive" style="margin-left: 4px;">{z:+.2f}σ</span></div>'
-            f'  <span style="font-size: 0.78rem; color: #047857; font-weight: 600;">{diff:+.1f}% vs Avg</span>'
-            f'</div>'
-        )
-    val_html = "".join(val_snippets) if val_snippets else '<div style="color: #64748B; font-size: 0.85rem;">None</div>'
-
-    over_snippets = []
-    for item in top_overextended:
-        tk = item["ticker"]
-        z = item["z"]
-        diff = item["diff"]
-        over_snippets.append(
-            f'<div style="margin-top: 6px; display: flex; align-items: center; justify-content: space-between;">'
-            f'  <div><b style="color: #0F172A; font-size: 0.95rem;">{tk}</b> <span class="metric-badge badge-overvalued" style="margin-left: 4px;">{z:+.2f}σ</span></div>'
-            f'  <span style="font-size: 0.78rem; color: #B91C1C; font-weight: 600;">{diff:+.1f}% vs Avg</span>'
-            f'</div>'
-        )
-    over_html = "".join(over_snippets) if over_snippets else '<div style="color: #64748B; font-size: 0.85rem;">None</div>'
-
     breadth_desc = "Overbought Skew" if count_above_zero >= (total_count * 0.6) else ("Oversold Skew" if count_above_zero <= (total_count * 0.4) else "Neutral Balance")
     framework_badge_lbl = "1Y Valuation Framework" if timeframe == "1-Year" else "90D Valuation Framework"
 
-    return f"""
-    <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-left: 4px solid #EAB308; border-radius: 10px; padding: 14px 18px; margin: 16px 0 20px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #F1F5F9;">
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <span style="font-size: 1.05rem; font-weight: 800; color: #0F172A; letter-spacing: -0.01em;">Executive Market Highlights</span>
-          <span style="font-size: 0.72rem; font-weight: 700; color: #854D0E; background-color: #FEF9C3; border: 1px solid #FDE047; padding: 2px 8px; border-radius: 9999px;">{framework_badge_lbl}</span>
-        </div>
-      </div>
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px;">
-        <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 14px; display: flex; flex-direction: column; justify-content: space-between;">
-          <div>
-            <div style="font-size: 0.72rem; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;">Basket Breadth</div>
-            <div style="font-size: 0.92rem; color: #0F172A; font-weight: 600; line-height: 1.4;">
-              <b>{count_overstretched} of {total_count}</b> tracked assets (<b>{overstretched_pct:.0f}%</b>) are in overstretched territory (&gt; +5% above average), with <b>{count_above_zero}</b> trading on the expensive side of average.
-            </div>
-          </div>
-          <div style="font-size: 0.78rem; color: #854D0E; font-weight: 600; margin-top: 6px;">• Bias: {breadth_desc}</div>
-        </div>
-        <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 14px;">
-          <div style="font-size: 0.72rem; font-weight: 700; color: #047857; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Top Value Opportunities</div>
-          {val_html}
-        </div>
-        <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 14px;">
-          <div style="font-size: 0.72rem; font-weight: 700; color: #B91C1C; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Most Overextended</div>
-          {over_html}
-        </div>
+    # Helper for strict conditional formatting colors:
+    # Green: <= -5.0%
+    # Amber (Yellow/Orange): -4.99% to +4.99%
+    # Red: >= +5.0%
+    def get_diff_pill(diff: float) -> str:
+        if diff <= -5.0:
+            color = "#047857"  # Green (Buy Zone)
+        elif diff >= 5.0:
+            color = "#B91C1C"  # Red (Wait for Pullback)
+        else:
+            color = "#B45309"  # Amber (Standard DCA: -4.99% to +4.99%)
+        return f'<span style="font-size: 0.78rem; color: {color}; font-weight: 700;">{diff:+.1f}% vs Avg</span>'
+
+    # Top Value Opportunities (deepest discounts / lowest % vs average)
+    sorted_by_val = sorted(items, key=lambda x: x["diff"])
+    top_value = sorted_by_val[:10]
+    val_rows = [
+        f'<div style="display: flex; align-items: center; justify-content: space-between; padding: 2px 0; border-bottom: 1px dashed rgba(226, 232, 240, 0.5);">'
+        f'  <a href="#card-{item["ticker"]}" style="color: #0F172A; font-size: 0.88rem; font-weight: 700; text-decoration: none;" title="Jump to {item["ticker"]} card">{item["ticker"]}</a>'
+        f'  {get_diff_pill(item["diff"])}'
+        f'</div>'
+        for item in top_value
+    ]
+    val_html = "".join(val_rows) if val_rows else '<div style="color: #64748B; font-size: 0.82rem; font-style: italic;">None</div>'
+
+    # Most Overextended (furthest above corridor median)
+    sorted_by_over = sorted(items, key=lambda x: x["diff"], reverse=True)
+    top_overextended = sorted_by_over[:10]
+    over_rows = [
+        f'<div style="display: flex; align-items: center; justify-content: space-between; padding: 2px 0; border-bottom: 1px dashed rgba(226, 232, 240, 0.5);">'
+        f'  <a href="#card-{item["ticker"]}" style="color: #0F172A; font-size: 0.88rem; font-weight: 700; text-decoration: none;" title="Jump to {item["ticker"]} card">{item["ticker"]}</a>'
+        f'  {get_diff_pill(item["diff"])}'
+        f'</div>'
+        for item in top_overextended
+    ]
+    over_html = "".join(over_rows) if over_rows else '<div style="color: #64748B; font-size: 0.82rem; font-style: italic;">None</div>'
+
+    # Recent Tactical Signals (scan last 5-7 trading days across all tracked tickers, NO arbitrary display cap)
+    recent_signals = []
+    for tk, d in visible_data.items():
+        if d.get("error"):
+            continue
+        hist = d.get("hist", pd.DataFrame())
+        if hist.empty:
+            continue
+        signals = d.get("tactical_signals", [])
+        if not signals:
+            continue
+
+        trading_dates = list(hist.index)
+        window_dates = set(trading_dates[-7:])
+        latest_ts = pd.Timestamp(trading_dates[-1])
+
+        for sig_ts, sig_low, sig_label, sig_color in signals:
+            sig_pdt = pd.Timestamp(sig_ts)
+            if sig_ts in window_dates or sig_pdt in window_dates:
+                trading_idx = trading_dates.index(sig_ts) if sig_ts in trading_dates else len(trading_dates) - 1
+                bars_ago = len(trading_dates) - 1 - trading_idx
+                cal_days = (latest_ts.date() - sig_pdt.date()).days
+
+                if cal_days == 0:
+                    time_ago_str = "Today"
+                elif cal_days == 1:
+                    time_ago_str = "1 day ago"
+                else:
+                    time_ago_str = f"{cal_days} days ago"
+
+                # Canonical badge formatting
+                if "CAPITULATION" in sig_label or "CRASH" in sig_label:
+                    badge_lbl = "CAPITULATION"
+                    badge_bg = "#FFEDD5"
+                    badge_text = "#9A3412"
+                    badge_border = "#F97316"
+                elif "DEEPLY" in sig_label or "OVERSOLD" in sig_label or "VALUE" in sig_label:
+                    badge_lbl = "DEEPLY OVERSOLD"
+                    badge_bg = "#FEF08A"
+                    badge_text = "#854D0E"
+                    badge_border = "#FDE047"
+                else:
+                    badge_lbl = "DCA"
+                    badge_bg = "#DCFCE7"
+                    badge_text = "#14532D"
+                    badge_border = "#86EFAC"
+
+                recent_signals.append({
+                    "ticker": tk,
+                    "badge": badge_lbl,
+                    "bg": badge_bg,
+                    "text": badge_text,
+                    "border": badge_border,
+                    "time_ago": time_ago_str,
+                    "bars_ago": bars_ago,
+                    "cal_days": cal_days,
+                })
+
+    # Sort recent signals by recency (least days ago first), deduplicate by ticker
+    recent_signals = sorted(recent_signals, key=lambda x: (x["cal_days"], x["bars_ago"]))
+    unique_signals = []
+    seen_tk = set()
+    for s in recent_signals:
+        if s["ticker"] not in seen_tk:
+            seen_tk.add(s["ticker"])
+            unique_signals.append(s)
+
+    # Render ALL signals dynamically (no hardcoded slicing cap)
+    if unique_signals:
+        sig_rows = [
+            f'<div style="display: flex; align-items: center; justify-content: space-between; padding: 3px 0; border-bottom: 1px dashed rgba(226, 232, 240, 0.6);">'
+            f'  <div style="display: flex; align-items: center; gap: 6px; flex-wrap: nowrap;">'
+            f'    <a href="#card-{s["ticker"]}" style="color: #0F172A; font-size: 0.90rem; font-weight: 700; text-decoration: none;" title="Jump to {s["ticker"]} card">{s["ticker"]}</a>'
+            f'    <span style="display: inline-block; padding: 1px 6px; font-size: 0.68rem; font-weight: 800; border-radius: 4px; background-color: {s["bg"]}; color: {s["text"]}; border: 1px solid {s["border"]}; white-space: nowrap;">{s["badge"]}</span>'
+            f'  </div>'
+            f'  <span style="font-size: 0.72rem; color: #64748B; font-weight: 500; white-space: nowrap;">{s["time_ago"]}</span>'
+            f'</div>'
+            for s in unique_signals
+        ]
+        signals_html = "".join(sig_rows)
+    else:
+        signals_html = '<div style="color: #64748B; font-size: 0.80rem; font-style: italic; margin-top: 4px;">No signals flashed in the last 7 days.</div>'
+
+    # Section Header
+    st.html(f"""
+    <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-left: 4px solid #EAB308; border-radius: 10px; padding: 10px 16px; margin: 16px 0 12px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.02); display: flex; justify-content: space-between; align-items: center;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 1.02rem; font-weight: 800; color: #0F172A; letter-spacing: -0.01em;">Executive Market Highlights</span>
+        <span style="font-size: 0.72rem; font-weight: 700; color: #854D0E; background-color: #FEF9C3; border: 1px solid #FDE047; padding: 2px 8px; border-radius: 9999px;">{framework_badge_lbl}</span>
       </div>
     </div>
-    """
+    """)
+
+    # 4 Cards using native st.columns(4) for desktop grid and mobile vertical stacking
+    c1, c2, c3, c4 = st.columns(4)
+    with c1:
+        st.html(f"""
+        <div class="highlights-card" style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-left: 3px solid #EAB308; border-radius: 8px; padding: 12px 14px; min-height: 105px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div style="font-size: 0.72rem; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Basket Breadth</div>
+            <div style="font-size: 0.86rem; color: #0F172A; font-weight: 600; line-height: 1.35;">
+              <b>{count_overstretched} of {total_count}</b> assets (<b>{overstretched_pct:.0f}%</b>) &gt; +5% above average.
+            </div>
+          </div>
+          <div style="font-size: 0.75rem; color: #854D0E; font-weight: 600; margin-top: 6px; padding-top: 4px; border-top: 1px dashed rgba(226, 232, 240, 0.8);">• Bias: {breadth_desc}</div>
+        </div>
+        """)
+    with c2:
+        st.html(f"""
+        <div class="highlights-card" style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-left: 3px solid #10B981; border-radius: 8px; padding: 12px 14px; min-height: 105px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div style="font-size: 0.72rem; font-weight: 700; color: #047857; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Top Value Opportunities</div>
+            <div class="custom-signals-scroll" style="max-height: 220px; overflow-y: auto; padding-right: 5px; display: flex; flex-direction: column; gap: 2px; margin-top: 2px;">
+              {val_html}
+            </div>
+          </div>
+          <div style="font-size: 0.70rem; color: #64748B; margin-top: 6px; padding-top: 4px; border-top: 1px dashed rgba(226, 232, 240, 0.8);">Deepest corridor discounts</div>
+        </div>
+        """)
+    with c3:
+        st.html(f"""
+        <div class="highlights-card" style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-left: 3px solid #EF4444; border-radius: 8px; padding: 12px 14px; min-height: 105px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div style="font-size: 0.72rem; font-weight: 700; color: #B91C1C; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Most Overextended</div>
+            <div class="custom-signals-scroll" style="max-height: 220px; overflow-y: auto; padding-right: 5px; display: flex; flex-direction: column; gap: 2px; margin-top: 2px;">
+              {over_html}
+            </div>
+          </div>
+          <div style="font-size: 0.70rem; color: #64748B; margin-top: 6px; padding-top: 4px; border-top: 1px dashed rgba(226, 232, 240, 0.8);">Furthest above corridor median</div>
+        </div>
+        """)
+    with c4:
+        count_badge = f'<span style="font-size: 0.68rem; font-weight: 800; color: #4338CA; background: #EEF2FF; border: 1px solid #C7D2FE; border-radius: 9999px; padding: 1px 6px;">{len(unique_signals)}</span>' if unique_signals else ''
+        st.html(f"""
+        <div class="highlights-card" style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-left: 3px solid #6366F1; border-radius: 8px; padding: 12px 14px; min-height: 105px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+              <span style="font-size: 0.72rem; font-weight: 700; color: #4338CA; text-transform: uppercase; letter-spacing: 0.05em;">Recent Tactical Signals</span>
+              {count_badge}
+            </div>
+            <div class="custom-signals-scroll" style="max-height: 220px; overflow-y: auto; padding-right: 5px; display: flex; flex-direction: column; gap: 4px; margin-top: 2px;">
+              {signals_html}
+            </div>
+          </div>
+          <div style="font-size: 0.70rem; color: #64748B; margin-top: 6px; padding-top: 4px; border-top: 1px dashed rgba(226, 232, 240, 0.8);">TID Engine entries (last 7 days)</div>
+        </div>
+        """)
+
+    # Check and dispatch live notifications for new tactical bar signals
+    dispatched_now = check_and_dispatch_signal_alerts(visible_data, timeframe=timeframe)
+    if dispatched_now:
+        st.toast(f"🔔 Dispatched {len(dispatched_now)} live signal alert(s): {', '.join(dispatched_now)}", icon="📲")
+
+
+def make_market_highlights_banner_html(visible_data: dict, timeframe: str = "90-Day") -> str:
+    """Backward compatibility fallback if needed."""
+    return ""
 
 
 # ─────────────────────────────────────────────
@@ -2411,8 +2796,8 @@ def make_summary_bar(all_data: dict, timeframe: str = "90-Day") -> go.Figure:
     max_val = max(vals) if vals else 0.0
 
     # Ensure negative values have dedicated visual clearance between zero line, bar end, and y-axis labels
-    # Dynamic headroom: generous padding on negative side to avoid label collision
-    x_min = min(min_val * 1.35, -15.0)
+    # Force aggressive negative buffer: subtract fixed 30 points from min_val to guarantee space on mobile
+    x_min = min_val - 30.0
     x_max = max(max_val * 1.15, 15.0)
 
     # Smart label positioning:
@@ -2499,15 +2884,16 @@ if "selected_equities" not in st.session_state:
 
 # Valuation corridor timeframe initialization (strictly default to 90-Day)
 query_timeframe = st.query_params.get("timeframe")
+init_timeframe = query_timeframe if query_timeframe in ["90-Day", "1-Year"] else "90-Day"
 if "val_timeframe" not in st.session_state:
-    if query_timeframe in ["90-Day", "1-Year"]:
-        st.session_state["val_timeframe"] = query_timeframe
-    else:
-        st.session_state["val_timeframe"] = "90-Day"
+    st.session_state["val_timeframe"] = init_timeframe
+if "val_timeframe_selector" not in st.session_state:
+    st.session_state["val_timeframe_selector"] = st.session_state["val_timeframe"]
 
 def on_timeframe_change():
-    sel = st.session_state.get("val_timeframe")
+    sel = st.session_state.get("val_timeframe_selector")
     if sel in ["90-Day", "1-Year"]:
+        st.session_state["val_timeframe"] = sel
         st.query_params["timeframe"] = sel
 
 
@@ -2597,6 +2983,7 @@ with st.sidebar:
             st.session_state["all_tickers"] = dict(DEFAULT_TICKERS)
             st.session_state["selected_equities"] = list(DEFAULT_TICKERS.keys())
             st.session_state["val_timeframe"] = "90-Day"
+            st.session_state["val_timeframe_selector"] = "90-Day"
             st.query_params["watchlist"] = ",".join(DEFAULT_TICKERS.keys())
             st.query_params["timeframe"] = "90-Day"
             st.rerun()
@@ -2633,6 +3020,101 @@ with st.sidebar:
     )
 
     st.markdown("---")
+    with st.expander("🔔 Live Signal Alerts (Telegram / Email)", expanded=st.session_state.get("alerts_enabled", False)):
+        alerts_enabled = st.toggle(
+            "Enable Live Signal Alerts",
+            value=st.session_state.get("alerts_enabled", False),
+            key="alerts_enabled",
+            help="Automatically send instant mobile push alerts when an equity in your basket triggers a DCA, DEEPLY OVERSOLD, or CAPITULATION signal.",
+        )
+        alert_channel = st.radio(
+            "Alert Channel",
+            options=["Telegram Bot", "Email (SMTP)"],
+            horizontal=True,
+            key="alert_channel",
+        )
+        if alert_channel == "Telegram Bot":
+            tg_token = st.text_input(
+                "Telegram Bot Token",
+                value=st.session_state.get("tg_bot_token", ""),
+                key="tg_bot_token",
+                type="password",
+                placeholder="123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ",
+                help="Obtain from @BotFather on Telegram",
+            )
+            tg_chat = st.text_input(
+                "Telegram Chat ID",
+                value=st.session_state.get("tg_chat_id", ""),
+                key="tg_chat_id",
+                placeholder="e.g. 987654321 or @your_channel",
+                help="Your personal Telegram User ID or Channel Username",
+            )
+            if st.button("📤 Send Test Telegram Alert", use_container_width=True):
+                if not tg_token or not tg_chat:
+                    st.error("Please enter both Bot Token and Chat ID.")
+                else:
+                    test_msg = (
+                        "🚨 <b>TEST ALERT: Valuation Radar Connected</b>\n\n"
+                        "✅ Your Telegram Bot credentials are verified!\n"
+                        "Live tactical signals (DCA, DEEPLY OVERSOLD, CAPITULATION) will be pushed here instantly.\n\n"
+                        "<i>The Stock Valuation Radar • @theinvestingdean</i>"
+                    )
+                    ok, msg = send_telegram_alert(tg_token, tg_chat, test_msg)
+                    if ok:
+                        st.success("Test alert sent! Check your Telegram.")
+                    else:
+                        st.error(msg)
+        else:
+            smtp_srv = st.text_input(
+                "SMTP Server",
+                value=st.session_state.get("email_smtp_server", "smtp.gmail.com"),
+                key="email_smtp_server",
+            )
+            smtp_p = st.number_input(
+                "SMTP Port",
+                value=int(st.session_state.get("email_smtp_port", 587)),
+                key="email_smtp_port",
+            )
+            sender = st.text_input(
+                "Sender Email",
+                value=st.session_state.get("email_sender", ""),
+                key="email_sender",
+                placeholder="sender@gmail.com",
+            )
+            pwd = st.text_input(
+                "App Password",
+                value=st.session_state.get("email_password", ""),
+                key="email_password",
+                type="password",
+                placeholder="App-specific password",
+            )
+            rcvr = st.text_input(
+                "Destination Email",
+                value=st.session_state.get("email_receiver", ""),
+                key="email_receiver",
+                placeholder="your.email@example.com",
+            )
+            if st.button("📤 Send Test Email Alert", use_container_width=True):
+                if not sender or not pwd or not rcvr:
+                    st.error("Please enter Sender Email, App Password, and Destination Email.")
+                else:
+                    test_html = """
+                    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 500px; border: 1px solid #E2E8F0; border-radius: 8px; padding: 18px;">
+                      <h3 style="color: #0F172A; margin-top: 0;">✅ Test Alert: Valuation Radar Connected</h3>
+                      <p style="color: #334155;">Your email configuration is working! Live tactical buy signals will be sent to this address.</p>
+                      <div style="margin-top: 14px; font-size: 0.75rem; color: #94A3B8;">@theinvestingdean</div>
+                    </div>
+                    """
+                    ok, msg = send_email_alert(smtp_srv, smtp_p, sender, pwd, rcvr, "Test Alert: Valuation Radar Connected", test_html)
+                    if ok:
+                        st.success("Test email sent! Check your inbox.")
+                    else:
+                        st.error(msg)
+
+        dispatched_count = len(st.session_state.get("dispatched_alerts", set()))
+        st.caption(f"🛡️ Deduplication cache: {dispatched_count} bar alerts dispatched this session.")
+
+    st.markdown("---")
     if st.button("Refresh Market Data", width="stretch"):
         # Explicitly clear cached market data before rerun
         st.cache_data.clear()
@@ -2664,9 +3146,12 @@ st.markdown(
         <h1 style="color: #0F172A; font-size: 2.1rem; font-weight: 800; margin: 0; padding: 0; letter-spacing: -0.025em; line-height: 1.2;">
           The Stock Valuation Radar
         </h1>
-        <p style="color: #64748B; font-size: 14px; margin-top: 6px; margin-bottom: 0;">
-          Know when quality stocks enter the Buy Zone, Standard DCA, or Wait for Pullback • <a href="https://www.instagram.com/theinvestingdean" target="_blank" rel="noopener noreferrer" class="dean-badge">@theinvestingdean</a>
+        <p style="color: #64748B; font-size: 14px; margin-top: 6px; margin-bottom: 0; line-height: 1.4;">
+          Know when quality stocks enter the Buy Zone, Standard DCA, or Wait for Pullback
         </p>
+        <div style="margin-top: 8px;">
+          <a href="https://www.instagram.com/theinvestingdean" target="_blank" rel="noopener noreferrer" class="dean-badge" style="display: inline-block;">@theinvestingdean</a>
+        </div>
       </div>
       <div style="display: flex; align-items: center; gap: 7px; background-color: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 9999px; padding: 6px 14px; margin-top: 4px;">
         <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: #10B981;"></span>
@@ -2724,15 +3209,16 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-val_timeframe = st.segmented_control(
+st.segmented_control(
     "Valuation Timeframe",
     options=["90-Day", "1-Year"],
     selection_mode="single",
     required=True,
     label_visibility="collapsed",
-    key="val_timeframe",
+    key="val_timeframe_selector",
     on_change=on_timeframe_change,
 )
+val_timeframe = st.session_state.get("val_timeframe", "90-Day")
 
 
 if visible:
@@ -2765,7 +3251,7 @@ k4.metric("Wait for Pullback", counts["Wait for Pullback"])
 
 # ── Executive Market Highlights Banner ──
 if visible:
-    st.html(make_market_highlights_banner_html(visible, timeframe=val_timeframe))
+    render_executive_market_highlights(visible, timeframe=val_timeframe)
 
 st.markdown("---")
 
@@ -2804,6 +3290,58 @@ elif sort_option == "Lowest 2Y PEG":
         return 999.0
     ticker_list = sorted(ticker_list, key=get_peg)
 
+# ── Quick Find Ticker Search & Direct Navigation ──
+qf_col1, qf_col2 = st.columns([3, 1])
+with qf_col1:
+    quick_find = st.selectbox(
+        "Quick Find Ticker",
+        options=[""] + ticker_list,
+        index=0,
+        format_func=lambda x: "🔍 Jump directly to a stock card..." if x == "" else f"{x}  ·  {visible.get(x, {}).get('shortName') or visible.get(x, {}).get('name', x)}",
+        key="quick_find_ticker",
+        help="Select any tracked asset to immediately navigate down to its valuation card.",
+    )
+with qf_col2:
+    st.markdown('<div class="qf-spacer" style="height: 28px;"></div>', unsafe_allow_html=True)
+    isolate_card = st.checkbox(
+        "🎯 Filter only this card",
+        value=False,
+        key="isolate_selected_card",
+        help="Check to isolate and only display the selected ticker's card below.",
+    )
+
+if quick_find:
+    if isolate_card:
+        ticker_list = [quick_find]
+    else:
+        scroll_js = f"""
+        <script>
+        (function() {{
+            function scrollToCard() {{
+                try {{
+                    var pDoc = (window.parent && window.parent.document) ? window.parent.document : document;
+                    var el = pDoc.getElementById('card-{quick_find}') || pDoc.getElementById('card-anchor-{quick_find}');
+                    if (el) {{
+                        el.scrollIntoView({{ behavior: 'smooth', block: 'start' }});
+                        var cardWrapper = el.closest('[data-testid="stVerticalBlockBorderWrapper"]') || el;
+                        cardWrapper.style.transition = 'box-shadow 0.4s ease, border-color 0.4s ease';
+                        cardWrapper.style.boxShadow = '0 0 0 3px #FACC15, 0 10px 25px -5px rgba(234, 179, 8, 0.4)';
+                        setTimeout(function() {{
+                            cardWrapper.style.boxShadow = '';
+                        }}, 2500);
+                    }}
+                }} catch(e) {{
+                    console.warn('Quick find scroll error:', e);
+                }}
+            }}
+            setTimeout(scrollToCard, 100);
+            setTimeout(scrollToCard, 350);
+            setTimeout(scrollToCard, 700);
+        }})();
+        </script>
+        """
+        st.components.v1.html(scroll_js, height=0)
+
 # ── Master Chart Legend Bar (Consolidates Repeating Legends) ──
 if show_charts:
     st.html(make_master_legend_html())
@@ -2821,6 +3359,8 @@ for row_start in range(0, len(ticker_list), n_cols):
         err    = d.get("error")
 
         with col:
+            # Anchor tag for direct jumps with clearance
+            st.html(f'<div id="card-anchor-{tk}" style="scroll-margin-top: 100px; height: 0; margin: 0; padding: 0;"></div>')
             # Wrap each stock's entire module in a clearly defined card container
             with st.container(border=True):
                 # ── Safe Header Display ──
@@ -2834,7 +3374,7 @@ for row_start in range(0, len(ticker_list), n_cols):
                     asset_badge_html = f'<span class="badge" style="background-color: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; font-size: 0.70rem; margin-left: 6px;">{badge_lbl}</span>'
 
                 header_html = f"""
-                <div id="card-{tk}" class="stock-card-container">
+                <div id="card-{tk}" class="stock-card-container" style="scroll-margin-top: 100px;">
                   <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #F1F5F9;">
                     <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px; min-width: 130px;">
                       <span style="font-size: 1.25rem; font-weight: 800; color: {TEXT_DARK}; letter-spacing: -0.01em;">{tk}</span>
@@ -3006,12 +3546,33 @@ for row_start in range(0, len(ticker_list), n_cols):
                 else:
                     # Single Stock: Forward P/E (normalized for foreign GDRs like SMSN.L)
                     fwd_pe = d.get("fwd_pe") or info.get("forwardPE")
-                    fwd_pe_str = f"{fwd_pe:.1f}" if isinstance(fwd_pe, (int, float)) and fwd_pe > 0 else "N/A"
+                    if isinstance(fwd_pe, (int, float)) and not np.isnan(fwd_pe) and fwd_pe > 0:
+                        fwd_pe_str = f"{fwd_pe:.1f}"
+                        if fwd_pe < 20.0:
+                            fwd_badge_text = "Attractive"
+                            fwd_badge_class = "badge-attractive"
+                            fwd_badge_style = "background-color: #DCFCE7; color: #166534; border: 1px solid #86EFAC;"
+                        elif fwd_pe <= 35.0:
+                            fwd_badge_text = "Moderate"
+                            fwd_badge_class = "badge-neutral"
+                            fwd_badge_style = "background-color: #FEF3C7; color: #854D0E; border: 1px solid #FDE68A;"
+                        else:
+                            fwd_badge_text = "High Multiple"
+                            fwd_badge_class = "badge-overvalued"
+                            fwd_badge_style = "background-color: #FEE2E2; color: #991B1B; border: 1px solid #FECACA;"
+                    else:
+                        fwd_pe_str = "N/A"
+                        fwd_badge_text = "N/A"
+                        fwd_badge_class = "badge-na"
+                        fwd_badge_style = "background-color: #F3F4F6; color: #374151; border: 1px solid #E5E7EB;"
 
                     box4_html = make_metric_tile_html(
                         title="Forward P/E",
                         value=fwd_pe_str,
                         subtext="NTM Multiple",
+                        badge_text=fwd_badge_text,
+                        badge_class=fwd_badge_class,
+                        badge_style=fwd_badge_style,
                         val_color=TEXT_DARK,
                         subtext_color=MUTED_SLATE,
                     )
@@ -3019,17 +3580,42 @@ for row_start in range(0, len(ticker_list), n_cols):
                     # Single Stock: 2Y PEG Ratio
                     peg_2y = d.get("peg_2y")
                     cagr_pct = d.get("cagr_2y_pct")
-                    if peg_2y is not None and not np.isnan(peg_2y) and peg_2y > 0:
+                    if (
+                        peg_2y is not None
+                        and not np.isnan(peg_2y)
+                        and peg_2y > 0
+                        and cagr_pct is not None
+                        and not np.isnan(cagr_pct)
+                        and cagr_pct > 0
+                    ):
                         peg_2y_str = f"{peg_2y:.2f}"
-                        peg_subtext = f"2Y CAGR: {cagr_pct:+.1f}%" if (cagr_pct is not None and not np.isnan(cagr_pct)) else "2Y Forward PEG"
+                        peg_subtext = f"2Y CAGR: {cagr_pct:+.1f}%"
+                        if peg_2y < 1.00:
+                            peg_badge_text = "Undervalued"
+                            peg_badge_class = "badge-attractive"
+                            peg_badge_style = "background-color: #DCFCE7; color: #166534; border: 1px solid #86EFAC;"
+                        elif peg_2y <= 1.75:
+                            peg_badge_text = "Fair Value"
+                            peg_badge_class = "badge-neutral"
+                            peg_badge_style = "background-color: #FEF3C7; color: #854D0E; border: 1px solid #FDE68A;"
+                        else:
+                            peg_badge_text = "Premium"
+                            peg_badge_class = "badge-overvalued"
+                            peg_badge_style = "background-color: #FEE2E2; color: #991B1B; border: 1px solid #FECACA;"
                     else:
                         peg_2y_str = "N/A"
                         peg_subtext = f"2Y CAGR: {cagr_pct:+.1f}%" if (cagr_pct is not None and not np.isnan(cagr_pct)) else "Consensus Unlisted"
+                        peg_badge_text = "N/A"
+                        peg_badge_class = "badge-na"
+                        peg_badge_style = "background-color: #F3F4F6; color: #374151; border: 1px solid #E5E7EB;"
 
                     box5_html = make_metric_tile_html(
                         title="2Y PEG Ratio",
                         value=peg_2y_str,
                         subtext=peg_subtext,
+                        badge_text=peg_badge_text,
+                        badge_class=peg_badge_class,
+                        badge_style=peg_badge_style,
                         val_color=TEXT_DARK,
                         subtext_color=MUTED_SLATE,
                     )
@@ -3391,20 +3977,19 @@ SNAPSHOT_JS = """
         m.id = 'dean-chart-modal';
         m.style.display = 'none';
         m.innerHTML = `
-          <div id="dean-modal-overlay" style="position: fixed; inset: 0; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); z-index: 9999999; display: flex; align-items: center; justify-content: center; padding: 16px;">
-            <div id="dean-modal-card" style="background: #FFFFFF; border-radius: 12px; width: 96vw; max-width: 1440px; max-height: 94vh; display: flex; flex-direction: column; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); border: 1px solid #E2E8F0; overflow: hidden;">
-              <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; border-bottom: 1px solid #F1F5F9; background: #FAFBFD;">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                  <span id="dean-modal-title" style="font-size: 1.35rem; font-weight: 800; color: #0F172A;"></span>
-                  <span id="dean-modal-subtitle" style="font-size: 0.90rem; color: #64748B; font-weight: 500;"></span>
-                  <span style="font-size: 0.70rem; font-weight: 700; color: #1F2937; background: #FDE047; border: 1px solid #EAB308; padding: 2px 8px; border-radius: 9999px;">Interactive Full-Screen View</span>
+          <div id="dean-modal-overlay" style="position: fixed; inset: 0; background: rgba(15, 23, 42, 0.78); backdrop-filter: blur(4px); z-index: 9999999; display: flex; align-items: center; justify-content: center; padding: 12px;">
+            <div id="dean-modal-card" style="background: #FFFFFF; border-radius: 12px; width: 96vw; max-width: 1440px; height: 94vh; max-height: 94vh; display: flex; flex-direction: column; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); border: 1px solid #E2E8F0; overflow: hidden;">
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; border-bottom: 1px solid #F1F5F9; background: #FAFBFD; flex-shrink: 0;">
+                <div style="display: flex; align-items: baseline; gap: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                  <span id="dean-modal-title" style="font-size: 1.30rem; font-weight: 800; color: #0F172A; letter-spacing: -0.01em;"></span>
+                  <span id="dean-modal-subtitle" style="font-size: 0.88rem; color: #64748B; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></span>
                 </div>
-                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                  <button id="dean-modal-reset-btn" onclick="(window.parent.deanRefocus||window.deanRefocus||function(){{}})('modal')" style="background: #FEF08A; border: 1px solid #EAB308; border-radius: 6px; padding: 6px 14px; font-weight: 700; color: #1F2937; cursor: pointer; font-size: 0.78rem; display: flex; align-items: center; gap: 4px;">↺ Refocus View</button>
-                  <button id="dean-modal-close-btn" onclick="(window.parent.deanCloseModal||window.deanCloseModal||function(){{}})()" style="background: #F1F5F9; border: 1px solid #CBD5E1; border-radius: 6px; padding: 6px 14px; font-weight: 700; color: #334155; cursor: pointer; font-size: 0.78rem;">✕ Close</button>
+                <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+                  <button id="dean-modal-reset-btn" onclick="(window.parent.deanRefocus||window.deanRefocus||function(){{}})('modal')" style="background: #FEF08A; border: 1px solid #EAB308; border-radius: 6px; padding: 5px 11px; font-weight: 700; color: #1F2937; cursor: pointer; font-size: 0.74rem; display: flex; align-items: center; gap: 3px;">↺ Refocus</button>
+                  <button id="dean-modal-close-btn" onclick="(window.parent.deanCloseModal||window.deanCloseModal||function(){{}})()" style="background: #F1F5F9; border: 1px solid #CBD5E1; border-radius: 6px; padding: 5px 11px; font-weight: 700; color: #334155; cursor: pointer; font-size: 0.74rem;">✕ Close</button>
                 </div>
               </div>
-              <div id="dean-modal-plot-container" style="padding: 12px 18px 18px 18px; flex: 1 1 auto; min-height: 540px; width: 100%; max-width: 100%; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden;"></div>
+              <div id="dean-modal-plot-container" style="padding: 6px 10px 10px 10px; flex: 1 1 auto; width: 100%; max-width: 100%; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden;"></div>
             </div>
           </div>
           <style>
@@ -3414,19 +3999,31 @@ SNAPSHOT_JS = """
             #dean-modal-plot-container .main-svg {
               width: 100% !important;
               max-width: 100% !important;
+              height: 100% !important;
             }
             @media (max-width: 768px) {
               #dean-modal-overlay {
-                padding: 4px !important;
+                padding: 0 !important;
+                align-items: flex-start !important;
               }
               #dean-modal-card {
                 width: 98vw !important;
-                max-height: 98vh !important;
-                border-radius: 8px !important;
+                max-width: 98vw !important;
+                height: 96vh !important;
+                max-height: 96vh !important;
+                margin: 2vh auto !important;
+                border-radius: 10px !important;
+                display: flex !important;
+                flex-direction: column !important;
+                overflow: hidden !important;
               }
               #dean-modal-plot-container {
-                min-height: 420px !important;
-                padding: 6px 8px !important;
+                flex: 1 1 auto !important;
+                height: calc(96vh - 50px) !important;
+                min-height: calc(96vh - 50px) !important;
+                max-height: calc(96vh - 50px) !important;
+                padding: 4px 4px 6px 4px !important;
+                overflow: hidden !important;
               }
             }
           </style>
@@ -3797,12 +4394,28 @@ SNAPSHOT_JS = """
           if (!cloneLayout.yaxis) cloneLayout.yaxis = {};
           cloneLayout.yaxis.fixedrange = false;
 
-          cloneLayout.dragmode = 'pan';
+          cloneLayout.dragmode = 'zoom';
 
-          cloneLayout.height = Math.max(520, Math.min(pWin.innerHeight * 0.76, 700));
-          cloneLayout.margin = { l: 55, r: 25, t: 36, b: 46 };
+          const isMobile = (pWin.innerWidth <= 768) || (window.innerWidth <= 768);
+          cloneLayout.height = isMobile 
+            ? Math.max(540, Math.round(pWin.innerHeight * 0.86))
+            : Math.max(560, Math.min(Math.round(pWin.innerHeight * 0.80), 750));
+
+          cloneLayout.margin = isMobile
+            ? { l: 38, r: 14, t: 12, b: 30 }
+            : { l: 55, r: 25, t: 22, b: 40 };
+
           cloneLayout.showlegend = true;
-          cloneLayout.legend = { orientation: 'h', y: 1.12, x: 0 };
+          cloneLayout.legend = {
+            orientation: 'h',
+            yanchor: 'bottom',
+            y: 1.01,
+            xanchor: 'center',
+            x: 0.5,
+            itemwidth: 30,
+            font: { size: isMobile ? 8.5 : 10 },
+            bgcolor: 'rgba(255, 255, 255, 0.85)',
+          };
           cloneLayout.paper_bgcolor = '#FFFFFF';
           cloneLayout.plot_bgcolor = '#FFFFFF';
 

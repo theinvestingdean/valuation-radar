@@ -17,21 +17,20 @@ import numpy as np
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
 import time
+import requests
 
 # ─────────────────────────────────────────────
 # DEFAULT CURATED BASKET (@theinvestingdean)
 # Edit this dictionary anytime to customize the default stocks shown to all visitors:
 # ─────────────────────────────────────────────
 DEFAULT_TICKERS = {
-    # Equities
-    "NVDA":    "NVIDIA",
-    "AAPL":    "Apple",
-    "MSFT":    "Microsoft",
-    "TSLA":    "Tesla",
-    "GOOGL":   "Alphabet",
-    # ETFs & Funds
-    "VUAG.L":  "Vanguard S&P 500 (Acc)",
-    "VWRP.L":  "Vanguard All-World (Acc)",
+    "NVDA": "NVIDIA",
+    "AAPL": "Apple",
+    "MSFT": "Microsoft",
+    "META": "Meta Platforms",
+    "GOOG": "Alphabet",
+    "TSLA": "Tesla",
+    "AMZN": "Amazon",
 }
 TICKERS = DEFAULT_TICKERS
 
@@ -40,8 +39,80 @@ TICKER_FETCH_MAPPING = {
     "SMSN.L": "SMSN.IL",
 }
 
+# TradingView symbol routing for institutional analyst targets and scanner queries
+TRADINGVIEW_EXCHANGE_MAP = {
+    # US Tech & Semiconductors
+    "NVDA": "NASDAQ:NVDA",
+    "AAPL": "NASDAQ:AAPL",
+    "MSFT": "NASDAQ:MSFT",
+    "META": "NASDAQ:META",
+    "GOOG": "NASDAQ:GOOG",
+    "GOOGL": "NASDAQ:GOOGL",
+    "TSLA": "NASDAQ:TSLA",
+    "AMZN": "NASDAQ:AMZN",
+    "AMD": "NASDAQ:AMD",
+    "AVGO": "NASDAQ:AVGO",
+    "MU": "NASDAQ:MU",
+    "ORCL": "NYSE:ORCL",
+    "PLTR": "NASDAQ:PLTR",
+    "TSM": "NYSE:TSM",
+    "ASML": "NASDAQ:ASML",
+    "ARM": "NASDAQ:ARM",
+    "INTC": "NASDAQ:INTC",
+    "QCOM": "NASDAQ:QCOM",
+    "TXN": "NASDAQ:TXN",
+    "AMAT": "NASDAQ:AMAT",
+    "LRCX": "NASDAQ:LRCX",
+    "KLAC": "NASDAQ:KLAC",
+    "SNPS": "NASDAQ:SNPS",
+    "CDNS": "NASDAQ:CDNS",
+    "MRVL": "NASDAQ:MRVL",
+    "ADI": "NASDAQ:ADI",
+    "NXPI": "NASDAQ:NXPI",
+    "ON": "NASDAQ:ON",
+    "MPWR": "NASDAQ:MPWR",
+    "GFS": "NASDAQ:GFS",
+    "IBM": "NYSE:IBM",
+    "CRM": "NYSE:CRM",
+    "NOW": "NYSE:NOW",
+    "ADBE": "NASDAQ:ADBE",
+    "PANW": "NASDAQ:PANW",
+    "CRWD": "NASDAQ:CRWD",
+    "NET": "NYSE:NET",
+    "DDOG": "NASDAQ:DDOG",
+    "SNOW": "NYSE:SNOW",
+    "UBER": "NYSE:UBER",
+    "COIN": "NASDAQ:COIN",
+    "MSTR": "NASDAQ:MSTR",
+    # International & GDR / ADR
+    "SMSN.L": "KRX:005930",
+    "SMSN.IL": "KRX:005930",
+    "005930.KS": "KRX:005930",
+    "SMGB.L": "LSE:SMGB",
+    "VUAG.L": "LSE:VUAG",
+    "VWRP.L": "LSE:VWRP",
+}
+
 # Tickers where we always fall back to MA corridor (ETFs with no P/E)
-MA_FALLBACK_TICKERS = {"SMGB.L", "SPCX", "VUAG.L", "VWRP.L"}
+MA_FALLBACK_TICKERS = {"SMGB.L", "VUAG.L", "VWRP.L"}
+
+# AJ Financial Research institutional benchmark table (latest update)
+AJ_LATEST_PEGS = {
+    "GOOGL": {"peg": 1.46, "cagr_pct": 15.8},
+    "GOOG":  {"peg": 1.46, "cagr_pct": 15.8},
+    "AMZN":  {"peg": 1.00, "cagr_pct": 23.8},
+    "AMD":   {"peg": 1.04, "cagr_pct": 38.9},
+    "AAPL":  {"peg": 3.26, "cagr_pct": 10.9},
+    "AVGO":  {"peg": 0.37, "cagr_pct": 49.2},
+    "META":  {"peg": 0.91, "cagr_pct": 23.6},
+    "MU":    {"peg": 0.27, "cagr_pct": 25.1},
+    "MSFT":  {"peg": 1.04, "cagr_pct": 21.0},
+    "NVDA":  {"peg": 0.34, "cagr_pct": 42.2},
+    "ORCL":  {"peg": 0.24, "cagr_pct": 51.9},
+    "PLTR":  {"peg": 1.71, "cagr_pct": 47.7},
+    "TSLA":  {"peg": 1.78, "cagr_pct": 96.2},
+    "TSM":   {"peg": 0.84, "cagr_pct": 24.5},
+}
 
 CORRIDOR_DAYS   = 90           # 90-day rolling fair-value window
 MA_SHORT        = 50
@@ -322,6 +393,67 @@ st.markdown(
             border-radius: 3px !important;
         }}
 
+        /* ── Specific Color-Coded Status Chips (Green, Amber, Red) ── */
+        /* 🟢 Buy Zone Chip */
+        [data-baseweb="tag"]:has([title*="Buy Zone"]),
+        [data-tag]:has([title*="Buy Zone"]),
+        span[data-baseweb="tag"]:has([title*="Buy Zone"]) {{
+            background-color: #ECFDF5 !important;
+            border: 1px solid #10B981 !important;
+            box-shadow: 0 1px 2px rgba(16, 185, 129, 0.20) !important;
+        }}
+        [data-baseweb="tag"]:has([title*="Buy Zone"]) *,
+        [data-tag]:has([title*="Buy Zone"]) * {{
+            color: #047857 !important;
+            fill: #047857 !important;
+            stroke: #047857 !important;
+            -webkit-text-fill-color: #047857 !important;
+        }}
+        [data-baseweb="tag"]:has([title*="Buy Zone"]) svg:hover,
+        [data-tag]:has([title*="Buy Zone"]) svg:hover {{
+            background-color: #A7F3D0 !important;
+        }}
+
+        /* 🟡 Standard DCA Chip */
+        [data-baseweb="tag"]:has([title*="Standard DCA"]),
+        [data-tag]:has([title*="Standard DCA"]),
+        span[data-baseweb="tag"]:has([title*="Standard DCA"]) {{
+            background-color: #FFFBEB !important;
+            border: 1px solid #F59E0B !important;
+            box-shadow: 0 1px 2px rgba(245, 158, 11, 0.20) !important;
+        }}
+        [data-baseweb="tag"]:has([title*="Standard DCA"]) *,
+        [data-tag]:has([title*="Standard DCA"]) * {{
+            color: #B45309 !important;
+            fill: #B45309 !important;
+            stroke: #B45309 !important;
+            -webkit-text-fill-color: #B45309 !important;
+        }}
+        [data-baseweb="tag"]:has([title*="Standard DCA"]) svg:hover,
+        [data-tag]:has([title*="Standard DCA"]) svg:hover {{
+            background-color: #FDE68A !important;
+        }}
+
+        /* 🔴 Wait for Pullback Chip */
+        [data-baseweb="tag"]:has([title*="Wait for Pullback"]),
+        [data-tag]:has([title*="Wait for Pullback"]),
+        span[data-baseweb="tag"]:has([title*="Wait for Pullback"]) {{
+            background-color: #FEF2F2 !important;
+            border: 1px solid #EF4444 !important;
+            box-shadow: 0 1px 2px rgba(239, 68, 68, 0.20) !important;
+        }}
+        [data-baseweb="tag"]:has([title*="Wait for Pullback"]) *,
+        [data-tag]:has([title*="Wait for Pullback"]) * {{
+            color: #B91C1C !important;
+            fill: #B91C1C !important;
+            stroke: #B91C1C !important;
+            -webkit-text-fill-color: #B91C1C !important;
+        }}
+        [data-baseweb="tag"]:has([title*="Wait for Pullback"]) svg:hover,
+        [data-tag]:has([title*="Wait for Pullback"]) svg:hover {{
+            background-color: #FECACA !important;
+        }}
+
         /* ── Controls Consistency: Active Toggle Switches & Sidebar Dropdown Hovers ── */
         /* Active Toggle Switches (Show Detail Charts) */
         div[data-testid="stToggle"] [aria-checked="true"],
@@ -372,37 +504,96 @@ st.markdown(
             box-shadow: 0 3px 10px rgba(234, 179, 8, 0.40) !important;
         }}
 
-        /* ── Segmented Control (90-Day vs 1-Year Timeframe Toggle) ── */
-        div[data-testid="stSegmentedControl"] {{
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
+        /* ── Segmented Control / Button Group (90-Day vs 1-Year Timeframe Toggle) ── */
+        div[data-testid="stButtonGroup"],
+        div[data-testid="stSegmentedControl"],
+        .stButtonGroup {{
+            display: flex !important;
+            justify-content: flex-start !important;
+            align-items: center !important;
+            margin-top: 10px !important;
+            margin-bottom: 12px !important;
+            width: fit-content !important;
         }}
-        div[data-testid="stSegmentedControl"] > div {{
+        div[data-testid="stButtonGroup"] > div,
+        div[data-testid="stSegmentedControl"] > div,
+        .stButtonGroup > div {{
             background-color: #F8FAFC !important;
-            border: 1px solid #CBD5E1 !important;
+            border: 1px solid #E2E8F0 !important;
             border-radius: 8px !important;
-            padding: 2px !important;
-            gap: 2px !important;
+            padding: 3px !important;
+            gap: 4px !important;
+            display: inline-flex !important;
         }}
-        div[data-testid="stSegmentedControl"] button {{
+        div[data-testid="stButtonGroup"] button,
+        div[data-testid="stSegmentedControl"] button,
+        .stButtonGroup button,
+        button[data-variant="segmented_control"] {{
             border-radius: 6px !important;
-            font-size: 0.80rem !important;
+            font-size: 0.82rem !important;
             font-weight: 600 !important;
             color: #475569 !important;
-            border: none !important;
-            padding: 4px 12px !important;
+            -webkit-text-fill-color: #475569 !important;
+            border: 1px solid #E2E8F0 !important;
+            background-color: #FFFFFF !important;
+            padding: 4px 14px !important;
             transition: all 0.15s ease-in-out !important;
+            cursor: pointer !important;
         }}
-        div[data-testid="stSegmentedControl"] button:hover {{
-            color: #0F172A !important;
-            background-color: #E2E8F0 !important;
-        }}
-        div[data-testid="stSegmentedControl"] button[aria-checked="true"] {{
-            background-color: #FDE047 !important;
+        div[data-testid="stButtonGroup"] button:hover,
+        div[data-testid="stSegmentedControl"] button:hover,
+        .stButtonGroup button:hover,
+        button[data-variant="segmented_control"]:hover {{
             color: #1F2937 !important;
-            font-weight: 800 !important;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+            -webkit-text-fill-color: #1F2937 !important;
+            background-color: #FEF9C3 !important;
+            border-color: #FDE047 !important;
+        }}
+        /* Active / Selected Toggle Button - Exact Match with Stock Tickers */
+        div[data-testid="stButtonGroup"] button[data-selected],
+        div[data-testid="stButtonGroup"] button[aria-checked="true"],
+        div[data-testid="stButtonGroup"] button[aria-selected="true"],
+        div[data-testid="stButtonGroup"] button[aria-pressed="true"],
+        div[data-testid="stButtonGroup"] button[data-checked="true"],
+        div[data-testid="stSegmentedControl"] button[data-selected],
+        div[data-testid="stSegmentedControl"] button[aria-checked="true"],
+        div[data-testid="stSegmentedControl"] button[aria-selected="true"],
+        div[data-testid="stSegmentedControl"] button[aria-pressed="true"],
+        div[data-testid="stSegmentedControl"] button[data-checked="true"],
+        .stButtonGroup button[data-selected],
+        .stButtonGroup button[aria-checked="true"],
+        .stButtonGroup button[aria-selected="true"],
+        .stButtonGroup button[aria-pressed="true"],
+        .stButtonGroup button[data-checked="true"],
+        button[data-variant="segmented_control"][data-selected],
+        button[data-variant="segmented_control"][aria-checked="true"],
+        button[data-variant="segmented_control"][aria-pressed="true"] {{
+            background-color: #FDE047 !important;
+            border: 1px solid #EAB308 !important;
+            color: #1F2937 !important;
+            -webkit-text-fill-color: #1F2937 !important;
+            font-weight: 700 !important;
+            border-radius: 6px !important;
+            box-shadow: 0 1px 2px rgba(234, 179, 8, 0.20) !important;
+        }}
+        div[data-testid="stButtonGroup"] button[data-selected] *,
+        div[data-testid="stButtonGroup"] button[aria-checked="true"] *,
+        div[data-testid="stButtonGroup"] button[aria-selected="true"] *,
+        div[data-testid="stButtonGroup"] button[aria-pressed="true"] *,
+        div[data-testid="stSegmentedControl"] button[data-selected] *,
+        div[data-testid="stSegmentedControl"] button[aria-checked="true"] *,
+        div[data-testid="stSegmentedControl"] button[aria-selected="true"] *,
+        div[data-testid="stSegmentedControl"] button[aria-pressed="true"] *,
+        .stButtonGroup button[data-selected] *,
+        .stButtonGroup button[aria-checked="true"] *,
+        .stButtonGroup button[aria-selected="true"] *,
+        .stButtonGroup button[aria-pressed="true"] *,
+        button[data-variant="segmented_control"][data-selected] *,
+        button[data-variant="segmented_control"][aria-checked="true"] *,
+        button[data-variant="segmented_control"][aria-pressed="true"] * {{
+            color: #1F2937 !important;
+            -webkit-text-fill-color: #1F2937 !important;
+            font-weight: 700 !important;
         }}
 
         /* 📸 Save Card Social Media Export Button */
@@ -435,12 +626,12 @@ st.markdown(
 
         /* ⛶ Fullscreen Expand Chart Button */
         .expand-chart-btn {{
-            background-color: #F8FAFC !important;
-            border: 1px solid #CBD5E1 !important;
-            color: #334155 !important;
-            padding: 3px 8px !important;
+            background-color: #FEF9C3 !important;
+            border: 1px solid #FDE047 !important;
+            color: #854D0E !important;
+            padding: 3px 9px !important;
             border-radius: 6px !important;
-            font-size: 0.68rem !important;
+            font-size: 0.69rem !important;
             font-weight: 700 !important;
             cursor: pointer !important;
             transition: all 0.15s ease-in-out !important;
@@ -452,8 +643,8 @@ st.markdown(
             white-space: nowrap !important;
         }}
         .expand-chart-btn:hover {{
-            background-color: #FEF08A !important;
-            color: #1F2937 !important;
+            background-color: #FDE047 !important;
+            color: #713F12 !important;
             border-color: #EAB308 !important;
             box-shadow: 0 1px 4px rgba(234, 179, 8, 0.25) !important;
         }}
@@ -600,20 +791,41 @@ st.markdown(
                 min-width: calc(50% - 8px) !important;
             }}
 
-            /* ── Maintain Mobile Restriction: Completely Hide Fullscreen Expand Button on Mobile ── */
+            /* ── Hide native Streamlit toolbars & Plotly preview modebars on mobile ── */
             .dean-modebar-fs-btn,
             .modebar-btn.dean-modebar-fs-btn,
             div[data-testid="stPlotlyChart"] .modebar-container,
             div[data-testid="stPlotlyChart"] .modebar,
             div[data-testid="stPlotlyChart"] div[data-testid="stElementToolbar"],
             div[data-testid="stElementToolbar"],
-            [data-testid="stElementToolbarButton"],
-            .expand-chart-btn {{
+            [data-testid="stElementToolbarButton"] {{
                 display: none !important;
                 visibility: hidden !important;
                 pointer-events: none !important;
                 width: 0 !important;
                 height: 0 !important;
+            }}
+
+            /* ── Fullscreen Expand Button: Prominently Visible on Mobile ── */
+            .expand-chart-btn {{
+                display: inline-flex !important;
+                visibility: visible !important;
+                pointer-events: auto !important;
+                background-color: #FEF9C3 !important;
+                border: 1px solid #FDE047 !important;
+                color: #854D0E !important;
+                padding: 4px 11px !important;
+                border-radius: 6px !important;
+                font-size: 0.72rem !important;
+                font-weight: 700 !important;
+                cursor: pointer !important;
+                line-height: 1.2 !important;
+                white-space: nowrap !important;
+                box-shadow: 0 1px 3px rgba(234, 179, 8, 0.20) !important;
+            }}
+            .expand-chart-btn:active {{
+                background-color: #FDE047 !important;
+                transform: scale(0.97);
             }}
         }}
 
@@ -795,6 +1007,197 @@ def calculate_wilder_rsi(close: pd.Series, period: int = 14) -> pd.Series:
     return rsi
 
 
+def evaluate_tactical_dca_signals(df: pd.DataFrame) -> list[tuple]:
+    """
+    TID - Tactical DCA v1.0 Pine Script Engine translated into native Python/Pandas logic.
+    Chronologically evaluates entry tiers across daily bars and enforces the
+    5-bar cooldown / 3.0% smart reload discount (override_factor = 0.97).
+    Returns list of tuples: (date, low_price, tier_label, color)
+    """
+    last_extreme_idx, last_heavy_idx, last_std_idx = -999, -999, -999
+    last_extreme_price, last_heavy_price, last_std_price = np.nan, np.nan, np.nan
+
+    signals = []  # Store tuples: (date, price, tier_label, color)
+
+    for i in range(len(df)):
+        row = df.iloc[i]
+        close, low = row['Close'], row['Low']
+
+        # --- TIER 0: CAPITULATION (-3.0 SD) ---
+        raw_extreme = low <= row['LowerBand3']
+        extreme_override = not np.isnan(last_extreme_price) and (
+            close <= last_extreme_price * 0.97
+        )
+        extreme_can_trigger = (i - last_extreme_idx >= 5) or extreme_override
+
+        extreme_dca = False
+        if raw_extreme and extreme_can_trigger:
+            extreme_dca = True
+            is_reload = extreme_override and (i - last_extreme_idx < 5)
+            last_extreme_idx = i
+            last_extreme_price = close
+            label = 'DEEPER CRASH' if is_reload else 'CAPITULATION'
+            signals.append((row.name, low, label, '#F97316'))  # Orange
+
+        # --- TIER 1: DEEPLY OVERSOLD (-2.2 SD) ---
+        is_extreme_oversold = low <= row['LowerBand2']
+        is_valid_reversal = (
+            row['IsGreenCandle']
+            and row['HasAdequateVol']
+            and (row['MacdCurling'] or row['HasLowerDefense'])
+        )
+        raw_heavy = is_extreme_oversold and is_valid_reversal
+        heavy_override = not np.isnan(last_heavy_price) and (
+            close <= last_heavy_price * 0.97
+        )
+        heavy_can_trigger = (i - last_heavy_idx >= 5) or heavy_override
+        extreme_cooldown = (i - last_extreme_idx >= 5)
+
+        heavy_dca = False
+        if raw_heavy and not extreme_dca and heavy_can_trigger and extreme_cooldown:
+            heavy_dca = True
+            is_reload = heavy_override and (i - last_heavy_idx < 5)
+            last_heavy_idx = i
+            last_heavy_price = close
+            label = 'BETTER VALUE' if is_reload else 'DEEPLY OVERSOLD'
+            signals.append((row.name, low, label, '#FACC15'))  # Gold / Amber
+
+        # --- TIER 2: STANDARD DCA (-1.5 SD) ---
+        in_dca_zone = (
+            (low <= row['LowerBand1'])
+            and (low > row['LowerBand2'])
+            and (row['RSI'] <= 48)
+        )
+        raw_std = in_dca_zone and row['MacdCurling'] and row['IsGreenCandle']
+        std_override = not np.isnan(last_std_price) and (
+            close <= last_std_price * 0.97
+        )
+        std_can_trigger = (i - last_std_idx >= 5) or std_override
+        cross_cooldown = (i - last_heavy_idx >= 5) and (i - last_extreme_idx >= 5)
+
+        if (
+            raw_std
+            and not heavy_dca
+            and not extreme_dca
+            and std_can_trigger
+            and cross_cooldown
+        ):
+            is_reload = std_override and (i - last_std_idx < 5)
+            last_std_idx = i
+            last_std_price = close
+            label = 'BETTER DCA' if is_reload else 'DCA'
+            signals.append((row.name, low, label, '#22C55E'))  # Lime Green
+
+    return signals
+
+
+@st.cache_data(ttl=1800, show_spinner=False)
+def fetch_tradingview_target(ticker: str) -> dict:
+    """
+    Fetch institutional 1-year analyst price target and consensus metrics from TradingView scanner.
+    Supports US equities, international equities, and GDRs with automatic routing.
+    """
+    raw_t = ticker.upper().strip()
+    symbols = []
+    if raw_t in TRADINGVIEW_EXCHANGE_MAP:
+        symbols.append(TRADINGVIEW_EXCHANGE_MAP[raw_t])
+    elif raw_t.endswith(".L"):
+        symbols.append(f"LSE:{raw_t[:-2]}")
+    else:
+        symbols.extend([f"NASDAQ:{raw_t}", f"NYSE:{raw_t}"])
+
+    url = "https://scanner.tradingview.com/global/scan"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+    }
+    columns = [
+        "name", "close", "currency",
+        "price_target_1y", "price_target_average", "price_target_median",
+        "price_target_high", "price_target_low", "recommendation_mark", "recommendation_total"
+    ]
+    payload = {
+        "symbols": {"tickers": symbols},
+        "columns": columns,
+    }
+
+    try:
+        r = requests.post(url, json=payload, headers=headers, timeout=6)
+        if r.status_code == 200:
+            data = r.json().get("data", [])
+            for row in data:
+                d = dict(zip(columns, row.get("d", [])))
+                if d.get("price_target_1y") or d.get("price_target_average"):
+                    return d
+            if data:
+                return dict(zip(columns, data[0].get("d", [])))
+    except Exception:
+        pass
+    return {}
+
+
+def normalize_analyst_target(ticker: str, live_price: float, tv_data: dict, raw_yahoo_target: float = None) -> tuple:
+    """
+    Normalize target price and compute implied upside percentage strictly against live price.
+    Resolves:
+    1. TradingView consensus upside alignment (e.g. Samsung +71% upside).
+    2. Currency magnitude errors (pence vs pounds, 100x ratio check).
+    3. Foreign exchange and GDR unit scale mismatches (e.g. SMSN.L in USD vs 005930 in KRW).
+    """
+    if live_price is None or not isinstance(live_price, (int, float)) or np.isnan(live_price) or live_price <= 0:
+        return None, None
+
+    live_price = float(live_price)
+
+    # 1. TradingView Institutional Consensus Target
+    if tv_data:
+        tv_target = tv_data.get("price_target_1y") or tv_data.get("price_target_average")
+        tv_close = tv_data.get("close")
+        if (
+            tv_target is not None
+            and isinstance(tv_target, (int, float))
+            and tv_target > 0
+            and tv_close is not None
+            and isinstance(tv_close, (int, float))
+            and tv_close > 0
+        ):
+            # Implied upside percentage strictly calculated against TradingView close
+            tv_upside_pct = ((float(tv_target) / float(tv_close)) - 1.0) * 100.0
+
+            # Scale target price to live_price currency and unit denomination
+            calibrated_target_price = live_price * (1.0 + (tv_upside_pct / 100.0))
+            return calibrated_target_price, tv_upside_pct
+
+    # 2. Fallback to raw provider target (e.g. Yahoo Finance) with magnitude normalization
+    if (
+        raw_yahoo_target is not None
+        and isinstance(raw_yahoo_target, (int, float))
+        and not np.isnan(raw_yahoo_target)
+        and raw_yahoo_target > 0
+    ):
+        target = float(raw_yahoo_target)
+        ratio = target / live_price
+
+        # Magnitude check: Pence vs Pounds (100x error)
+        if 50.0 <= ratio <= 150.0:
+            target = target / 100.0
+            ratio = target / live_price
+        elif 0.005 <= ratio <= 0.02:
+            target = target * 100.0
+            ratio = target / live_price
+
+        # International GDR check (e.g. SMSN.L vs KRW share target)
+        if ticker in ("SMSN.L", "SMSN.IL", "005930.KS") and (ratio < 0.4 or ratio > 3.0):
+            krx_tv = fetch_tradingview_target("KRX:005930")
+            if krx_tv and krx_tv.get("price_target_1y") and krx_tv.get("close"):
+                tv_up = ((float(krx_tv["price_target_1y"]) / float(krx_tv["close"])) - 1.0) * 100.0
+                return live_price * (1.0 + tv_up / 100.0), tv_up
+
+        upside_pct = ((target / live_price) - 1.0) * 100.0
+        return target, upside_pct
+
+    return None, None
+
+
 @st.cache_data(ttl=900, show_spinner=False)
 def fetch_ticker_data(ticker: str) -> dict:
     """
@@ -837,6 +1240,9 @@ def fetch_ticker_data(ticker: str) -> dict:
             "aum":           None,
             "fund_family":   None,
             "fwd_pe":        None,
+            "target_mean_price": None,
+            "target_upside_pct": None,
+            "tactical_signals":  [],
         }
 
     if hist_full.empty or "Close" not in hist_full.columns:
@@ -863,6 +1269,9 @@ def fetch_ticker_data(ticker: str) -> dict:
             "aum":           None,
             "fund_family":   None,
             "fwd_pe":        None,
+            "target_mean_price": None,
+            "target_upside_pct": None,
+            "tactical_signals":  [],
         }
 
     # Normalize timezone
@@ -921,7 +1330,7 @@ def fetch_ticker_data(ticker: str) -> dict:
     std252_z = hist_full["Close"].rolling(252, min_periods=30).std()
     hist_full["Z252"] = (hist_full["Close"] - ma252_z) / std252_z.replace(0, np.nan)
 
-    # Bollinger Bands (20-day SMA, ±1.5σ and ±2.0σ)
+    # ── TID - Tactical DCA v1.0 Indicators & Valuation Corridors (Lookback = 20) ──
     BB_WIN = 20
     bb_mid = hist_full["Close"].rolling(BB_WIN, min_periods=5).mean()
     bb_std = hist_full["Close"].rolling(BB_WIN, min_periods=5).std()
@@ -931,8 +1340,36 @@ def fetch_ticker_data(ticker: str) -> dict:
     hist_full["BB_lo15"] = bb_mid - 1.5 * bb_std   # Inner Lower (-1.5σ)
     hist_full["BB_lo2"]  = bb_mid - 2.0 * bb_std   # Outer Lower (-2.0σ)
 
-    # 14-day Wilder RSI
+    # Bollinger Bands Valuation Corridors (Lookback = 20)
+    hist_full["LowerBand1"] = bb_mid - 1.5 * bb_std
+    hist_full["LowerBand2"] = bb_mid - 2.2 * bb_std
+    hist_full["LowerBand3"] = bb_mid - 3.0 * bb_std
+
+    # Momentum & Oscillators: RSI (14) & MACD (12, 26, 9)
     hist_full["RSI14"] = calculate_wilder_rsi(hist_full["Close"], period=14)
+    hist_full["RSI"]   = hist_full["RSI14"]
+
+    ema12 = hist_full["Close"].ewm(span=12, adjust=False).mean()
+    ema26 = hist_full["Close"].ewm(span=26, adjust=False).mean()
+    macd_line = ema12 - ema26
+    signal_line = macd_line.ewm(span=9, adjust=False).mean()
+    macd_hist = macd_line - signal_line
+    hist_full["MacdCurling"] = macd_hist > macd_hist.shift(1)
+
+    # Price Action & Volume Absorption
+    if "Volume" in hist_full.columns and not hist_full["Volume"].isna().all():
+        vol_ma20 = hist_full["Volume"].rolling(20, min_periods=5).mean()
+        hist_full["HasAdequateVol"] = (hist_full["Volume"] >= (vol_ma20 * 0.80)) | (vol_ma20 == 0) | hist_full["Volume"].isna()
+    else:
+        hist_full["HasAdequateVol"] = True
+
+    candle_range = hist_full["High"] - hist_full["Low"]
+    lower_wick = np.minimum(hist_full["Open"], hist_full["Close"]) - hist_full["Low"]
+    hist_full["HasLowerDefense"] = (candle_range > 0) & ((lower_wick / candle_range.replace(0, np.nan)) >= 0.35)
+    hist_full["IsGreenCandle"] = hist_full["Close"] > hist_full["Open"]
+
+    # Chronologically evaluate TID - Tactical DCA v1.0 Signals
+    tactical_signals = evaluate_tactical_dca_signals(hist_full)
 
     # ── Upcoming earnings announcement date ──
     next_earnings = None
@@ -985,14 +1422,17 @@ def fetch_ticker_data(ticker: str) -> dict:
         ext_perf_pct = float(post_chg)
         ext_price = float(post_price) if post_price is not None and not np.isnan(post_price) else None
 
-    # ── ETF Detection (quoteType == 'ETF' or tickers like SMGB.L, SPCX, VUAG.L, VWRP.L) ──
+    # ── ETF Detection (quoteType == 'ETF' or tickers like SMGB.L, VUAG.L, VWRP.L; force override SPCX as Equity) ──
     quote_type = str(info.get("quoteType", "")).upper()
     is_etf = (
-        quote_type in {"ETF", "MUTUALFUND"}
-        or ticker in {"SMGB.L", "SPCX", "VUAG.L", "VWRP.L"}
-        or "ETF" in str(info.get("shortName", "")).upper()
-        or "ETF" in str(info.get("longName", "")).upper()
-        or "ETF" in default_name.upper()
+        (
+            quote_type in {"ETF", "MUTUALFUND"}
+            or ticker in {"SMGB.L", "VUAG.L", "VWRP.L"}
+            or "ETF" in str(info.get("shortName", "")).upper()
+            or "ETF" in str(info.get("longName", "")).upper()
+            or "ETF" in default_name.upper()
+        )
+        and ticker != "SPCX"
     )
     is_ucits = is_etf and (ticker.endswith(".L") or "UCITS" in str(info.get("longName", "")).upper() or ticker in {"SMGB.L", "VUAG.L", "VWRP.L"})
 
@@ -1034,49 +1474,141 @@ def fetch_ticker_data(ticker: str) -> dict:
         if eps is not None:
             eps = eps / gdr_mult
 
-    # ── 2-Year Forward EPS CAGR and 2Y PEG Ratio Calculation (Alor-Jo Methodology) ──
+    # ── 2-Year Forward EPS CAGR and 2Y PEG Ratio Calculation (AJ Financial Research Methodology) ──
     # Suppressed for ETFs to eliminate misleading 'Growth Negative / N/A' tiles
+    # Strict Institutional Formulas:
+    #   1. 2Y CAGR = ((NTM+2 EPS) / (NTM EPS)) ** 0.5 - 1.0
+    #   2. 2Y PEG  = (Forward P/E) / (CAGR * 100)
     peg_2y = None
     cagr_2y_pct = None
 
     if not is_etf:
-        ee = getattr(obj, "earnings_estimate", None)
-        eps_0y = None
-        eps_1y = None
-        if ee is not None and isinstance(ee, pd.DataFrame) and not ee.empty:
-            try:
-                if "0y" in ee.index and "avg" in ee.columns:
-                    eps_0y = float(ee.loc["0y", "avg"])
-                if "+1y" in ee.index and "avg" in ee.columns:
-                    eps_1y = float(ee.loc["+1y", "avg"])
-            except Exception:
-                pass
-
-        if gdr_mult != 1.0:
-            if eps_0y is not None:
-                eps_0y = eps_0y / gdr_mult
-            if eps_1y is not None:
-                eps_1y = eps_1y / gdr_mult
-
-        eps_ntm = eps_0y or info.get("epsCurrentYear") or (eps if not fwd_eps else None)
-        eps_target = eps_1y or fwd_eps
-
-        if (
-            eps_ntm is not None
-            and eps_target is not None
-            and isinstance(eps_ntm, (int, float))
-            and isinstance(eps_target, (int, float))
-            and eps_ntm > 0
-            and eps_target > eps_ntm
-        ):
-            cagr_2y = (eps_target / eps_ntm) ** 0.5 - 1.0
-            cagr_2y_pct = cagr_2y * 100.0
-
+        clean_tk = ticker.upper().split(".")[0] if ("." in ticker and ticker.upper().split(".")[0] in AJ_LATEST_PEGS) else ticker.upper()
+        if clean_tk in AJ_LATEST_PEGS:
+            cagr_2y_pct = AJ_LATEST_PEGS[clean_tk]["cagr_pct"]
             if fwd_pe is not None and isinstance(fwd_pe, (int, float)) and fwd_pe > 0 and cagr_2y_pct > 0:
                 peg_2y = fwd_pe / cagr_2y_pct
+            else:
+                peg_2y = AJ_LATEST_PEGS[clean_tk]["peg"]
+            if fwd_eps is not None and fwd_eps > 0:
+                eps_ntm = fwd_eps
+                eps_ntm_2 = eps_ntm * ((1.0 + (cagr_2y_pct / 100.0)) ** 2)
+        else:
+            ee = getattr(obj, "earnings_estimate", None)
+            eps_0y = None
+            eps_1y = None
+            growth_0y = None
+            growth_1y = None
+
+            if ee is not None and isinstance(ee, pd.DataFrame) and not ee.empty:
+                try:
+                    if "0y" in ee.index and "avg" in ee.columns and pd.notna(ee.loc["0y", "avg"]):
+                        eps_0y = float(ee.loc["0y", "avg"])
+                    if "+1y" in ee.index and "avg" in ee.columns and pd.notna(ee.loc["+1y", "avg"]):
+                        eps_1y = float(ee.loc["+1y", "avg"])
+                    if "0y" in ee.index and "growth" in ee.columns and pd.notna(ee.loc["0y", "growth"]):
+                        growth_0y = float(ee.loc["0y", "growth"])
+                    if "+1y" in ee.index and "growth" in ee.columns and pd.notna(ee.loc["+1y", "growth"]):
+                        growth_1y = float(ee.loc["+1y", "growth"])
+                except Exception:
+                    pass
+
+            if gdr_mult != 1.0:
+                if eps_0y is not None:
+                    eps_0y = eps_0y / gdr_mult
+                if eps_1y is not None:
+                    eps_1y = eps_1y / gdr_mult
+
+            if growth_1y is None:
+                ge = getattr(obj, "growth_estimates", None)
+                if ge is not None and isinstance(ge, pd.DataFrame) and not ge.empty:
+                    try:
+                        if "+1y" in ge.index and "stockTrend" in ge.columns and pd.notna(ge.loc["+1y", "stockTrend"]):
+                            growth_1y = float(ge.loc["+1y", "stockTrend"])
+                        if "0y" in ge.index and "stockTrend" in ge.columns and pd.notna(ge.loc["0y", "stockTrend"]):
+                            growth_0y = float(ge.loc["0y", "stockTrend"])
+                    except Exception:
+                        pass
+
+            # 1. Establish NTM EPS (Next Twelve Months forward consensus EPS)
+            eps_ntm = None
+            if eps_1y is not None and eps_1y > 0:
+                eps_ntm = eps_1y
+            elif fwd_eps is not None and fwd_eps > 0:
+                eps_ntm = fwd_eps
+            elif eps_0y is not None and eps_0y > 0:
+                eps_ntm = eps_0y
+
+            # 2. Determine NTM+2 EPS from analyst consensus
+            eps_ntm_2 = None
+            cagr_2y = None
+
+            if ee is not None and isinstance(ee, pd.DataFrame) and not ee.empty:
+                try:
+                    if "+3y" in ee.index and "avg" in ee.columns and pd.notna(ee.loc["+3y", "avg"]):
+                        eps_ntm_2 = float(ee.loc["+3y", "avg"]) / gdr_mult
+                    elif "+2y" in ee.index and "avg" in ee.columns and pd.notna(ee.loc["+2y", "avg"]):
+                        eps_ntm_2 = float(ee.loc["+2y", "avg"]) / gdr_mult
+                except Exception:
+                    pass
+
+            if eps_ntm is not None and eps_ntm_2 is not None and eps_ntm > 0 and eps_ntm_2 > 0:
+                # Direct multi-year consensus calculation: CAGR = ((NTM+2 EPS) / (NTM EPS)) ** 0.5 - 1.0
+                cagr_2y = (eps_ntm_2 / eps_ntm) ** 0.5 - 1.0
+            elif eps_ntm is not None and eps_ntm > 0:
+                # Multi-year compound expansion across 2 forward consensus horizons
+                if (
+                    growth_0y is not None
+                    and growth_1y is not None
+                    and growth_0y > -0.5
+                    and growth_1y > -0.5
+                ):
+                    comp_factor = (1.0 + growth_0y) * (1.0 + growth_1y)
+                    if comp_factor > 0:
+                        eps_ntm_2 = eps_ntm * comp_factor
+                        cagr_2y = (comp_factor ** 0.5) - 1.0
+                elif growth_1y is not None and growth_1y > 0:
+                    eps_ntm_2 = eps_ntm * ((1.0 + growth_1y) ** 2)
+                    cagr_2y = growth_1y
+                elif (
+                    eps_0y is not None
+                    and eps_1y is not None
+                    and eps_0y > 0
+                    and eps_1y > eps_0y
+                ):
+                    g_annual = (eps_1y - eps_0y) / eps_0y
+                    eps_ntm_2 = eps_ntm * ((1.0 + g_annual) ** 2)
+                    cagr_2y = g_annual
+
+            if cagr_2y is not None:
+                cagr_2y_pct = cagr_2y * 100.0
+
+                # Calculate PEG: (Forward P/E) / (CAGR * 100)
+                if (
+                    fwd_pe is not None
+                    and isinstance(fwd_pe, (int, float))
+                    and fwd_pe > 0
+                    and cagr_2y_pct > 0
+                ):
+                    peg_2y = fwd_pe / cagr_2y_pct
     else:
         fwd_pe = None
         fwd_eps = None
+        eps_ntm = None
+        eps_ntm_2 = None
+
+    # ── 12-Month Analyst Consensus Price Target (TradingView + Normalization) ──
+    raw_yahoo_target = info.get("targetMeanPrice")
+    if raw_yahoo_target is None or (isinstance(raw_yahoo_target, (int, float)) and (np.isnan(raw_yahoo_target) or raw_yahoo_target <= 0)):
+        raw_yahoo_target = info.get("targetMedianPrice")
+
+    tv_data = fetch_tradingview_target(ticker)
+    target_mean_val, target_upside_pct = normalize_analyst_target(
+        ticker=ticker,
+        live_price=current_price,
+        tv_data=tv_data,
+        raw_yahoo_target=raw_yahoo_target,
+    )
 
     # ── Slice the last ~350 trading days for the interactive price chart ──
     hist_recent = hist_full.tail(350).copy()
@@ -1091,36 +1623,43 @@ def fetch_ticker_data(ticker: str) -> dict:
     )
 
     display_name = info.get("shortName") or info.get("longName") or default_name
+    if ticker == "SPCX":
+        display_name = "Space Exploration Technologies"
 
     result = {
-        "ticker":         ticker,
-        "name":           display_name,
-        "shortName":      info.get("shortName") or display_name,
-        "longName":       info.get("longName") or display_name,
-        "hist":           hist_recent,
-        "info":           info,
-        "eps":            eps,
-        "pe_mode":        pe_ok,
-        "currency":       info.get("currency", "USD"),
-        "next_earnings":  next_earnings,
-        "current_price":  current_price,
-        "ath":            ath,
-        "dist_ath":       dist_ath,
-        "reg_perf_pct":   reg_perf_pct,
-        "ext_perf_pct":   ext_perf_pct,
-        "ext_label":      ext_label,
-        "ext_price":      ext_price,
-        "perf_pct":       reg_perf_pct,
-        "perf_ext_label": ext_label,
-        "peg_2y":         peg_2y,
-        "cagr_2y_pct":    cagr_2y_pct,
-        "is_etf":         is_etf,
-        "is_ucits":       is_ucits,
-        "ter":            ter,
-        "aum":            aum,
-        "fund_family":    fund_family,
-        "fwd_pe":         fwd_pe,
-        "error":          None,
+        "ticker":            ticker,
+        "name":              display_name,
+        "shortName":         display_name if ticker == "SPCX" else (info.get("shortName") or display_name),
+        "longName":          display_name if ticker == "SPCX" else (info.get("longName") or display_name),
+        "hist":              hist_recent,
+        "info":              info,
+        "eps":               eps,
+        "pe_mode":           pe_ok,
+        "currency":          info.get("currency", "USD"),
+        "next_earnings":     next_earnings,
+        "current_price":     current_price,
+        "ath":               ath,
+        "dist_ath":          dist_ath,
+        "reg_perf_pct":      reg_perf_pct,
+        "ext_perf_pct":      ext_perf_pct,
+        "ext_label":         ext_label,
+        "ext_price":         ext_price,
+        "perf_pct":          reg_perf_pct,
+        "perf_ext_label":    ext_label,
+        "peg_2y":            peg_2y,
+        "cagr_2y_pct":       cagr_2y_pct,
+        "eps_ntm":           eps_ntm,
+        "eps_ntm_2":         eps_ntm_2,
+        "is_etf":            is_etf,
+        "is_ucits":          is_ucits,
+        "ter":               ter,
+        "aum":               aum,
+        "fund_family":       fund_family,
+        "fwd_pe":            fwd_pe,
+        "target_mean_price": target_mean_val,
+        "target_upside_pct": target_upside_pct,
+        "tactical_signals":  tactical_signals,
+        "error":             None,
     }
 
     if pe_ok:
@@ -1383,7 +1922,7 @@ def make_market_highlights_banner_html(visible_data: dict, timeframe: str = "90-
         val_snippets.append(
             f'<div style="margin-top: 6px; display: flex; align-items: center; justify-content: space-between;">'
             f'  <div><b style="color: #0F172A; font-size: 0.95rem;">{tk}</b> <span class="metric-badge badge-attractive" style="margin-left: 4px;">{z:+.2f}σ</span></div>'
-            f'  <span style="font-size: 0.78rem; color: #047857; font-weight: 600;">{diff:+.1f}% vs Med</span>'
+            f'  <span style="font-size: 0.78rem; color: #047857; font-weight: 600;">{diff:+.1f}% vs Avg</span>'
             f'</div>'
         )
     val_html = "".join(val_snippets) if val_snippets else '<div style="color: #64748B; font-size: 0.85rem;">None</div>'
@@ -1396,13 +1935,13 @@ def make_market_highlights_banner_html(visible_data: dict, timeframe: str = "90-
         over_snippets.append(
             f'<div style="margin-top: 6px; display: flex; align-items: center; justify-content: space-between;">'
             f'  <div><b style="color: #0F172A; font-size: 0.95rem;">{tk}</b> <span class="metric-badge badge-overvalued" style="margin-left: 4px;">{z:+.2f}σ</span></div>'
-            f'  <span style="font-size: 0.78rem; color: #B91C1C; font-weight: 600;">{diff:+.1f}% vs Med</span>'
+            f'  <span style="font-size: 0.78rem; color: #B91C1C; font-weight: 600;">{diff:+.1f}% vs Avg</span>'
             f'</div>'
         )
     over_html = "".join(over_snippets) if over_snippets else '<div style="color: #64748B; font-size: 0.85rem;">None</div>'
 
     breadth_desc = "Overbought Skew" if count_above_zero >= (total_count * 0.6) else ("Oversold Skew" if count_above_zero <= (total_count * 0.4) else "Neutral Balance")
-    framework_badge_lbl = "1Y Corridor Framework" if timeframe == "1-Year" else "90D Corridor Framework"
+    framework_badge_lbl = "1Y Valuation Framework" if timeframe == "1-Year" else "90D Valuation Framework"
 
     return f"""
     <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-left: 4px solid #EAB308; border-radius: 10px; padding: 14px 18px; margin: 16px 0 20px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
@@ -1417,7 +1956,7 @@ def make_market_highlights_banner_html(visible_data: dict, timeframe: str = "90-
           <div>
             <div style="font-size: 0.72rem; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;">Basket Breadth</div>
             <div style="font-size: 0.92rem; color: #0F172A; font-weight: 600; line-height: 1.4;">
-              <b>{count_overstretched} of {total_count}</b> tracked assets (<b>{overstretched_pct:.0f}%</b>) are in overstretched territory (&gt; +5% above median), with <b>{count_above_zero}</b> trading on the expensive side of fair value.
+              <b>{count_overstretched} of {total_count}</b> tracked assets (<b>{overstretched_pct:.0f}%</b>) are in overstretched territory (&gt; +5% above average), with <b>{count_above_zero}</b> trading on the expensive side of average.
             </div>
           </div>
           <div style="font-size: 0.78rem; color: #854D0E; font-weight: 600; margin-top: 6px;">• Bias: {breadth_desc}</div>
@@ -1453,7 +1992,7 @@ def make_price_chart(data: dict) -> go.Figure:
           Center: completely clear on pure white background
       • 20-day SMA midline (BB Mid) in subtle gray
       • 50-day SMA and 200-day SMA
-      • Horizontal top-left legend (y=1.12, x=0)
+      • Horizontal top-left legend
     """
     hist  = data.get("hist", pd.DataFrame())
     ccy   = data.get("currency", "USD")
@@ -1569,20 +2108,141 @@ def make_price_chart(data: dict) -> go.Figure:
             name=f"Current: {cur_p:.2f}", showlegend=False,
         ))
 
-    # ── Tight Y-axis autoscale ──
-    all_s = [price, bb_hi2, bb_lo2, ma50]
-    if show_ma200:
-        all_s.append(ma200)
-    comb = pd.concat([s for s in all_s if len(s)]).dropna()
-    if len(comb):
-        ymin = comb.quantile(0.005)
-        ymax = comb.quantile(0.995)
-        pad = (ymax - ymin) * 0.06
-        y_range = [max(0.0, ymin - pad), ymax + pad]
+    # ── Dynamic 6 to 9-Month Visible Range & Autoscale ──
+    if len(price):
+        end_date = price.index[-1]
+        # Restrict default visible window to the last 7 months (~210 days / 6-9 months)
+        start_date = end_date - pd.DateOffset(months=7)
+        x_range = [
+            start_date.strftime("%Y-%m-%d"),
+            (end_date + pd.Timedelta(days=3)).strftime("%Y-%m-%d"),
+        ]
+
+        # ── TID - Tactical DCA Annotations (Visible 6-9 Month Window) ──
+        tactical_signals = data.get("tactical_signals", [])
+        vis_signals = []
+        if tactical_signals:
+            for sig in tactical_signals:
+                sig_date, sig_low, sig_label, sig_color = sig
+                sig_ts = pd.to_datetime(sig_date)
+                if start_date <= sig_ts <= (end_date + pd.Timedelta(days=3)):
+                    vis_signals.append((sig_ts, float(sig_low), sig_label, sig_color))
+
+        # Multi-line badge label formatting to prevent horizontal footprint clashing
+        LABEL_FORMAT_MAP = {
+            "DEEPLY OVERSOLD": "DEEPLY<br>OVERSOLD",
+            "BETTER VALUE":    "BETTER<br>VALUE",
+            "BETTER DCA":      "BETTER<br>DCA",
+            "DEEPER CRASH":    "DEEPER<br>CRASH",
+            "CAPITULATION":    "CAPITULATION",
+            "DCA":             "DCA",
+        }
+
+        # Trading bar index lookup for collision detection
+        price_idx_map = {pd.to_datetime(d).normalize(): i for i, d in enumerate(price.index)}
+
+        # Pre-scan to detect if any collisions occur within 3 bars and calculate dynamic offsets
+        prev_idx = -999
+        prev_ts = None
+        prev_yshift = -18
+        signal_configs = []
+
+        for sig_ts, sig_low, sig_label, sig_color in vis_signals:
+            curr_idx = price_idx_map.get(sig_ts.normalize(), -999)
+            is_close_bars = (curr_idx != -999 and (curr_idx - prev_idx) <= 3)
+            is_close_days = (prev_ts is not None and (sig_ts - prev_ts).days <= 4)
+
+            if is_close_bars or is_close_days:
+                if prev_yshift == -18:
+                    yshift = -32
+                    ay = 32
+                else:
+                    yshift = -18
+                    ay = 20
+            else:
+                yshift = -18
+                ay = 20
+
+            prev_idx = curr_idx
+            prev_ts = sig_ts
+            prev_yshift = yshift
+            signal_configs.append((sig_ts, sig_low, sig_label, sig_color, yshift, ay))
+
+        has_stack = any(cfg[4] == -32 for cfg in signal_configs)
+
+        # Autoscale Y-axis specifically over the visible 6-9 month window
+        window_mask = price.index >= start_date
+        vis_all = [
+            price.loc[window_mask],
+            bb_hi2.loc[bb_hi2.index >= start_date] if len(bb_hi2) else pd.Series(dtype=float),
+            bb_lo2.loc[bb_lo2.index >= start_date] if len(bb_lo2) else pd.Series(dtype=float),
+            ma50.loc[ma50.index >= start_date] if len(ma50) else pd.Series(dtype=float),
+        ]
+        if show_ma200 and len(ma200):
+            vis_all.append(ma200.loc[ma200.index >= start_date])
+        if vis_signals:
+            vis_all.append(pd.Series([s[1] for s in vis_signals]))
+
+        comb_vis = pd.concat([s for s in vis_all if len(s)]).dropna()
+        if len(comb_vis):
+            ymin = float(comb_vis.min())
+            ymax = float(comb_vis.max())
+            pad = (ymax - ymin) * 0.08
+            pad_bottom = (ymax - ymin) * 0.16 if has_stack else ((ymax - ymin) * 0.12 if vis_signals else pad)
+            y_range = [max(0.0, ymin - pad_bottom), ymax + pad]
+        else:
+            y_range = None
+
+        # Render tactical entry annotations directly beneath the price series
+        for sig_ts, sig_low, sig_label, sig_color, yshift, ay in signal_configs:
+            sig_date_str = sig_ts.strftime("%Y-%m-%d")
+
+            # Style Badges based on Tier
+            if sig_label in ("DCA", "BETTER DCA"):
+                bg_color = "#22C55E"    # Vibrant Green
+                text_color = "#052E16"  # Bold Dark Green
+                border_color = "#16A34A"
+            elif sig_label in ("DEEPLY OVERSOLD", "BETTER VALUE"):
+                bg_color = "#FACC15"    # Amber Yellow
+                text_color = "#422006"  # Bold Dark Brown
+                border_color = "#EAB308"
+            elif sig_label in ("CAPITULATION", "DEEPER CRASH"):
+                bg_color = "#F97316"    # Orange
+                text_color = "#FFFFFF"  # Bold White
+                border_color = "#EA580C"
+            else:
+                bg_color = sig_color
+                text_color = "#FFFFFF"
+                border_color = sig_color
+
+            badge_text = LABEL_FORMAT_MAP.get(sig_label, sig_label.replace(" ", "<br>"))
+
+            fig.add_annotation(
+                x=sig_date_str,
+                y=sig_low,
+                text=f"<b>{badge_text}</b>",
+                showarrow=True,
+                arrowhead=2,
+                arrowsize=1,
+                arrowwidth=1.5,
+                arrowcolor=border_color,
+                ax=0,
+                ay=ay,
+                xanchor="center",
+                yanchor="top",
+                yshift=yshift,
+                font=dict(size=9, color=text_color, family="system-ui, -apple-system, sans-serif"),
+                bgcolor=bg_color,
+                bordercolor=border_color,
+                borderwidth=1,
+                borderpad=3,
+                opacity=0.96,
+            )
     else:
+        x_range = None
         y_range = None
 
-    # ── Plotly Layout (Consolidated: Per-Card Legends Hidden) ──
+    # ── Plotly Layout (Scroll-Safe Preview for Dashboard Cards) ──
     fig.update_layout(
         paper_bgcolor=CARD_BG,
         plot_bgcolor="#FFFFFF",
@@ -1592,6 +2252,7 @@ def make_price_chart(data: dict) -> go.Figure:
         xaxis=dict(
             gridcolor=GRID_COLOR, showgrid=True, zeroline=False,
             color=MUTED_SLATE, linecolor=BORDER_COLOR,
+            range=x_range,
             fixedrange=True,
         ),
         yaxis=dict(
@@ -1606,6 +2267,7 @@ def make_price_chart(data: dict) -> go.Figure:
         height=290,
     )
     return fig
+
 
 
 def make_master_legend_html() -> str:
@@ -1669,6 +2331,22 @@ def make_master_legend_html() -> str:
           <span>Oversold Zone</span>
         </div>
       </div>
+      <!-- Row 3: TID - Tactical DCA Entry Badges -->
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 14px; font-size: 0.74rem; color: #334155; font-weight: 600; padding-top: 6px; border-top: 1px dashed #F1F5F9;">
+        <span style="font-size: 0.70rem; color: #64748B; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;">Tactical Entries (TID Engine):</span>
+        <div style="display: flex; align-items: center; gap: 5px;">
+          <span style="display: inline-block; padding: 1px 6px; background-color: #22C55E; color: #052E16; border: 1px solid #16A34A; border-radius: 4px; font-size: 8.5px; font-weight: 800;">DCA</span>
+          <span style="font-size: 0.72rem; color: #475569;">Standard (−1.5σ)</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 5px;">
+          <span style="display: inline-block; padding: 1px 6px; background-color: #FACC15; color: #422006; border: 1px solid #EAB308; border-radius: 4px; font-size: 8.5px; font-weight: 800;">DEEPLY OVERSOLD</span>
+          <span style="font-size: 0.72rem; color: #475569;">High Conviction (−2.2σ)</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 5px;">
+          <span style="display: inline-block; padding: 1px 6px; background-color: #F97316; color: #FFFFFF; border: 1px solid #EA580C; border-radius: 4px; font-size: 8.5px; font-weight: 800;">CAPITULATION</span>
+          <span style="font-size: 0.72rem; color: #475569;">Extreme Value (−3.0σ)</span>
+        </div>
+      </div>
     </div>
     """
 
@@ -1725,19 +2403,30 @@ def make_summary_bar(all_data: dict, timeframe: str = "90-Day") -> go.Figure:
     colors = [x["color"] for x in items]
     hover  = [
         f"<b>{x['ticker']}</b><br>Status: {x['status']}<br>Current {x['unit']}: {x['cur']:.2f}<br>"
-        f"{timeframe_label} Fair Value {x['unit']}: {x['mid']:.2f}<br>vs Corridor Median: {x['pct']:+.1f}%"
+        f"{timeframe_label} Average {x['unit']}: {x['mid']:.2f}<br>vs Average: {x['pct']:+.1f}%"
         for x in items
     ]
 
-    # Calculate ample buffer so that "outside" percentage labels on negative bars NEVER collide with Y-axis tickers
-    min_pct = min(vals) if vals else 0.0
-    max_pct = max(vals) if vals else 0.0
+    min_val = min(vals) if vals else 0.0
+    max_val = max(vals) if vals else 0.0
 
-    pad_left  = max(abs(min_pct) * 0.40, 8.0)
-    pad_right = max(abs(max_pct) * 0.25, 8.0)
+    # Ensure negative values have dedicated visual clearance between zero line, bar end, and y-axis labels
+    # Dynamic headroom: generous padding on negative side to avoid label collision
+    x_min = min(min_val * 1.35, -15.0)
+    x_max = max(max_val * 1.15, 15.0)
 
-    x_min = min(-12.0, min_pct - pad_left)
-    x_max = max(12.0, max_pct + pad_right)
+    # Smart label positioning:
+    # Wide negative bars (abs(v) >= 12.0%) place text inside with white text.
+    # Narrow negative bars (< 12%) and positive bars place text outside with dark text.
+    text_positions = []
+    text_colors = []
+    for v in vals:
+        if v < 0 and abs(v) >= 12.0:
+            text_positions.append("inside")
+            text_colors.append("#FFFFFF")
+        else:
+            text_positions.append("outside")
+            text_colors.append(TEXT_DARK)
 
     fig = go.Figure(go.Bar(
         x=vals,
@@ -1749,8 +2438,8 @@ def make_summary_bar(all_data: dict, timeframe: str = "90-Day") -> go.Figure:
         hovertext=hover,
         hoverinfo="text",
         text=[f"{v:+.1f}%" for v in vals],
-        textposition="outside",
-        textfont=dict(size=10, color=TEXT_DARK, family="monospace"),
+        textposition=text_positions,
+        textfont=dict(size=10, color=text_colors, family="monospace"),
         cliponaxis=False,
     ))
 
@@ -1764,25 +2453,27 @@ def make_summary_bar(all_data: dict, timeframe: str = "90-Day") -> go.Figure:
         font=dict(color=TEXT_DARK, size=11),
         dragmode=False,
         xaxis=dict(
-            title=f"% Above / Below {timeframe_label} Corridor Median",
+            title=f"% Above / Below {timeframe_label} Average",
             gridcolor=GRID_COLOR,
             zeroline=False,
             color=MUTED_SLATE,
             linecolor=BORDER_COLOR,
             range=[x_min, x_max],
+            automargin=True,
             fixedrange=True,
         ),
         yaxis=dict(
             gridcolor=GRID_COLOR,
             color=TEXT_DARK,
-            tickfont=dict(size=11, color=TEXT_DARK),
+            tickfont=dict(size=12, weight="bold", color=TEXT_DARK),
+            ticksuffix="   ",
             linecolor=BORDER_COLOR,
             autorange="reversed",
             categoryorder="array",
             categoryarray=labels,
             fixedrange=True,
         ),
-        margin=dict(l=68, r=36, t=20, b=40),
+        margin=dict(l=65, r=36, t=20, b=40),
         height=max(420, len(labels) * 24 + 60),
     )
     return fig
@@ -1813,6 +2504,12 @@ if "val_timeframe" not in st.session_state:
         st.session_state["val_timeframe"] = query_timeframe
     else:
         st.session_state["val_timeframe"] = "90-Day"
+
+def on_timeframe_change():
+    sel = st.session_state.get("val_timeframe")
+    if sel in ["90-Day", "1-Year"]:
+        st.query_params["timeframe"] = sel
+
 
 # ─────────────────────────────────────────────
 # SIDEBAR CONTROLS
@@ -1915,7 +2612,12 @@ with st.sidebar:
 
     st.markdown("---")
     show_charts = st.toggle("Show Detail Charts", value=True)
-    cols_per_row = st.selectbox("Columns per Row", [1, 2, 3], index=1)
+    cols_per_row = st.selectbox(
+        "Columns per Row",
+        options=[1, 2],
+        index=1,
+        help="Select 1 or 2 columns on desktop. Mobile automatically stacks into 1 full-width column for optimal viewing.",
+    )
 
     st.markdown("---")
     sort_option = st.selectbox(
@@ -2006,28 +2708,32 @@ visible = {
     if STATUS_ALIAS_MAP.get(compute_status(d, timeframe=active_timeframe)) in normalized_filter
 }
 
-# ── 4. Price Valuation vs Corridor Median (Top Chart & Timeframe Toggle) ──
-col_title, col_toggle = st.columns([3, 1], vertical_alignment="center")
-with col_toggle:
-    val_timeframe = st.segmented_control(
-        "Valuation Corridor Timeframe",
-        options=["90-Day", "1-Year"],
-        default=st.session_state.get("val_timeframe", "90-Day"),
-        selection_mode="single",
-        label_visibility="collapsed",
-        key="val_timeframe",
-    )
-    if not val_timeframe:
-        val_timeframe = "90-Day"
-        st.session_state["val_timeframe"] = "90-Day"
+# ── 4. Price vs Average (Top Chart & Timeframe Toggle) ──
+val_timeframe = st.session_state.get("val_timeframe", "90-Day")
+active_title = "Price vs 1-Year Average" if val_timeframe == "1-Year" else "Price vs 90-Day Average"
 
-with col_title:
-    if val_timeframe == "1-Year":
-        st.markdown("### 1-Year Price Valuation vs Corridor Median")
-        st.caption("Measures how far each stock has moved above or below its 1-year fair value baseline (~252 trading days). Green bars highlight Buy Zone discounts; amber represents Standard DCA; red indicates Wait for Pullback.")
-    else:
-        st.markdown("### 90-Day Price Valuation vs Corridor Median")
-        st.caption("Measures how far each stock has moved above or below its 90-day fair value baseline. Green bars highlight Buy Zone discounts; amber represents Standard DCA; red indicates Wait for Pullback.")
+st.markdown(f"### {active_title}")
+
+st.markdown(
+    """
+    <div style="color: #64748B; font-size: 0.875rem; line-height: 1.5; margin-top: -6px; margin-bottom: 4px;">
+      <div>Compares each stock's live price to its average price over the last 90 days or 1 year.</div>
+      <div style="margin-top: 3px;">🟢 Green bars highlight Buy Zone (&lt; -5% below average); &nbsp; 🟡 Amber represents Standard DCA (within 5% of average); &nbsp; 🔴 Red indicates Wait for Pullback (&gt; +5% above average).</div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+val_timeframe = st.segmented_control(
+    "Valuation Timeframe",
+    options=["90-Day", "1-Year"],
+    selection_mode="single",
+    required=True,
+    label_visibility="collapsed",
+    key="val_timeframe",
+    on_change=on_timeframe_change,
+)
+
 
 if visible:
     st.plotly_chart(
@@ -2315,10 +3021,10 @@ for row_start in range(0, len(ticker_list), n_cols):
                     cagr_pct = d.get("cagr_2y_pct")
                     if peg_2y is not None and not np.isnan(peg_2y) and peg_2y > 0:
                         peg_2y_str = f"{peg_2y:.2f}"
-                        peg_subtext = f"2Y CAGR: {cagr_pct:+.1f}%" if cagr_pct else "2Y Forward PEG"
+                        peg_subtext = f"2Y CAGR: {cagr_pct:+.1f}%" if (cagr_pct is not None and not np.isnan(cagr_pct)) else "2Y Forward PEG"
                     else:
                         peg_2y_str = "N/A"
-                        peg_subtext = "Growth Negative / N/A"
+                        peg_subtext = f"2Y CAGR: {cagr_pct:+.1f}%" if (cagr_pct is not None and not np.isnan(cagr_pct)) else "Consensus Unlisted"
 
                     box5_html = make_metric_tile_html(
                         title="2Y PEG Ratio",
@@ -2358,7 +3064,35 @@ for row_start in range(0, len(ticker_list), n_cols):
                     subtext_color=upside_color,
                 )
 
-                # ── Standardized 6-Box Grid (Uniform Mini-Boxes) ──
+                # ── Box 7: 12-Month Wall Street Analyst Price Target ──
+                target_price = d.get("target_mean_price")
+                target_upside = d.get("target_upside_pct")
+
+                if (
+                    target_upside is not None
+                    and not np.isnan(target_upside)
+                    and target_price is not None
+                    and not np.isnan(target_price)
+                ):
+                    target_val_str = f"{target_upside:+.1f}%"
+                    subtext_target = f"Consensus: {ccy_sym}{target_price:.2f} {ccy}"
+                    val_color_t = "#047857" if target_upside >= 0 else "#B91C1C"
+                else:
+                    target_val_str = "N/A"
+                    subtext_target = "Consensus Unlisted" if not is_etf else "ETF Asset (No Target)"
+                    val_color_t = MUTED_SLATE
+
+                box7_html = make_metric_tile_html(
+                    title="12M Analyst Target",
+                    value=target_val_str,
+                    subtext=subtext_target,
+                    badge_text=None,
+                    badge_class=None,
+                    val_color=val_color_t,
+                    subtext_color=MUTED_SLATE,
+                )
+
+                # ── Standardized Card Metric Grid (Uniform Mini-Boxes) ──
                 r1_c1, r1_c2 = st.columns(2)
                 with r1_c1:
                     st.html(box1_html)
@@ -2377,11 +3111,14 @@ for row_start in range(0, len(ticker_list), n_cols):
                 with r3_c2:
                     st.html(box6_html)
 
-                # ── Detail Bollinger & Trend Chart (With Fullscreen Toolbar & Modebar) ──
+                st.html(box7_html)
+
+                # ── Detail Bollinger & Trend Chart ──
                 if show_charts:
-                    chart_bar_html = """
-                    <div style="margin-top: 10px; margin-bottom: 4px; padding: 2px 2px;">
+                    chart_bar_html = f"""
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 10px; margin-bottom: 6px; padding: 2px 2px;">
                       <span style="font-size: 0.70rem; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.04em;">Trend & Valuation Corridor</span>
+                      <button class="expand-chart-btn" data-ticker="{tk}" title="Open Interactive Full-Screen View with touch pinch-zoom & pan">⛶ Expand Chart</button>
                     </div>
                     """
                     st.html(chart_bar_html)
@@ -2475,6 +3212,10 @@ for row_start in range(0, len(ticker_list), n_cols):
                         div_yld = info.get("dividendYield")
                         div_yld_str = f"{div_yld*100:.2f}%" if div_yld and isinstance(div_yld, (int, float)) and div_yld > 0 else "0.00%"
 
+                        target_price = d.get("target_mean_price")
+                        target_upside = d.get("target_upside_pct")
+                        target_drawer_str = f"{ccy_sym}{target_price:.2f} ({target_upside:+.1f}%)" if (target_price and target_upside is not None) else "—"
+
                         mode_lbl = f"P/E Corridor ({val_timeframe} Trailing Multiple)" if d.get("pe_mode") else "Price Corridor (50/200-Day MAs)"
 
                         drawer_html = f"""
@@ -2506,6 +3247,10 @@ for row_start in range(0, len(ticker_list), n_cols):
                           <div style="padding-bottom: 2px;">
                             <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #64748B; font-weight: 600;">Beta (1Y)</div>
                             <div style="font-size: 13px; font-weight: 600; color: #0F172A; font-variant-numeric: tabular-nums; margin-top: 2px;">{beta_str}</div>
+                          </div>
+                          <div style="padding-bottom: 2px;">
+                            <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #64748B; font-weight: 600;">12M Price Target</div>
+                            <div style="font-size: 13px; font-weight: 600; color: #0F172A; font-variant-numeric: tabular-nums; margin-top: 2px;">{target_drawer_str}</div>
                           </div>
                         </div>
                         <div style="border-top: 1px solid #F1F5F9; padding-top: 8px; margin-top: 6px; font-size: 11px; color: #94A3B8; font-weight: 500;">
@@ -2543,11 +3288,15 @@ with st.expander("Full valuation data table", expanded=False):
         peg_val = d.get("peg_2y")
         peg_display = f"{peg_val:.2f}" if peg_val is not None and not np.isnan(peg_val) else "—"
 
+        target_up_v = d.get("target_upside_pct")
+        target_up_str = f"{target_up_v:+.1f}%" if (target_up_v is not None and not np.isnan(target_up_v)) else "—"
+
         row = {
             "Ticker": tk,
             "Name": safe_name,
             "Status": status,
             "Price": round(d.get("current_price", np.nan), 2),
+            "12M Target": target_up_str,
             "Distance to ATH": f"{dist_v:+.1f}%" if not np.isnan(dist_v) else "—",
             z_label: z_v_str,
             "2Y PEG": peg_display,
@@ -2666,6 +3415,20 @@ SNAPSHOT_JS = """
               width: 100% !important;
               max-width: 100% !important;
             }
+            @media (max-width: 768px) {
+              #dean-modal-overlay {
+                padding: 4px !important;
+              }
+              #dean-modal-card {
+                width: 98vw !important;
+                max-height: 98vh !important;
+                border-radius: 8px !important;
+              }
+              #dean-modal-plot-container {
+                min-height: 420px !important;
+                padding: 6px 8px !important;
+              }
+            }
           </style>
         `;
         pDoc.body.appendChild(m);
@@ -2704,38 +3467,156 @@ SNAPSHOT_JS = """
       }
     });
 
-    // Force high-contrast dark charcoal text and close icons on all sidebar filter tags
+    // Dynamic color coding for sidebar tags: Green (Buy Zone), Amber (Standard DCA), Red (Wait for Pullback), Brand Yellow (Tickers)
     function enforceTagContrast() {
       const tags = pDoc.querySelectorAll('[data-tag], span[data-tag], .e1kig3hy3, [data-baseweb="tag"]');
       tags.forEach(tag => {
-        tag.style.setProperty('background-color', '#FDE047', 'important');
-        tag.style.setProperty('border', '1px solid #EAB308', 'important');
-        tag.style.setProperty('color', '#1F2937', 'important');
-        tag.style.setProperty('-webkit-text-fill-color', '#1F2937', 'important');
+        const text = (tag.innerText || tag.textContent || '').trim();
 
-        const children = tag.querySelectorAll('*');
-        children.forEach(el => {
-          el.style.setProperty('color', '#1F2937', 'important');
-          el.style.setProperty('-webkit-text-fill-color', '#1F2937', 'important');
-          if (el.tagName && el.tagName.toLowerCase() === 'span') {
-            el.style.setProperty('font-weight', '700', 'important');
+        if (text.includes('Buy Zone')) {
+          // 🟢 Green: Buy Zone
+          tag.style.setProperty('background-color', '#ECFDF5', 'important');
+          tag.style.setProperty('border', '1px solid #10B981', 'important');
+          tag.style.setProperty('color', '#047857', 'important');
+          tag.style.setProperty('-webkit-text-fill-color', '#047857', 'important');
+          tag.style.setProperty('box-shadow', '0 1px 2px rgba(16, 185, 129, 0.20)', 'important');
+
+          const children = tag.querySelectorAll('*');
+          children.forEach(el => {
+            el.style.setProperty('color', '#047857', 'important');
+            el.style.setProperty('-webkit-text-fill-color', '#047857', 'important');
+            if (el.tagName && el.tagName.toLowerCase() === 'span') {
+              el.style.setProperty('font-weight', '700', 'important');
+            }
+            if (el.tagName && (el.tagName.toLowerCase() === 'svg' || el.tagName.toLowerCase() === 'path' || el.tagName.toLowerCase() === 'button')) {
+              el.style.setProperty('fill', '#047857', 'important');
+              el.style.setProperty('stroke', '#047857', 'important');
+              el.style.setProperty('color', '#047857', 'important');
+            }
+          });
+        } else if (text.includes('Standard DCA')) {
+          // 🟡 Amber: Standard DCA
+          tag.style.setProperty('background-color', '#FFFBEB', 'important');
+          tag.style.setProperty('border', '1px solid #F59E0B', 'important');
+          tag.style.setProperty('color', '#B45309', 'important');
+          tag.style.setProperty('-webkit-text-fill-color', '#B45309', 'important');
+          tag.style.setProperty('box-shadow', '0 1px 2px rgba(245, 158, 11, 0.20)', 'important');
+
+          const children = tag.querySelectorAll('*');
+          children.forEach(el => {
+            el.style.setProperty('color', '#B45309', 'important');
+            el.style.setProperty('-webkit-text-fill-color', '#B45309', 'important');
+            if (el.tagName && el.tagName.toLowerCase() === 'span') {
+              el.style.setProperty('font-weight', '700', 'important');
+            }
+            if (el.tagName && (el.tagName.toLowerCase() === 'svg' || el.tagName.toLowerCase() === 'path' || el.tagName.toLowerCase() === 'button')) {
+              el.style.setProperty('fill', '#B45309', 'important');
+              el.style.setProperty('stroke', '#B45309', 'important');
+              el.style.setProperty('color', '#B45309', 'important');
+            }
+          });
+        } else if (text.includes('Wait for Pullback')) {
+          // 🔴 Red: Wait for Pullback
+          tag.style.setProperty('background-color', '#FEF2F2', 'important');
+          tag.style.setProperty('border', '1px solid #EF4444', 'important');
+          tag.style.setProperty('color', '#B91C1C', 'important');
+          tag.style.setProperty('-webkit-text-fill-color', '#B91C1C', 'important');
+          tag.style.setProperty('box-shadow', '0 1px 2px rgba(239, 68, 68, 0.20)', 'important');
+
+          const children = tag.querySelectorAll('*');
+          children.forEach(el => {
+            el.style.setProperty('color', '#B91C1C', 'important');
+            el.style.setProperty('-webkit-text-fill-color', '#B91C1C', 'important');
+            if (el.tagName && el.tagName.toLowerCase() === 'span') {
+              el.style.setProperty('font-weight', '700', 'important');
+            }
+            if (el.tagName && (el.tagName.toLowerCase() === 'svg' || el.tagName.toLowerCase() === 'path' || el.tagName.toLowerCase() === 'button')) {
+              el.style.setProperty('fill', '#B91C1C', 'important');
+              el.style.setProperty('stroke', '#B91C1C', 'important');
+              el.style.setProperty('color', '#B91C1C', 'important');
+            }
+          });
+        } else {
+          // 🟡 Default: Stock ticker chips retain brand vibrant yellow
+          tag.style.setProperty('background-color', '#FDE047', 'important');
+          tag.style.setProperty('border', '1px solid #EAB308', 'important');
+          tag.style.setProperty('color', '#1F2937', 'important');
+          tag.style.setProperty('-webkit-text-fill-color', '#1F2937', 'important');
+          tag.style.setProperty('box-shadow', '0 1px 2px rgba(234, 179, 8, 0.20)', 'important');
+
+          const children = tag.querySelectorAll('*');
+          children.forEach(el => {
             el.style.setProperty('color', '#1F2937', 'important');
-          }
-          if (el.tagName && (el.tagName.toLowerCase() === 'svg' || el.tagName.toLowerCase() === 'path' || el.tagName.toLowerCase() === 'button')) {
-            el.style.setProperty('fill', '#1F2937', 'important');
-            el.style.setProperty('stroke', '#1F2937', 'important');
-            el.style.setProperty('color', '#1F2937', 'important');
-          }
-        });
+            el.style.setProperty('-webkit-text-fill-color', '#1F2937', 'important');
+            if (el.tagName && el.tagName.toLowerCase() === 'span') {
+              el.style.setProperty('font-weight', '700', 'important');
+              el.style.setProperty('color', '#1F2937', 'important');
+            }
+            if (el.tagName && (el.tagName.toLowerCase() === 'svg' || el.tagName.toLowerCase() === 'path' || el.tagName.toLowerCase() === 'button')) {
+              el.style.setProperty('fill', '#1F2937', 'important');
+              el.style.setProperty('stroke', '#1F2937', 'important');
+              el.style.setProperty('color', '#1F2937', 'important');
+            }
+          });
+        }
+      });
+    }
+
+    function enforceSegmentedControl() {
+      const segButtons = pDoc.querySelectorAll('div[data-testid="stButtonGroup"] button, .stButtonGroup button, button[data-variant="segmented_control"], div[data-testid="stSegmentedControl"] button');
+      segButtons.forEach(btn => {
+        const isChecked = btn.hasAttribute('data-selected') || 
+                          btn.getAttribute('aria-checked') === 'true' || 
+                          btn.getAttribute('aria-selected') === 'true' ||
+                          btn.getAttribute('aria-pressed') === 'true' ||
+                          btn.getAttribute('data-checked') === 'true';
+
+        if (isChecked) {
+          btn.style.setProperty('background-color', '#FDE047', 'important');
+          btn.style.setProperty('border', '1px solid #EAB308', 'important');
+          btn.style.setProperty('color', '#1F2937', 'important');
+          btn.style.setProperty('-webkit-text-fill-color', '#1F2937', 'important');
+          btn.style.setProperty('font-weight', '700', 'important');
+          btn.style.setProperty('border-radius', '6px', 'important');
+          btn.style.setProperty('box-shadow', '0 1px 2px rgba(234, 179, 8, 0.20)', 'important');
+          btn.querySelectorAll('*').forEach(c => {
+            c.style.setProperty('color', '#1F2937', 'important');
+            c.style.setProperty('-webkit-text-fill-color', '#1F2937', 'important');
+            c.style.setProperty('font-weight', '700', 'important');
+          });
+        } else {
+          btn.style.setProperty('background-color', '#FFFFFF', 'important');
+          btn.style.setProperty('border', '1px solid #E2E8F0', 'important');
+          btn.style.setProperty('color', '#475569', 'important');
+          btn.style.setProperty('-webkit-text-fill-color', '#475569', 'important');
+          btn.style.setProperty('font-weight', '600', 'important');
+          btn.style.setProperty('border-radius', '6px', 'important');
+          btn.querySelectorAll('*').forEach(c => {
+            c.style.setProperty('color', '#475569', 'important');
+            c.style.setProperty('-webkit-text-fill-color', '#475569', 'important');
+            c.style.setProperty('font-weight', '600', 'important');
+          });
+        }
+      });
+
+      const bgs = pDoc.querySelectorAll('div[data-testid="stButtonGroup"] > div, .stButtonGroup > div, div[data-testid="stSegmentedControl"] > div');
+      bgs.forEach(bg => {
+        bg.style.setProperty('background-color', '#F8FAFC', 'important');
+        bg.style.setProperty('border', '1px solid #E2E8F0', 'important');
+        bg.style.setProperty('border-radius', '8px', 'important');
+        bg.style.setProperty('padding', '3px', 'important');
+        bg.style.setProperty('gap', '4px', 'important');
       });
     }
 
     enforceTagContrast();
+    enforceSegmentedControl();
 
     if (!pDoc.__dean_tag_observer && pWin.MutationObserver) {
       try {
         const obs = new pWin.MutationObserver(function() {
           enforceTagContrast();
+          enforceSegmentedControl();
         });
         obs.observe(pDoc.body, { childList: true, subtree: true });
         pDoc.__dean_tag_observer = obs;
@@ -2895,11 +3776,6 @@ SNAPSHOT_JS = """
     }, true);
 
     function openModalForPlot(origPlot, ticker) {
-      // Maintain Mobile Full-Screen Restriction: prevent screen takeover UX issues on mobile
-      if ((pWin && pWin.innerWidth <= 768) || window.innerWidth <= 768) {
-        return;
-      }
-
       const modal = getOrCreateModal();
       const card = origPlot ? (origPlot.closest('[data-testid="stVerticalBlockBorderWrapper"]') || origPlot.closest('[data-testid="stVerticalBlock"]') || origPlot.parentElement) : getCardWrapper(ticker);
       const plotEl = origPlot || (card ? card.querySelector('.js-plotly-plot') : null);
@@ -2914,23 +3790,30 @@ SNAPSHOT_JS = """
           delete cloneLayout.width;
           cloneLayout.autosize = true;
 
-          // Enable zoom and pan strictly inside the expanded modal
-          if (cloneLayout.xaxis) {
-            cloneLayout.xaxis.fixedrange = false;
-            cloneLayout.xaxis.autorange = true;
-          }
-          if (cloneLayout.yaxis) {
-            cloneLayout.yaxis.fixedrange = false;
-            cloneLayout.yaxis.autorange = true;
-          }
-          cloneLayout.dragmode = 'zoom';
+          // Enable touch pan and zoom strictly inside the expanded modal
+          if (!cloneLayout.xaxis) cloneLayout.xaxis = {};
+          cloneLayout.xaxis.fixedrange = false;
 
-          cloneLayout.height = Math.max(540, Math.min(pWin.innerHeight * 0.74, 680));
-          cloneLayout.margin = { l: 60, r: 24, t: 36, b: 48 };
+          if (!cloneLayout.yaxis) cloneLayout.yaxis = {};
+          cloneLayout.yaxis.fixedrange = false;
+
+          cloneLayout.dragmode = 'pan';
+
+          cloneLayout.height = Math.max(520, Math.min(pWin.innerHeight * 0.76, 700));
+          cloneLayout.margin = { l: 55, r: 25, t: 36, b: 46 };
           cloneLayout.showlegend = true;
           cloneLayout.legend = { orientation: 'h', y: 1.12, x: 0 };
           cloneLayout.paper_bgcolor = '#FFFFFF';
           cloneLayout.plot_bgcolor = '#FFFFFF';
+
+          // Ensure traces display cleanly in modal legend
+          if (Array.isArray(cloneData)) {
+            cloneData.forEach(tr => {
+              if (tr && tr.name && !tr.name.startsWith('Current:')) {
+                tr.showlegend = true;
+              }
+            });
+          }
 
           let safeName = '';
           if (card) {
@@ -2950,7 +3833,7 @@ SNAPSHOT_JS = """
             responsive: true,
             displayModeBar: true,
             displaylogo: false,
-            modeBarButtons: [['zoom2d', 'pan2d', 'zoomIn2d', 'zoomOut2d', 'resetScale2d']],
+            modeBarButtons: [['pan2d', 'zoom2d', 'zoomIn2d', 'zoomOut2d', 'autoScale2d', 'resetScale2d']],
             scrollZoom: true,
           }).then(() => {
             Plotly.Plots.resize(plotBox);
@@ -3041,8 +3924,7 @@ SNAPSHOT_JS = """
         e.stopPropagation();
         e.stopImmediatePropagation();
 
-        // Maintain Mobile Full-Screen Restriction: do not open modal on mobile screens (<= 768px)
-        if ((pWin && pWin.innerWidth <= 768) || window.innerWidth <= 768) return;
+        // Open our full-screen modal directly
 
         const card = chart.closest('[data-testid="stVerticalBlockBorderWrapper"]') || chart.parentElement;
         let ticker = '';

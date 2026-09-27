@@ -660,13 +660,26 @@ st.markdown(
         }}
 
         /* ⛶ Fullscreen Expand Chart Button */
+        .expand-chart-bar {{
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            flex-wrap: wrap !important;
+            gap: 8px !important;
+            margin-top: 14px !important;
+            margin-bottom: 8px !important;
+            padding: 4px 2px !important;
+            position: relative !important;
+            z-index: 15 !important;
+            clear: both !important;
+        }}
         .expand-chart-btn {{
             background-color: #FEF9C3 !important;
             border: 1px solid #FDE047 !important;
             color: #854D0E !important;
-            padding: 3px 9px !important;
+            padding: 4px 10px !important;
             border-radius: 6px !important;
-            font-size: 0.69rem !important;
+            font-size: 0.72rem !important;
             font-weight: 700 !important;
             cursor: pointer !important;
             transition: all 0.15s ease-in-out !important;
@@ -676,6 +689,11 @@ st.markdown(
             gap: 4px !important;
             line-height: 1.2 !important;
             white-space: nowrap !important;
+            touch-action: manipulation !important;
+            -webkit-tap-highlight-color: transparent !important;
+            user-select: none !important;
+            position: relative !important;
+            z-index: 20 !important;
         }}
         .expand-chart-btn:hover {{
             background-color: #FDE047 !important;
@@ -845,6 +863,18 @@ st.markdown(
             .qf-spacer {{
                 display: none !important;
                 height: 0 !important;
+            }}
+            /* Expand Chart button touch target optimization on mobile */
+            .expand-chart-bar {{
+                margin-top: 16px !important;
+                margin-bottom: 10px !important;
+                gap: 8px !important;
+            }}
+            .expand-chart-btn {{
+                padding: 7px 14px !important;
+                font-size: 0.78rem !important;
+                min-height: 38px !important;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.06) !important;
             }}
             /* Clean edge padding on mobile phones for maximum chart width */
             .block-container {{
@@ -2176,29 +2206,37 @@ def render_executive_market_highlights(visible_data: dict, timeframe: str = "90-
             color = "#B45309"  # Amber (Standard DCA: -4.99% to +4.99%)
         return f'<span style="font-size: 0.78rem; color: {color}; font-weight: 700;">{diff:+.1f}% vs Avg</span>'
 
-    # Top Value Opportunities (deepest discounts / lowest % vs average)
-    sorted_by_val = sorted(items, key=lambda x: x["diff"])
-    top_value = sorted_by_val[:10]
-    val_rows = [
-        f'<div style="display: flex; align-items: center; justify-content: space-between; padding: 2px 0; border-bottom: 1px dashed rgba(226, 232, 240, 0.5);">'
-        f'  <a href="#card-{item["ticker"]}" style="color: #0F172A; font-size: 0.88rem; font-weight: 700; text-decoration: none;" title="Jump to {item["ticker"]} card">{item["ticker"]}</a>'
-        f'  {get_diff_pill(item["diff"])}'
-        f'</div>'
-        for item in top_value
-    ]
-    val_html = "".join(val_rows) if val_rows else '<div style="color: #64748B; font-size: 0.82rem; font-style: italic;">None</div>'
+    # Top Value Opportunities (strictly <= 0% distance to corridor average/median)
+    value_items = [x for x in items if x["diff"] is not None and not np.isnan(x["diff"]) and x["diff"] <= 0.0]
+    sorted_by_val = sorted(value_items, key=lambda x: x["diff"])
+    top_value = sorted_by_val[:5]
+    if top_value:
+        val_rows = [
+            f'<div style="display: flex; align-items: center; justify-content: space-between; padding: 2px 0; border-bottom: 1px dashed rgba(226, 232, 240, 0.5);">'
+            f'  <a href="#card-{item["ticker"]}" style="color: #0F172A; font-size: 0.88rem; font-weight: 700; text-decoration: none;" title="Jump to {item["ticker"]} card">{item["ticker"]}</a>'
+            f'  {get_diff_pill(item["diff"])}'
+            f'</div>'
+            for item in top_value
+        ]
+        val_html = "".join(val_rows)
+    else:
+        val_html = '<div style="color: #64748B; font-size: 0.80rem; font-style: italic; line-height: 1.4; padding: 4px 0;">No tracked assets are currently trading at a discount.</div>'
 
-    # Most Overextended (furthest above corridor median)
-    sorted_by_over = sorted(items, key=lambda x: x["diff"], reverse=True)
-    top_overextended = sorted_by_over[:10]
-    over_rows = [
-        f'<div style="display: flex; align-items: center; justify-content: space-between; padding: 2px 0; border-bottom: 1px dashed rgba(226, 232, 240, 0.5);">'
-        f'  <a href="#card-{item["ticker"]}" style="color: #0F172A; font-size: 0.88rem; font-weight: 700; text-decoration: none;" title="Jump to {item["ticker"]} card">{item["ticker"]}</a>'
-        f'  {get_diff_pill(item["diff"])}'
-        f'</div>'
-        for item in top_overextended
-    ]
-    over_html = "".join(over_rows) if over_rows else '<div style="color: #64748B; font-size: 0.82rem; font-style: italic;">None</div>'
+    # Most Overextended (strictly > 0% distance above corridor average/median)
+    over_items = [x for x in items if x["diff"] is not None and not np.isnan(x["diff"]) and x["diff"] > 0.0]
+    sorted_by_over = sorted(over_items, key=lambda x: x["diff"], reverse=True)
+    top_overextended = sorted_by_over[:5]
+    if top_overextended:
+        over_rows = [
+            f'<div style="display: flex; align-items: center; justify-content: space-between; padding: 2px 0; border-bottom: 1px dashed rgba(226, 232, 240, 0.5);">'
+            f'  <a href="#card-{item["ticker"]}" style="color: #0F172A; font-size: 0.88rem; font-weight: 700; text-decoration: none;" title="Jump to {item["ticker"]} card">{item["ticker"]}</a>'
+            f'  {get_diff_pill(item["diff"])}'
+            f'</div>'
+            for item in top_overextended
+        ]
+        over_html = "".join(over_rows)
+    else:
+        over_html = '<div style="color: #64748B; font-size: 0.80rem; font-style: italic; line-height: 1.4; padding: 4px 0;">No tracked assets are currently overextended.</div>'
 
     # Recent Tactical Signals (scan last 5-7 trading days across all tracked tickers, NO arbitrary display cap)
     recent_signals = []
@@ -3294,10 +3332,11 @@ elif sort_option == "Lowest 2Y PEG":
 qf_col1, qf_col2 = st.columns([3, 1])
 with qf_col1:
     quick_find = st.selectbox(
-        "Quick Find Ticker",
-        options=[""] + ticker_list,
-        index=0,
-        format_func=lambda x: "🔍 Jump directly to a stock card..." if x == "" else f"{x}  ·  {visible.get(x, {}).get('shortName') or visible.get(x, {}).get('name', x)}",
+        "Quick Find",
+        options=ticker_list,
+        index=None,
+        placeholder="Jump directly to a stock card...",
+        format_func=lambda x: f"{x}  ·  {visible.get(x, {}).get('shortName') or visible.get(x, {}).get('name', x)}",
         key="quick_find_ticker",
         help="Select any tracked asset to immediately navigate down to its valuation card.",
     )
@@ -3702,7 +3741,7 @@ for row_start in range(0, len(ticker_list), n_cols):
                 # ── Detail Bollinger & Trend Chart ──
                 if show_charts:
                     chart_bar_html = f"""
-                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 10px; margin-bottom: 6px; padding: 2px 2px;">
+                    <div class="expand-chart-bar">
                       <span style="font-size: 0.70rem; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.04em;">Trend & Valuation Corridor</span>
                       <button class="expand-chart-btn" data-ticker="{tk}" title="Open Interactive Full-Screen View with touch pinch-zoom & pan">⛶ Expand Chart</button>
                     </div>
@@ -3850,6 +3889,7 @@ for row_start in range(0, len(ticker_list), n_cols):
         empty_col.empty()
 
     st.markdown("---")
+
 
 # ── 7. Full Data Table (Safe from KeyError) ──
 with st.expander("Full valuation data table", expanded=False):
@@ -4554,8 +4594,8 @@ SNAPSHOT_JS = """
       }
     }, true);
 
-    // ── Expand Chart Button Click (Multi-layer guarantee) ──
-    pDoc.addEventListener('click', function(e) {
+    // ── Expand Chart Button Click & Mobile Touch Handler ──
+    function handleExpandChart(e) {
       const expandBtn = e.target.closest('.expand-chart-btn');
       if (!expandBtn) return;
       e.preventDefault();
@@ -4565,7 +4605,9 @@ SNAPSHOT_JS = """
       const card = expandBtn.closest('[data-testid="stVerticalBlockBorderWrapper"]') || getCardWrapper(ticker);
       const origPlot = card ? card.querySelector('.js-plotly-plot') : null;
       openModalForPlot(origPlot, ticker);
-    }, true);
+    }
+    pDoc.addEventListener('click', handleExpandChart, true);
+    pDoc.addEventListener('touchend', handleExpandChart, { capture: true, passive: false });
 
     // ── Refocus Chart Button Click on Card ──
     pDoc.addEventListener('click', function(e) {

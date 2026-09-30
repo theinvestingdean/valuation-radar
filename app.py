@@ -1237,10 +1237,13 @@ def evaluate_tactical_dca_signals(df: pd.DataFrame) -> list[tuple]:
 
     for i in range(len(df)):
         row = df.iloc[i]
-        close, low = row['Close'], row['Low']
+        close = row["close"] if "close" in row else row["Close"]
+        low = row["low"] if "low" in row else row["Low"]
 
-        # --- TIER 0: CAPITULATION (-3.0 SD) ---
-        raw_extreme = low <= row['LowerBand3']
+        # ── Tier 0: Capitulation (-3.0 SD) ──
+        # Logic: df['low'] <= (df['sma_20'] - (3.0 * df['std_20']))
+        # Note: This tier requires no technical confirmation.
+        raw_extreme = bool(row.get("signal_tier_0_capitulation", low <= (row["sma_20"] - (3.0 * row["std_20"]))))
         extreme_override = not np.isnan(last_extreme_price) and (
             close <= last_extreme_price * 0.97
         )
@@ -1252,17 +1255,20 @@ def evaluate_tactical_dca_signals(df: pd.DataFrame) -> list[tuple]:
             is_reload = extreme_override and (i - last_extreme_idx < 5)
             last_extreme_idx = i
             last_extreme_price = close
-            label = 'DEEPER CRASH' if is_reload else 'CAPITULATION'
-            signals.append((row.name, low, label, '#F97316'))  # Orange
+            label = "DEEPER CRASH" if is_reload else "CAPITULATION"
+            signals.append((row.name, low, label, "#F97316"))  # Red / Orange
 
-        # --- TIER 1: DEEPLY OVERSOLD (-2.2 SD) ---
-        is_extreme_oversold = low <= row['LowerBand2']
-        is_valid_reversal = (
-            row['IsGreenCandle']
-            and row['HasAdequateVol']
-            and (row['MacdCurling'] or row['HasLowerDefense'])
-        )
-        raw_heavy = is_extreme_oversold and is_valid_reversal
+        # ── Tier 1: Deeply Oversold (-2.2 SD) ──
+        # Logic: df['low'] <= (df['sma_20'] - (2.2 * df['std_20']))
+        # Filters: AND is_green_candle AND has_adequate_volume AND (macd_curling_up OR has_lower_defense)
+        # Note: Ensure this does not trigger if Capitulation is already true.
+        raw_heavy = bool(row.get("signal_tier_1_deeply_oversold", (
+            (low <= (row["sma_20"] - (2.2 * row["std_20"])))
+            and not raw_extreme
+            and bool(row.get("is_green_candle", False))
+            and bool(row.get("has_adequate_volume", False))
+            and (bool(row.get("macd_curling_up", False)) or bool(row.get("has_lower_defense", False)))
+        )))
         heavy_override = not np.isnan(last_heavy_price) and (
             close <= last_heavy_price * 0.97
         )
@@ -1275,16 +1281,19 @@ def evaluate_tactical_dca_signals(df: pd.DataFrame) -> list[tuple]:
             is_reload = heavy_override and (i - last_heavy_idx < 5)
             last_heavy_idx = i
             last_heavy_price = close
-            label = 'BETTER VALUE' if is_reload else 'DEEPLY OVERSOLD'
-            signals.append((row.name, low, label, '#FACC15'))  # Gold / Amber
+            label = "BETTER VALUE" if is_reload else "DEEPLY OVERSOLD"
+            signals.append((row.name, low, label, "#FACC15"))  # Gold / Amber
 
-        # --- TIER 2: STANDARD DCA (-1.5 SD) ---
-        in_dca_zone = (
-            (low <= row['LowerBand1'])
-            and (low > row['LowerBand2'])
-            and (row['RSI'] <= 48)
-        )
-        raw_std = in_dca_zone and row['MacdCurling'] and row['IsGreenCandle']
+        # ── Tier 2: Standard DCA (-1.5 SD) ──
+        # Logic: df['low'] <= (df['sma_20'] - (1.5 * df['std_20'])) AND df['low'] > (df['sma_20'] - (2.2 * df['std_20']))
+        # Filters: AND df['rsi_14'] <= 48 AND macd_curling_up AND is_green_candle
+        raw_std = bool(row.get("signal_tier_2_standard_dca", (
+            (low <= (row["sma_20"] - (1.5 * row["std_20"])))
+            and (low > (row["sma_20"] - (2.2 * row["std_20"])))
+            and (row.get("rsi_14", 50) <= 48)
+            and bool(row.get("macd_curling_up", False))
+            and bool(row.get("is_green_candle", False))
+        )))
         std_override = not np.isnan(last_std_price) and (
             close <= last_std_price * 0.97
         )
@@ -1301,8 +1310,8 @@ def evaluate_tactical_dca_signals(df: pd.DataFrame) -> list[tuple]:
             is_reload = std_override and (i - last_std_idx < 5)
             last_std_idx = i
             last_std_price = close
-            label = 'BETTER DCA' if is_reload else 'DCA'
-            signals.append((row.name, low, label, '#22C55E'))  # Lime Green
+            label = "BETTER DCA" if is_reload else "DCA"
+            signals.append((row.name, low, label, "#22C55E"))  # Lime Green
 
     return signals
 
@@ -1604,33 +1613,76 @@ def fetch_ticker_data(ticker: str) -> dict:
     hist_full["BB_lo15"] = bb_mid - 1.5 * bb_std   # Inner Lower (-1.5σ)
     hist_full["BB_lo2"]  = bb_mid - 2.0 * bb_std   # Outer Lower (-2.0σ)
 
-    # Bollinger Bands Valuation Corridors (Lookback = 20)
-    hist_full["LowerBand1"] = bb_mid - 1.5 * bb_std
-    hist_full["LowerBand2"] = bb_mid - 2.2 * bb_std
-    hist_full["LowerBand3"] = bb_mid - 3.0 * bb_std
+    # 1. Dedicated 20-Day Signal Engine Columns (Preserves 50-day rolling Z-score UI)
+    hist_full["sma_20"] = bb_mid
+    hist_full["std_20"] = bb_std
+    if "Volume" in hist_full.columns and not hist_full["Volume"].isna().all():
+        hist_full["vol_sma_20"] = hist_full["Volume"].rolling(20, min_periods=5).mean()
+    else:
+        hist_full["vol_sma_20"] = 0.0
 
-    # Momentum & Oscillators: RSI (14) & MACD (12, 26, 9)
-    hist_full["RSI14"] = calculate_wilder_rsi(hist_full["Close"], period=14)
-    hist_full["RSI"]   = hist_full["RSI14"]
+    # Normalized lowercase column aliases for exact 1:1 Pine Script compatibility
+    hist_full["close"] = hist_full["Close"]
+    hist_full["open"] = hist_full["Open"]
+    hist_full["high"] = hist_full["High"]
+    hist_full["low"] = hist_full["Low"]
+    hist_full["volume"] = hist_full["Volume"] if "Volume" in hist_full.columns else 0.0
 
+    # 14-day Wilder RSI
+    hist_full["rsi_14"] = calculate_wilder_rsi(hist_full["Close"], period=14)
+    hist_full["RSI14"] = hist_full["rsi_14"]
+    hist_full["RSI"]   = hist_full["rsi_14"]
+
+    # Standard MACD (12, 26, 9)
     ema12 = hist_full["Close"].ewm(span=12, adjust=False).mean()
     ema26 = hist_full["Close"].ewm(span=26, adjust=False).mean()
-    macd_line = ema12 - ema26
-    signal_line = macd_line.ewm(span=9, adjust=False).mean()
-    macd_hist = macd_line - signal_line
-    hist_full["MacdCurling"] = macd_hist > macd_hist.shift(1)
+    hist_full["macd_line"] = ema12 - ema26
+    hist_full["macd_signal"] = hist_full["macd_line"].ewm(span=9, adjust=False).mean()
+    hist_full["macd_histogram"] = hist_full["macd_line"] - hist_full["macd_signal"]
 
-    # Price Action & Volume Absorption
-    if "Volume" in hist_full.columns and not hist_full["Volume"].isna().all():
-        vol_ma20 = hist_full["Volume"].rolling(20, min_periods=5).mean()
-        hist_full["HasAdequateVol"] = (hist_full["Volume"] >= (vol_ma20 * 0.80)) | (vol_ma20 == 0) | hist_full["Volume"].isna()
-    else:
-        hist_full["HasAdequateVol"] = True
+    # 2. Implement 1:1 Pine Script Signal Logic Helper Masks
+    hist_full["is_green_candle"] = hist_full["close"] > hist_full["open"]
+    hist_full["macd_curling_up"] = hist_full["macd_histogram"] > hist_full["macd_histogram"].shift(1)
 
-    candle_range = hist_full["High"] - hist_full["Low"]
-    lower_wick = np.minimum(hist_full["Open"], hist_full["Close"]) - hist_full["Low"]
-    hist_full["HasLowerDefense"] = (candle_range > 0) & ((lower_wick / candle_range.replace(0, np.nan)) >= 0.35)
-    hist_full["IsGreenCandle"] = hist_full["Close"] > hist_full["Open"]
+    vol_thresh = hist_full["vol_sma_20"] * 0.8
+    hist_full["has_adequate_volume"] = (
+        (hist_full["volume"] >= vol_thresh)
+        | (hist_full["vol_sma_20"] == 0)
+        | hist_full["volume"].isna()
+    )
+
+    candle_range = (hist_full["high"] - hist_full["low"]).replace(0, np.nan)
+    body_min = hist_full[["open", "close"]].min(axis=1)
+    hist_full["has_lower_defense"] = (((body_min - hist_full["low"]) / candle_range) >= 0.35).fillna(False)
+
+    # Aliases for backward-compatibility with chart corridors and annotations
+    hist_full["LowerBand1"] = hist_full["sma_20"] - (1.5 * hist_full["std_20"])
+    hist_full["LowerBand2"] = hist_full["sma_20"] - (2.2 * hist_full["std_20"])
+    hist_full["LowerBand3"] = hist_full["sma_20"] - (3.0 * hist_full["std_20"])
+    hist_full["IsGreenCandle"] = hist_full["is_green_candle"]
+    hist_full["MacdCurling"] = hist_full["macd_curling_up"]
+    hist_full["HasAdequateVol"] = hist_full["has_adequate_volume"]
+    hist_full["HasLowerDefense"] = hist_full["has_lower_defense"]
+
+    # Vectorized Boolean Signal Masks (1:1 TradingView Pine Script TID v1.0)
+    tier_0_mask = hist_full["low"] <= (hist_full["sma_20"] - (3.0 * hist_full["std_20"]))
+    tier_1_mask = (
+        (hist_full["low"] <= (hist_full["sma_20"] - (2.2 * hist_full["std_20"])))
+        & (~tier_0_mask)
+        & hist_full["is_green_candle"]
+        & hist_full["has_adequate_volume"]
+        & (hist_full["macd_curling_up"] | hist_full["has_lower_defense"])
+    )
+    tier_2_mask = (
+        (hist_full["low"] <= (hist_full["sma_20"] - (1.5 * hist_full["std_20"])))
+        & (hist_full["low"] > (hist_full["sma_20"] - (2.2 * hist_full["std_20"])))
+        & (hist_full["rsi_14"] <= 48)
+        & hist_full["macd_curling_up"]
+        & hist_full["is_green_candle"]
+    )
+    hist_full["signal_tier_0_capitulation"] = tier_0_mask
+    hist_full["signal_tier_1_deeply_oversold"] = tier_1_mask
+    hist_full["signal_tier_2_standard_dca"] = tier_2_mask
 
     # Chronologically evaluate TID - Tactical DCA v1.0 Signals
     tactical_signals = evaluate_tactical_dca_signals(hist_full)

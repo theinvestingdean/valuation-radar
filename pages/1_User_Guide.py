@@ -1,8 +1,9 @@
 """
-Streamlit Multi-Page Application - Dedicated Terminology & User Guide
+Streamlit Multi-Page Application - Dedicated Beginner-Friendly User Guide
 Curated for The Stock Valuation Radar (@theinvestingdean)
 """
 
+import os
 import streamlit as st
 
 st.set_page_config(
@@ -24,8 +25,8 @@ st.markdown(
     .guide-container {
         max-width: 960px;
         margin: 0 auto;
-        font-size: 15px;
-        line-height: 1.65;
+        font-size: 16px;
+        line-height: 1.7;
         color: #1E293B;
     }
     .guide-badge-buy {
@@ -35,7 +36,7 @@ st.markdown(
         padding: 3px 10px;
         border-radius: 9999px;
         font-weight: 700;
-        font-size: 12px;
+        font-size: 13px;
         display: inline-block;
     }
     .guide-badge-dca {
@@ -45,7 +46,7 @@ st.markdown(
         padding: 3px 10px;
         border-radius: 9999px;
         font-weight: 700;
-        font-size: 12px;
+        font-size: 13px;
         display: inline-block;
     }
     .guide-badge-wait {
@@ -55,25 +56,34 @@ st.markdown(
         padding: 3px 10px;
         border-radius: 9999px;
         font-weight: 700;
-        font-size: 12px;
+        font-size: 13px;
         display: inline-block;
     }
-    .guide-badge-ytd-green {
+    .guide-badge-green {
         background-color: #DCFCE7;
         color: #166534;
         padding: 2px 8px;
         border-radius: 12px;
         font-weight: 600;
-        font-size: 12px;
+        font-size: 13px;
         display: inline-block;
     }
-    .guide-badge-ytd-red {
+    .guide-badge-amber {
+        background-color: #FEF3C7;
+        color: #92400E;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 13px;
+        display: inline-block;
+    }
+    .guide-badge-red {
         background-color: #FEE2E2;
         color: #991B1B;
         padding: 2px 8px;
         border-radius: 12px;
         font-weight: 600;
-        font-size: 12px;
+        font-size: 13px;
         display: inline-block;
     }
     .dean-badge {
@@ -104,7 +114,7 @@ with st.sidebar:
         """
         <div style="font-size: 0.72rem; color: #64748B; line-height: 1.5;">
             <strong>The Stock Valuation Radar</strong><br>
-            Reference Guide & Terminology Documentation.<br>
+            Beginner's Guide & Terminology.<br>
             Curated by <a href="https://www.instagram.com/theinvestingdean" target="_blank" class="dean-badge" style="font-size: 0.68rem; padding: 1px 6px;">@theinvestingdean</a>
         </div>
         """,
@@ -123,173 +133,178 @@ with col_link:
 st.title("📚 Terminology & User Guide")
 st.markdown(
     """
-    <p style="color: #64748B; font-size: 15px; margin-top: -8px; margin-bottom: 24px;">
-      Comprehensive documentation of formulas, valuation corridors, quantitative indicators, and tactical execution systems.
+    <p style="color: #64748B; font-size: 16px; margin-top: -8px; margin-bottom: 24px;">
+      A simple, beginner-friendly guide to understanding the dashboard, spotting great buying opportunities, and investing with confidence.
     </p>
     """,
     unsafe_allow_html=True,
 )
 
-USER_GUIDE_MARKDOWN = r"""
+# ── Section 1 & 2 Markdown ──
+st.markdown(
+    """
 <div class="guide-container">
 
 ---
 
-## 1. Executive Overview & Investment Philosophy
+## 1. How to Think About Investing
 
-### The Mission: Emotion-Free, Disciplined Investing
-Most retail investors suffer from two destructive behavioral biases:
-1. **FOMO (Fear Of Missing Out):** Aggressively buying near market peaks when prices are extended, hype is elevated, and valuation multiples are stretched.
-2. **Panic Hesitation:** Freezing or selling during natural pullbacks, exactly when high-quality businesses are on sale at an attractive margin of safety.
+### Buying Stocks on Sale
+Imagine your favorite trainers or gaming console. You wouldn't want to buy them when the price is at an all-time peak and everyone is hyping them up. You want to buy them when they go on sale!
 
-**The Stock Valuation Radar** eliminates emotional decision-making. By calculating objective historical moving average corridors, forward earnings growth rates, and statistical volatility bands, the Radar provides a clear, quantitative signal for when to **accumulate**, when to **hold standard DCA**, and when to **exercise patience**.
+The stock market works the exact same way:
+- **The Mistake Most People Make:** They get excited and buy when prices have skyrocketed (FOMO - Fear Of Missing Out). Then, when prices drop, they panic and sell.
+- **The Smart Way to Invest:** Keep calm, look for top-quality companies, and buy them when they are discounted.
+
+**Dollar-Cost Averaging (DCA):** This means investing a set amount of money regularly (like once a month), no matter what the market is doing. The Valuation Radar helps you know when a stock is on sale so you can make the most of your money.
 
 ---
 
-## 2. The Traffic Light Valuation System
+## 2. The Traffic Light System
 
-Every asset on the dashboard is continuously classified into one of three primary valuation states based on its price relative to its historical moving average corridor:
+Every stock on your dashboard has a simple color status that tells you how its current price compares to its normal historical average:
 
-| Valuation Status | Visual Signal | Mathematical Condition | Strategic Action |
+| Status | What It Looks Like | What It Means in Plain English | What You Should Do |
 | :--- | :---: | :--- | :--- |
-| **Buy Zone** | <span class="guide-badge-buy">🟢 BUY ZONE</span> | **Price $\le -5.0\%$** vs Historical Average Corridor | **Prime Accumulation.** Asset is historically discounted. Increase DCA allocation or deploy tactical dip-buying tranches. |
-| **Standard DCA** | <span class="guide-badge-dca">🟡 STANDARD DCA</span> | **Price between $-5.0\%$ and $+10.0\%$** vs Historical Average | **Fair Value Corridor.** Proceed with routine automated DCA schedules. No need to pause or over-allocate. |
-| **Wait for Pullback** | <span class="guide-badge-wait">🔴 WAIT FOR PULLBACK</span> | **Price $> +10.0\%$** vs Historical Average Corridor | **Overextended.** Elevated multiple expansion. Pause lump-sum purchases and let cash reserves build for mean-reversion pullbacks. |
+| **Buy Zone** | <span class="guide-badge-buy">🟢 BUY ZONE</span> | Price is **more than 5% below** its normal average | **Prime buying time!** The stock is on sale. A great time to add to your investments. |
+| **Standard DCA** | <span class="guide-badge-dca">🟡 STANDARD DCA</span> | Price is **between 5% below and 10% above** average | **Fair price.** Continue with your normal scheduled investments as usual. |
+| **Wait for Pullback** | <span class="guide-badge-wait">🔴 WAIT FOR PULLBACK</span> | Price is **more than 10% above** its normal average | **Expensive!** The stock is stretched high. Be patient and wait for the price to cool down before buying. |
 
-> [!TIP]
-> **Active Timeframe Selection:** You can toggle the baseline between the **90-Day Moving Average** (short-to-medium term swing valuation) and the **1-Year Moving Average** (long-term structural fair value) using the timeframe toggle at the top of the main dashboard.
+> **Tip:** You can switch between the **90-Day Average** (short-term swings) and the **1-Year Average** (long-term trend) using the toggle button at the top of the main dashboard.
 
 ---
 
-## 3. Stock Card Metrics & Glossary
+## 3. Stock Card Metrics Made Simple
 
-Each individual stock card features standardized, uniform metric tiles designed to provide instant multi-dimensional context.
+Every stock card shows key figures that give you the full story behind the price. Here is what each one means:
 
-### 💵 Price (USD / Local) & Performance Context
-- **Live / Delayed Price:** Displayed in the primary currency of the stock listing (e.g. USD for US equities, GBX/GBP for London listings).
-- **YTD Return Badge:** Renders as a styled pill badge (<span class="guide-badge-ytd-green">YTD +18.4%</span> or <span class="guide-badge-ytd-red">YTD -4.2%</span>) representing performance since the opening session of January 1st:
-  $$\text{YTD Return (\%)} = \left( \frac{\text{Current Price} - \text{Year Open Close}}{\text{Year Open Close}} \right) \times 100$$
-- **Daily Performance:** Absolute dollar/currency change alongside percentage change at the official close of regular trading:
+### 💵 Price & Market Hours (UK Time)
+- **Stock Price:** The current price of a single share of the stock.
+- **Daily Performance:** How much money and percentage the stock went up or down during normal market hours.  
   *Example:* `+$2.30 (+1.5%) at market close` or `-$4.61 (-1.29%) at market close`.
-- **Extended-Hours Trading (Pre-Market / Post-Market):** When pre-market or post-market quotes are active, the card displays the raw extended-hours price and the net move from regular close:
-  *Example:* `Pre-market price: $351.60 | -$1.24 (-0.35%)`.
+- **UK Market Hours to Remember:**
+  - **Standard Market Hours:** **2:30 PM to 9:00 PM (UK Time)** — This is when the main US stock exchanges are open.
+  - **Pre-Market:** **Before 2:30 PM (UK Time)** — Early trading before the official market opens.
+  - **Post-Market:** **After 9:00 PM (UK Time)** — Late trading after the official market closes.
+
+---
+
+### 📅 YTD Return (Year-to-Date)
+- **Definition:** The profit or loss the stock has made since January 1st of the current year.
+- **<span class="guide-badge-green">Green Badge</span>:** The stock has gained value this year.
+- **<span class="guide-badge-red">Red Badge</span>:** The stock has lost value this year.
 
 ---
 
 ### 🏔️ Distance to All-Time High (ATH)
-Measures the current drawdown from the company's highest historical closing price across its entire lifetime dataset:
-$$\text{Distance to ATH (\%)} = \left( \frac{\text{Current Price} - \text{Lifetime High}}{\text{Lifetime High}} \right) \times 100$$
-
-- **$> -10\%$ (Green):** Normal market consolidation within striking distance of record highs.
-- **$-10\%$ to $-25\%$ (Amber):** Healthy market correction. Often represents an attractive entry window for blue-chip compounders.
-- **$< -25\%$ (Red):** Bear market territory / deep value drawdown. Requires fundamental verification to distinguish between temporary market dislocation vs permanent business impairment.
-
----
-
-### 📊 Standard Deviation (50-Day & 252-Day) / Z-Score
-Quantifies how many standard deviations ($\sigma$) the current price sits above or below its 50-day Simple Moving Average:
-$$Z = \frac{\text{Current Price} - \text{SMA}_{50}}{\sigma_{50}}$$
-
-- **$Z < -1.5\sigma$:** Statistically oversold. Price is stretched unusually far below its short-term mean, creating high rebound probability.
-- **$-1.5\sigma \le Z \le +1.5\sigma$:** Normal random walk distribution around trend.
-- **$Z > +1.5\sigma$:** Statistically overbought. Short-term momentum is stretched.
+- **Definition:** The highest price the stock has ever reached in its history.
+- **What the colors tell you:**
+  - **<span class="guide-badge-red">Red (Near ATH)</span>:** The stock is trading very close to its record highs. Proceed with caution, as it is relatively expensive.
+  - **<span class="guide-badge-amber">Amber (Moderate Pullback)</span>:** The stock has pulled back from its highs, offering a standard dip.
+  - **<span class="guide-badge-green">Green (Deep Discount)</span>:** The stock is significantly below its record highs, offering a wide margin of safety and a cheaper entry price.
 
 ---
 
-### ⚖️ Trailing P/E & Historical Fair Value Corridor
-- **Trailing P/E (TTM):** Current Price divided by Trailing Twelve Month diluted earnings per share.
-  $$\text{Trailing P/E} = \frac{\text{Current Price}}{\text{Trailing 12-Month EPS}}$$
-- **Fair Value Corridor:** The historical moving average of the stock's price or P/E over the chosen timeframe (90-Day or 1-Year).
-- **Upside / Downside to Fair Value:** The percentage move required for the stock to revert to its historical mean:
-  $$\text{Upside to Fair Value (\%)} = \left( \frac{\text{Fair Value Target} - \text{Current Price}}{\text{Current Price}} \right) \times 100$$
-  *Positive values (Green)* show upside potential to historical fair value; *negative values (Red)* show overvaluation.
+### 📏 Standard Deviation (Z-Score)
+- **Definition:** This measures how far the stock's price has stretched away from its normal average.
+- **How to read the score:**
+  - A score of **-1.5** means the stock is **heavily discounted** (a good buying opportunity).
+  - A score near **0** means it is trading right at its **normal average**.
+  - A score of **+1.5** means the stock is **overstretched** and may soon drop back down.
 
 ---
 
-## 4. 2-Year Forward PEG & EPS CAGR (AJ Financial Research Methodology)
-
-Standard trailing P/E ratios look backward and fail to account for corporate reinvestment and rapid earnings expansion. The Valuation Radar implements the **AJ Financial Research 2-Year Forward PEG framework** to benchmark growth equities against consensus expectations.
-
-### Mathematical Formulation
-
-1. **Forward Price-to-Earnings (NTM P/E):**
-   $$\text{Forward P/E} = \frac{\text{Current Price}}{\text{Next Twelve Months Consensus EPS (NTM EPS)}}$$
-
-2. **2-Year Forward EPS Compound Annual Growth Rate (CAGR):**
-   Estimates annual earnings growth between year 1 (NTM EPS) and year 2 (NTM+2 EPS):
-   $$\text{EPS CAGR}_{2Y} = \left( \frac{\text{NTM+2 EPS}}{\text{NTM EPS}} \right)^{\frac{1}{2}} - 1$$
-
-3. **2-Year Forward PEG Ratio:**
-   Normalizes the forward earnings multiple against the annual growth rate:
-   $$\text{PEG}_{2Y} = \frac{\text{Forward P/E}}{\text{EPS CAGR}_{2Y} \times 100}$$
-
-### Valuation Tiers & Interpretation
-- **$< 1.0$ — Exceptional Value:** Forward earnings growth exceeds the price multiple. Rare asymmetric upside.
-- **$1.0 - 1.75$ — Fair Value (GARP):** Healthy Growth-At-A-Reasonable-Price. Premium business trading at a sensible multiple.
-- **$1.75 - 2.5$ — High Valuation:** Multiple is elevated relative to growth. High vulnerability to market volatility or guidance revisions.
-- **$> 2.5$ — Extreme Premium:** Stock is priced for flawless execution. Significant multiple compression risk if earnings growth moderates.
+### 🏷️ Trailing P/E & Fair Value
+- **P/E Ratio (Price-to-Earnings):** Shows how much you are paying for every £1 or $1 the company makes in profit. A lower number generally means you are getting more profit for your money.
+- **Fair Value Corridor:** The stock's normal average price over the last 90 days or 1 year. Upside shows how much the stock could rise to return back to this normal average.
 
 ---
 
-## 5. TID - Tactical DCA v1.0 System
-
-The **TID Tactical DCA** engine translates quantitative volatility envelopes and liquidity absorption patterns into concrete dip-buying tiers.
-
-### Bollinger Envelopes Structure (Lookback = 20 Sessions)
-The system calculates a 20-day Simple Moving Average baseline and expands three standard deviation envelopes:
-- **Baseline:** 20-day Simple Moving Average (SMA 20)
-- **Corridor 2 ($-1.5\sigma$):** Standard DCA Accumulation Boundary
-- **Corridor 1 ($-2.2\sigma$):** Heavy DCA Accumulation Boundary
-- **Corridor 0 ($-3.0\sigma$):** Capitulation / Liquidity Flush Boundary
-
-### Execution Tiers
-
-| Tier | Volatility Level | Trigger Mechanism | Suggested DCA Allocation |
-| :--- | :--- | :--- | :--- |
-| **Tier 2** | **$-1.5\sigma$ Lower Band** | Price touches or penetrates the $-1.5\sigma$ band | **$1\times$ Standard DCA Allocation.** Routine accumulation. |
-| **Tier 1** | **$-2.2\sigma$ Lower Band** | Price touches or penetrates the $-2.2\sigma$ band | **$2\times$ to $3\times$ Standard Allocation.** High-conviction dip buying. |
-| **Tier 0** | **$-3.0\sigma$ Lower Band** | Price reaches extreme $-3.0\sigma$ liquidity flush | **Max Tactical Deployment.** Rare panic capitulation offering generational entry prices. |
-
-### Technical Confirmation Filters
-To prevent "catching falling knives", tactical signals are reinforced with price action confirmation:
-1. **Volume Absorption:** Daily trading volume $> 1.3\times$ the 20-day moving average, signaling institutional buyers absorbing supply.
-2. **Lower Wick Defense:** Daily candlestick exhibiting a lower shadow $\ge 40\%$ of the total bar range, demonstrating aggressive intraday buyer support.
-3. **Bullish Reversal Candle:** A green closing candle following band penetration, confirming buyer control before capital deployment.
+### 🚀 2-Year Forward PEG Ratio
+- **What it is:** This compares the price of the stock to how fast its profits are expected to grow over the next 2 years.
+- **How to read the score:**
+  - **Under 1.0 (<span class="guide-badge-green">Great Value</span>):** The company's profits are growing faster than its price. A true bargain!
+  - **Between 1.0 and 1.75 (<span class="guide-badge-amber">Fair Value</span>):** The stock is fairly priced for its expected growth.
+  - **Over 1.75 (<span class="guide-badge-red">Expensive</span>):** The stock is pricey. It expects perfection, making it vulnerable to drops if growth slows down.
 
 ---
 
-## 6. ETFs vs Individual Equities
-
-The Valuation Radar automatically recognizes Exchange-Traded Funds (ETFs) such as `VUAG.L` (Vanguard S&P 500), `VWRP.L` (Vanguard FTSE All-World), and `SMGB.L` (VanEck Semiconductor).
-
-Because index ETFs represent diversified baskets of hundreds of companies, single-stock metrics like EPS and PEG ratios are mathematically inapplicable. The dashboard dynamically swaps these tiles for ETF-specific metrics:
-- **TER (Total Expense Ratio):** The annual management fee charged by the fund manager (e.g. 0.07% for VUAG). Lower fees allow more capital to compound over decades.
-- **AUM (Assets Under Management):** The total dollar size of the fund, reflecting liquidity, institutional adoption, and low tracking error risk.
+### 🎯 12-Month Analyst Target
+- What professional Wall Street researchers predict the stock will be worth one year from now, showing the potential percentage gain or loss.
 
 ---
 
-## 7. Interactive Tools & Productivity Features
-
-- 🔍 **Quick Find Ticker Jumper:** Type or select any stock in the Quick Find bar to immediately jump to its detailed card without manual scrolling.
-- ⛶ **Expand Chart Modal:** Tap the "Expand Chart" bar beneath any chart to open a full-screen, high-resolution modal with touch-enabled pinch-to-zoom and pan.
-- 🎯 **Refocus Chart Button:** Double-click or tap the "Refocus" button to instantly restore the chart view back to the optimal 6-to-9 month window.
-- 📸 **Export 4:5 Social Card:** Click the camera icon on any card to export a high-contrast 4:5 visual summary ready for Instagram or Twitter.
-- ⏱️ **Timeframe Toggle (90-Day vs 1-Year):** Recalibrate the entire dashboard between short-term swing fair value and 1-year structural mean reversion.
+### ⚡ RSI (Momentum Gauge)
+- Think of RSI like a speedometer from 0 to 100:
+  - **Under 30 (Oversold):** The stock has been sold off too fast and is ready to bounce back up.
+  - **Between 30 and 70 (Normal):** A calm, steady trend.
+  - **Over 70 (Overbought):** The stock has rocketed up too quickly and needs to take a breather.
 
 ---
 
-## 8. Frequently Asked Questions (FAQ)
+## 4. Valuation Corridors & The Dip-Buying System
 
-**Q: Why do some prices say "at market close" while others say "Pre-market price"?**  
-*A: During regular trading hours (9:30 AM – 4:00 PM EST), prices reflect official exchange trading. After the close, the dashboard displays "at market close". During extended sessions (pre-market 4:00 AM – 9:30 AM EST and after-hours 4:00 PM – 8:00 PM EST), extended-hours quotes are shown.*
-
-**Q: Should I completely stop buying when a stock is in "Wait for Pullback"?**  
-*A: If you are an automated long-term monthly DCA investor, maintaining regular scheduled contributions is fine. However, "Wait for Pullback" warns against deploying large lump-sums or chasing hype. Let tactical cash accumulate until prices revert toward Standard DCA or the Buy Zone.*
-
-**Q: How often does the data update?**  
-*A: The dashboard pulls live market data via Yahoo Finance. Click the "Refresh Market Data" button in the sidebar or reload the page anytime to synchronize the latest quotes.*
+Stocks naturally move up and down around their historical average price:
+- **Median Line (Middle):** The stock's normal average price where it usually trades.
+- When market dips or temporary bad news push the price below this average, it creates clear, discounted buying zones.
 
 </div>
-"""
+""",
+    unsafe_allow_html=True,
+)
 
-st.markdown(USER_GUIDE_MARKDOWN, unsafe_allow_html=True)
+# ── Bollinger Bands Visual Aid ──
+img_candidates = ["bollinger_guide.png", "pages/bollinger_guide.png"]
+img_path = next((p for p in img_candidates if os.path.exists(p)), None)
+
+if img_path:
+    st.image(img_path, caption="Visual guide to the Valuation Corridors (-1.5, -2.0, and Median)")
+else:
+    st.image("bollinger_guide.png", caption="Visual guide to the Valuation Corridors (-1.5, -2.0, and Median)")
+
+# ── Section 4 Breakdown & Final Sections ──
+st.markdown(
+    """
+<div class="guide-container">
+
+### The Three Buying Tiers
+
+| Buying Tier & Dashboard Badge | Where Price Sits on the Chart | What It Means | What to Do |
+| :--- | :--- | :--- | :--- |
+| **Tier 2 (Standard Dip)**<br><span class="guide-badge-green">🟢 Standard DCA</span> | Price touches the **-1.5 line** | The stock is slightly discounted below its normal average. | Good time for your regular scheduled DCA purchase. |
+| **Tier 1 (Deep Dip)**<br><span class="guide-badge-amber">🟡 Deeply Oversold</span> | Price reaches the **-2.0 or -2.2 line** | The stock is heavily discounted. | Great value! Consider investing double your normal amount. |
+| **Tier 0 (Extreme Panic)**<br><span class="guide-badge-red">🔴 Capitulation</span> | Price drops to the **-3.0 line** | The stock has experienced a severe crash or market panic. | Rare generational bargain. Maximum buying opportunity. |
+
+### How to Confirm a Bounce Before Buying
+To avoid buying while the price is still falling like a falling rock, look for these three easy clues:
+1. **Volume Spike:** A huge surge in trading activity showing big funds are stepping in to buy.
+2. **Long Bottom Wick:** The price dropped during the day, but strong buyers immediately pushed it back up before the close.
+3. **Green Candle:** The day closes higher than it opened, proving the buyers have taken back control.
+
+---
+
+## 5. Helpful Dashboard Tools
+
+- 🔍 **Quick Find:** Type any stock ticker in the Quick Find bar to jump straight to its card without scrolling.
+- ⛶ **Expand Chart:** Tap the Expand button under any chart to open a full-screen view with pinch-to-zoom on your phone.
+- 🎯 **Refocus Chart:** Tap Refocus to reset the chart back to the perfect 6-to-9 month view.
+- 📸 **Export 4:5 Card:** Tap the camera icon on any stock card to download a clean image ready to share on Instagram or Twitter.
+- ⏱️ **Timeframe Toggle:** Switch between 90-Day and 1-Year valuation averages with a single click.
+
+---
+
+## 6. Frequently Asked Questions (FAQ)
+
+**Q: What are the main stock market hours?**  
+*A: All times are in **UK Time**! The official US market is open from **2:30 PM to 9:00 PM (UK Time)**. Before 2:30 PM is pre-market, and after 9:00 PM is post-market.*
+
+**Q: Should I stop investing if a stock is in "Wait for Pullback"?**  
+*A: If you invest automatically every month for the next 10 years, sticking to your routine is fine. But do not dump big lumps of cash into a stock while it is red. Wait for it to pull back into Standard DCA or the Buy Zone.*
+
+**Q: How often does the market data update?**  
+*A: Live from Yahoo Finance! You can click the "Refresh Market Data" button in the sidebar anytime to synchronize the freshest numbers.*
+
+</div>
+""",
+    unsafe_allow_html=True,
+)

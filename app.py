@@ -3111,6 +3111,11 @@ def on_timeframe_change():
 # SIDEBAR CONTROLS
 # ─────────────────────────────────────────────
 with st.sidebar:
+    try:
+        st.page_link("pages/1_User_Guide.py", label="View the Terminology & User Guide", icon="📚")
+        st.markdown("---")
+    except Exception:
+        pass
     st.markdown("### Controls & Filters")
     st.markdown("---")
 
@@ -3371,6 +3376,12 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+
+try:
+    st.page_link("pages/1_User_Guide.py", label="View the Terminology & User Guide", icon="📚")
+    st.markdown("<div style='margin-bottom: 1rem;'></div>", unsafe_allow_html=True)
+except Exception:
+    pass
 
 if not selected:
     st.warning("Please select at least one equity from the sidebar.")

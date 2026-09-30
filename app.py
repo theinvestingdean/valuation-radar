@@ -1356,6 +1356,8 @@ def fetch_ticker_data(ticker: str) -> dict:
             "ext_price":      None,
             "peg_2y":        None,
             "cagr_2y_pct":   None,
+            "eps_ntm":       None,
+            "eps_ntm_2":     None,
             "is_etf":        False,
             "is_ucits":      False,
             "ter":           None,
@@ -1385,6 +1387,8 @@ def fetch_ticker_data(ticker: str) -> dict:
             "ext_price":      None,
             "peg_2y":        None,
             "cagr_2y_pct":   None,
+            "eps_ntm":       None,
+            "eps_ntm_2":     None,
             "is_etf":        False,
             "is_ucits":      False,
             "ter":           None,
@@ -1603,6 +1607,8 @@ def fetch_ticker_data(ticker: str) -> dict:
     #   2. 2Y PEG  = (Forward P/E) / (CAGR * 100)
     peg_2y = None
     cagr_2y_pct = None
+    eps_ntm = None
+    eps_ntm_2 = None
 
     if not is_etf:
         clean_tk = ticker.upper().split(".")[0] if ("." in ticker and ticker.upper().split(".")[0] in AJ_LATEST_PEGS) else ticker.upper()
@@ -1614,6 +1620,9 @@ def fetch_ticker_data(ticker: str) -> dict:
                 peg_2y = AJ_LATEST_PEGS[clean_tk]["peg"]
             if fwd_eps is not None and fwd_eps > 0:
                 eps_ntm = fwd_eps
+                eps_ntm_2 = eps_ntm * ((1.0 + (cagr_2y_pct / 100.0)) ** 2)
+            elif eps is not None and eps > 0:
+                eps_ntm = eps
                 eps_ntm_2 = eps_ntm * ((1.0 + (cagr_2y_pct / 100.0)) ** 2)
         else:
             ee = getattr(obj, "earnings_estimate", None)

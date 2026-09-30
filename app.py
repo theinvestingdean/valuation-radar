@@ -3614,17 +3614,28 @@ for row_start in range(0, len(ticker_list), n_cols):
                 ccy_sym = get_currency_symbol(ccy)
                 price_now = float(d.get("current_price", hist_df["Close"].iloc[-1]))
 
-                # ── Box 1: Price with YTD Return & Dual Performance Display ──
+                # ── Box 1: Price with YTD Return Badge & Dual Performance Display ──
                 ytd_val = d.get("ytd_pct")
                 if ytd_val is None:
                     ytd_val = compute_ytd_pct(hist_df, price_now)
 
                 if ytd_val is not None and not np.isnan(ytd_val):
                     subtext_p = f"{ytd_val:+.1f}% YTD"
-                    sub_color_p = "#047857" if ytd_val >= 0 else "#B91C1C"
+                    if ytd_val >= 0:
+                        ytd_bg = "#DCFCE7"
+                        ytd_color = "#166534"
+                        ytd_border = "#BBF7D0"
+                    else:
+                        ytd_bg = "#FEE2E2"
+                        ytd_color = "#991B1B"
+                        ytd_border = "#FECACA"
                 else:
                     subtext_p = "YTD N/A"
-                    sub_color_p = MUTED_SLATE
+                    ytd_bg = "#F1F5F9"
+                    ytd_color = "#64748B"
+                    ytd_border = "#E2E8F0"
+
+                ytd_badge_html = f'<span style="display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.70rem; font-weight: 600; line-height: 1.2; background-color: {ytd_bg}; color: {ytd_color}; border: 1px solid {ytd_border}; white-space: nowrap; text-align: right;" title="Year-to-Date Return: {subtext_p}">{subtext_p}</span>'
 
                 dual_perf_html = make_dual_perf_pill_html(
                     d.get("reg_perf_pct"),
@@ -3649,8 +3660,8 @@ for row_start in range(0, len(ticker_list), n_cols):
                       </span>
                       {dual_perf_html}
                     </div>
-                    <div style="display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-start; flex-shrink: 0; padding-top: 3px;">
-                      <span style="font-size: 0.74rem; font-weight: 600; color: {sub_color_p}; white-space: nowrap; text-align: right;" title="{subtext_p}">{subtext_p}</span>
+                    <div style="display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-start; flex-shrink: 0; padding-top: 2px;">
+                      {ytd_badge_html}
                     </div>
                   </div>
                 </div>

@@ -663,16 +663,6 @@ st.markdown(
             transform: scale(0.97);
         }}
 
-        /* Target Streamlit buttons to prevent mobile touch interception */
-        [data-testid="stButton"] button,
-        .expand-chart-btn,
-        .save-card-btn {{
-            position: relative !important;
-            z-index: 999 !important;
-            pointer-events: auto !important;
-            touch-action: manipulation !important;
-        }}
-
         /* ⛶ Fullscreen Expand Chart Button */
         .expand-chart-bar {{
             display: flex !important;
@@ -879,14 +869,6 @@ st.markdown(
             .qf-spacer {{
                 display: none !important;
                 height: 0 !important;
-            }}
-            /* Target Streamlit buttons to prevent mobile touch interception */
-            [data-testid="stButton"] button,
-            .expand-chart-btn {{
-                position: relative !important;
-                z-index: 999 !important;
-                pointer-events: auto !important;
-                touch-action: manipulation !important;
             }}
             /* Expand Chart button touch target optimization on mobile */
             .expand-chart-bar {{

@@ -208,14 +208,18 @@ st.markdown(
         }}
         .kpi-mini-title {{
             color: {MUTED_SLATE};
-            font-size: 0.68rem;
+            font-size: 0.66rem;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.04em;
-            line-height: 1.2;
+            letter-spacing: 0.03em;
+            line-height: 1.15;
             overflow: hidden;
             text-overflow: ellipsis;
-            white-space: nowrap;
+            white-space: normal;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            max-width: 100%;
         }}
         .kpi-mini-value {{
             font-size: 1.22rem;
@@ -659,6 +663,16 @@ st.markdown(
             transform: scale(0.97);
         }}
 
+        /* Target Streamlit buttons to prevent mobile touch interception */
+        [data-testid="stButton"] button,
+        .expand-chart-btn,
+        .save-card-btn {{
+            position: relative !important;
+            z-index: 999 !important;
+            pointer-events: auto !important;
+            touch-action: manipulation !important;
+        }}
+
         /* ⛶ Fullscreen Expand Chart Button */
         .expand-chart-bar {{
             display: flex !important;
@@ -667,10 +681,11 @@ st.markdown(
             flex-wrap: wrap !important;
             gap: 8px !important;
             margin-top: 14px !important;
-            margin-bottom: 8px !important;
-            padding: 4px 2px !important;
+            margin-bottom: 12px !important;
+            padding: 4px 2px 20px 2px !important;
             position: relative !important;
-            z-index: 15 !important;
+            z-index: 998 !important;
+            pointer-events: auto !important;
             clear: both !important;
         }}
         .expand-chart-btn {{
@@ -693,7 +708,8 @@ st.markdown(
             -webkit-tap-highlight-color: transparent !important;
             user-select: none !important;
             position: relative !important;
-            z-index: 20 !important;
+            z-index: 999 !important;
+            pointer-events: auto !important;
         }}
         .expand-chart-btn:hover {{
             background-color: #FDE047 !important;
@@ -864,17 +880,39 @@ st.markdown(
                 display: none !important;
                 height: 0 !important;
             }}
+            /* Target Streamlit buttons to prevent mobile touch interception */
+            [data-testid="stButton"] button,
+            .expand-chart-btn {{
+                position: relative !important;
+                z-index: 999 !important;
+                pointer-events: auto !important;
+                touch-action: manipulation !important;
+            }}
             /* Expand Chart button touch target optimization on mobile */
             .expand-chart-bar {{
                 margin-top: 16px !important;
-                margin-bottom: 10px !important;
+                margin-bottom: 12px !important;
+                padding-bottom: 20px !important; /* Adequate vertical padding so container directly beneath does not swallow touch target */
                 gap: 8px !important;
+                position: relative !important;
+                z-index: 998 !important;
+                pointer-events: auto !important;
             }}
             .expand-chart-btn {{
-                padding: 7px 14px !important;
-                font-size: 0.78rem !important;
-                min-height: 38px !important;
-                box-shadow: 0 1px 3px rgba(0,0,0,0.06) !important;
+                padding: 8px 16px !important;
+                font-size: 0.80rem !important;
+                min-height: 44px !important;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.08) !important;
+                position: relative !important;
+                z-index: 999 !important;
+                pointer-events: auto !important;
+                touch-action: manipulation !important;
+            }}
+            /* Ensure plotly chart wrapper does not bleed over the button above it */
+            div[data-testid="stPlotlyChart"],
+            .js-plotly-plot {{
+                position: relative !important;
+                z-index: 1 !important;
             }}
             /* Clean edge padding on mobile phones for maximum chart width */
             .block-container {{
@@ -995,37 +1033,55 @@ def make_dual_perf_pill_html(
     ext_label: str | None = None,
     ext_price: float | None = None,
     ccy_sym: str = "$",
+    align: str = "left",
+    reg_abs: float | None = None,
+    ext_abs: float | None = None,
 ) -> str:
     """
     Generate side-by-side / stacked badges for regular daily session and extended-hours trading.
     Preserves official regular session change and displays secondary badge for pre/post-market
-    with percentage and absolute price, e.g. Pre: +0.3% ($3.12).
+    with percentage and absolute price/change matching TradingView conventions with currency symbols.
     """
+    def _fmt_pct(v: float) -> str:
+        # Formats e.g. 1.5% if round tenths (matches +1.5%), else 1.29%
+        return f"{v:.1f}%" if abs(round(v, 1) - round(v, 2)) < 1e-4 else f"{v:.2f}%"
+
     # 1. Regular session badge
     reg_badge = ""
     if reg_pct is not None and not np.isnan(reg_pct):
-        if reg_pct > 0.05:
+        if reg_pct > 0.005:
             bg_r = "#DCFCE7"
             col_r = "#15803D"
-            lbl_r = f"▲ +{reg_pct:.1f}%"
-        elif reg_pct < -0.05:
+            if reg_abs is not None and not np.isnan(reg_abs):
+                lbl_r = f"+{ccy_sym}{abs(reg_abs):.2f} (+{_fmt_pct(reg_pct)})"
+            else:
+                lbl_r = f"+{_fmt_pct(reg_pct)}"
+        elif reg_pct < -0.005:
             bg_r = "#FEE2E2"
             col_r = "#B91C1C"
-            lbl_r = f"▼ {reg_pct:.1f}%"
+            if reg_abs is not None and not np.isnan(reg_abs):
+                lbl_r = f"-{ccy_sym}{abs(reg_abs):.2f} ({_fmt_pct(reg_pct)})"
+            else:
+                lbl_r = f"{_fmt_pct(reg_pct)}"
         else:
             bg_r = "#F1F5F9"
             col_r = "#64748B"
-            lbl_r = "0.0%"
-        reg_badge = f'<span style="font-size: 0.64rem; font-weight: 700; background-color: {bg_r}; color: {col_r}; padding: 1px 5px; border-radius: 9999px; line-height: 1.1; white-space: nowrap;">{lbl_r}</span>'
+            if reg_abs is not None and not np.isnan(reg_abs):
+                lbl_r = f"{ccy_sym}0.00 (0.0%)"
+            else:
+                lbl_r = "0.00 (0.0%)"
+        pill_html = f'<span style="font-size: 0.65rem; font-weight: 700; background-color: {bg_r}; color: {col_r}; padding: 1.5px 6px; border-radius: 9999px; line-height: 1.1; white-space: nowrap;">{lbl_r}</span>'
+        label_html = '<span style="font-size: 0.62rem; font-weight: 500; color: #64748B; line-height: 1.1; white-space: nowrap;">at market close</span>'
+        reg_badge = f'<div style="display: inline-flex; align-items: center; gap: 4px; flex-wrap: wrap;">{pill_html}{label_html}</div>'
 
     # 2. Extended-hours badge (pre-market or post-market)
     ext_badge = ""
     if ext_label and ext_pct is not None and not np.isnan(ext_pct) and abs(float(ext_pct)) >= 0.005:
-        if ext_pct > 0.05:
+        if ext_pct > 0.005:
             bg_e = "#DCFCE7"
             col_e = "#15803D"
             bdr_e = "#A7F3D0"
-        elif ext_pct < -0.05:
+        elif ext_pct < -0.005:
             bg_e = "#FEE2E2"
             col_e = "#B91C1C"
             bdr_e = "#FECACA"
@@ -1034,16 +1090,45 @@ def make_dual_perf_pill_html(
             col_e = "#64748B"
             bdr_e = "#E2E8F0"
 
-        price_part = f" ({ccy_sym}{ext_price:.2f})" if ext_price is not None and not np.isnan(ext_price) and ext_price > 0 else ""
-        lbl_e = f"{ext_label}: {ext_pct:+.1f}%{price_part}"
-        ext_badge = f'<span style="font-size: 0.60rem; font-weight: 600; background-color: {bg_e}; color: {col_e}; border: 1px solid {bdr_e}; padding: 1px 4px; border-radius: 9999px; line-height: 1.1; white-space: nowrap;">{lbl_e}</span>'
+        clean_label = str(ext_label).strip()
+        if clean_label.upper().startswith("PRE"):
+            full_ext_label = "Pre-market price"
+        elif clean_label.upper().startswith("POST"):
+            full_ext_label = "Post-market price"
+        else:
+            full_ext_label = f"{clean_label}-market price"
+
+        if ext_abs is not None and not np.isnan(ext_abs):
+            if ext_abs > 0.005:
+                abs_str = f"+{ccy_sym}{abs(ext_abs):.2f}"
+                pct_sign = "+"
+            elif ext_abs < -0.005:
+                abs_str = f"-{ccy_sym}{abs(ext_abs):.2f}"
+                pct_sign = ""
+            else:
+                abs_str = f"{ccy_sym}0.00"
+                pct_sign = ""
+            chg_part = f"{abs_str} ({pct_sign}{_fmt_pct(ext_pct)})"
+        else:
+            pct_sign = "+" if ext_pct > 0.005 else ""
+            chg_part = f"{pct_sign}{_fmt_pct(ext_pct)}"
+
+        if ext_price is not None and not np.isnan(ext_price) and ext_price > 0:
+            lbl_e = f"{full_ext_label}: {ccy_sym}{ext_price:.2f} | {chg_part}"
+        else:
+            lbl_e = f"{full_ext_label}: {chg_part}"
+
+        ext_badge = f'<span style="font-size: 0.60rem; font-weight: 600; background-color: {bg_e}; color: {col_e}; border: 1px solid {bdr_e}; padding: 1.5px 6px; border-radius: 9999px; line-height: 1.1; white-space: nowrap;">{lbl_e}</span>'
+
+    items_align = "flex-start" if align == "left" else "flex-end"
+    margin_css = "margin-right: auto;" if align == "left" else "margin-left: auto;"
 
     if reg_badge and ext_badge:
-        return f'<div style="display: inline-flex; flex-direction: column; align-items: flex-end; gap: 2px; margin-left: auto; max-width: 100%; flex-shrink: 1;">{reg_badge}{ext_badge}</div>'
+        return f'<div style="display: inline-flex; flex-direction: column; align-items: {items_align}; gap: 3px; {margin_css} max-width: 100%; flex-shrink: 1;">{reg_badge}{ext_badge}</div>'
     elif reg_badge:
-        return f'<div style="display: inline-flex; align-items: center; margin-left: auto; max-width: 100%; flex-shrink: 1;">{reg_badge}</div>'
+        return f'<div style="display: inline-flex; align-items: center; {margin_css} max-width: 100%; flex-shrink: 1;">{reg_badge}</div>'
     elif ext_badge:
-        return f'<div style="display: inline-flex; align-items: center; margin-left: auto; max-width: 100%; flex-shrink: 1;">{ext_badge}</div>'
+        return f'<div style="display: inline-flex; align-items: center; {margin_css} max-width: 100%; flex-shrink: 1;">{ext_badge}</div>'
     return ""
 
 
@@ -1081,13 +1166,15 @@ def format_rsi_display(rsi_val: float | None) -> str:
 def make_metric_tile_html(
     title: str,
     value: str,
-    subtext: str,
+    subtext: str | None = None,
     badge_text: str | None = None,
     badge_class: str | None = None,
     val_color: str = "#0F172A",
     subtext_color: str = "#64748B",
     inline_badge_html: str | None = None,
     badge_style: str | None = None,
+    subtext_html: str | None = None,
+    value_right_html: str | None = None,
 ) -> str:
     """Generate standardized, uniform KPI mini-box HTML."""
     badge_html = ""
@@ -1096,7 +1183,14 @@ def make_metric_tile_html(
         cls_attr = f' class="metric-badge {badge_class}"' if badge_class else ' class="metric-badge"'
         badge_html = f'<span{cls_attr}{style_attr}>{badge_text}</span>'
 
-    inline_html = f"{inline_badge_html}" if inline_badge_html else ""
+    right_content = f"{value_right_html}" if value_right_html else (f"{inline_badge_html}" if inline_badge_html else "")
+
+    if subtext_html is not None:
+        sub_content = f'<div class="kpi-mini-subtext" style="display: flex; align-items: flex-start; justify-content: flex-start; min-height: 18px;">{subtext_html}</div>'
+    elif subtext:
+        sub_content = f'<div class="kpi-mini-subtext" style="color: {subtext_color};" title="{subtext}">{subtext}</div>'
+    else:
+        sub_content = '<div class="kpi-mini-subtext" style="min-height: 18px;"></div>'
 
     return f"""
     <div class="kpi-mini-box">
@@ -1105,9 +1199,9 @@ def make_metric_tile_html(
         {badge_html}
       </div>
       <div class="kpi-mini-value" style="color: {val_color};">
-        <span style="font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{value}</span>{inline_html}
+        <span style="font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{value}</span>{right_content}
       </div>
-      <div class="kpi-mini-subtext" style="color: {subtext_color};" title="{subtext}">{subtext}</div>
+      {sub_content}
     </div>
     """
 
@@ -1320,6 +1414,35 @@ def normalize_analyst_target(ticker: str, live_price: float, tv_data: dict, raw_
     return None, None
 
 
+def compute_ytd_pct(hist: pd.DataFrame, current_price: float | None = None) -> float | None:
+    """
+    Calculate Year-to-Date (YTD) percentage return.
+    Base price is the close of the last trading day of the previous calendar year.
+    Fallback to the first trading day of the current calendar year if previous year is unavailable.
+    """
+    if hist.empty or "Close" not in hist.columns:
+        return None
+    try:
+        latest_dt = hist.index[-1]
+        curr_year = latest_dt.year
+        prior_year_data = hist[hist.index.year < curr_year]
+        if not prior_year_data.empty:
+            base_price = float(prior_year_data["Close"].iloc[-1])
+        else:
+            curr_year_data = hist[hist.index.year == curr_year]
+            if not curr_year_data.empty:
+                base_price = float(curr_year_data["Close"].iloc[0])
+            else:
+                return None
+
+        now_price = current_price if (current_price is not None and not np.isnan(current_price) and current_price > 0) else float(hist["Close"].iloc[-1])
+        if base_price > 0 and now_price > 0:
+            return ((now_price / base_price) - 1.0) * 100.0
+    except Exception:
+        pass
+    return None
+
+
 @st.cache_data(ttl=900, show_spinner=False)
 def fetch_ticker_data(ticker: str) -> dict:
     """
@@ -1353,7 +1476,13 @@ def fetch_ticker_data(ticker: str) -> dict:
             "ath":           np.nan,
             "dist_ath":      np.nan,
             "current_price": np.nan,
-            "ext_price":      None,
+            "reg_perf_pct":  None,
+            "reg_perf_abs":  None,
+            "ext_perf_pct":  None,
+            "ext_perf_abs":  None,
+            "ext_label":     None,
+            "ext_price":     None,
+            "ytd_pct":       None,
             "peg_2y":        None,
             "cagr_2y_pct":   None,
             "eps_ntm":       None,
@@ -1384,7 +1513,13 @@ def fetch_ticker_data(ticker: str) -> dict:
             "ath":           np.nan,
             "dist_ath":      np.nan,
             "current_price": np.nan,
-            "ext_price":      None,
+            "reg_perf_pct":  None,
+            "reg_perf_abs":  None,
+            "ext_perf_pct":  None,
+            "ext_perf_abs":  None,
+            "ext_label":     None,
+            "ext_price":     None,
+            "ytd_pct":       None,
             "peg_2y":        None,
             "cagr_2y_pct":   None,
             "eps_ntm":       None,
@@ -1439,6 +1574,9 @@ def fetch_ticker_data(ticker: str) -> dict:
         ath = current_price
 
     dist_ath = ((current_price - ath) / ath) * 100.0 if ath > 0 else 0.0
+
+    # ── Year-to-Date (YTD) Percentage Return ──
+    ytd_pct = compute_ytd_pct(hist_full, current_price)
 
     # ── Indicators calculated with full history warmup ──
     hist_full[f"MA{MA_SHORT}"] = hist_full["Close"].rolling(MA_SHORT, min_periods=10).mean()
@@ -1517,23 +1655,37 @@ def fetch_ticker_data(ticker: str) -> dict:
     # Check marketState: 'PRE', 'POST' / 'POSTPOST', 'REGULAR', 'CLOSED'
     market_state = str(info.get("marketState", "")).upper()
     reg_chg = info.get("regularMarketChangePercent")
+    reg_chg_abs = info.get("regularMarketChange")
     pre_chg = info.get("preMarketChangePercent")
+    pre_chg_abs = info.get("preMarketChange")
     post_chg = info.get("postMarketChangePercent")
+    post_chg_abs = info.get("postMarketChange")
     prev_close = info.get("regularMarketPreviousClose") or info.get("previousClose")
 
     # If reg_chg is not provided directly, calculate vs previous close
     if reg_chg is None:
         if prev_close and isinstance(prev_close, (int, float)) and prev_close > 0 and current_price:
             reg_chg = ((current_price / float(prev_close)) - 1.0) * 100.0
+            if reg_chg_abs is None:
+                reg_chg_abs = current_price - float(prev_close)
         elif len(hist_full) >= 2:
             pc = float(hist_full["Close"].iloc[-2])
             if pc > 0 and current_price:
                 reg_chg = ((current_price / pc) - 1.0) * 100.0
+                if reg_chg_abs is None:
+                    reg_chg_abs = current_price - pc
+
+    if reg_chg_abs is None and reg_chg is not None and prev_close and isinstance(prev_close, (int, float)) and prev_close > 0:
+        reg_chg_abs = current_price - float(prev_close)
+    elif reg_chg_abs is None and reg_chg is not None and current_price:
+        reg_chg_abs = current_price - (current_price / (1.0 + (reg_chg / 100.0)))
 
     reg_perf_pct = float(reg_chg) if reg_chg is not None and not np.isnan(reg_chg) else None
+    reg_perf_abs = float(reg_chg_abs) if reg_chg_abs is not None and not np.isnan(reg_chg_abs) else None
 
     # Extended-hours trading prints (never overwrites regular session daily performance)
     ext_perf_pct = None
+    ext_perf_abs = None
     ext_label = None
     ext_price = None
     pre_price = info.get("preMarketPrice")
@@ -1543,10 +1695,18 @@ def fetch_ticker_data(ticker: str) -> dict:
         ext_label = "Pre"
         ext_perf_pct = float(pre_chg)
         ext_price = float(pre_price) if pre_price is not None and not np.isnan(pre_price) else None
+        if pre_chg_abs is not None and not np.isnan(pre_chg_abs):
+            ext_perf_abs = float(pre_chg_abs)
+        elif ext_price is not None and current_price:
+            ext_perf_abs = ext_price - current_price
     elif post_chg is not None and not np.isnan(post_chg) and abs(float(post_chg)) >= 0.005:
         ext_label = "Post"
         ext_perf_pct = float(post_chg)
         ext_price = float(post_price) if post_price is not None and not np.isnan(post_price) else None
+        if post_chg_abs is not None and not np.isnan(post_chg_abs):
+            ext_perf_abs = float(post_chg_abs)
+        elif ext_price is not None and current_price:
+            ext_perf_abs = ext_price - current_price
 
     # ── ETF Detection (quoteType == 'ETF' or tickers like SMGB.L, VUAG.L, VWRP.L; force override SPCX as Equity) ──
     quote_type = str(info.get("quoteType", "")).upper()
@@ -1772,9 +1932,12 @@ def fetch_ticker_data(ticker: str) -> dict:
         "ath":               ath,
         "dist_ath":          dist_ath,
         "reg_perf_pct":      reg_perf_pct,
+        "reg_perf_abs":      reg_perf_abs,
         "ext_perf_pct":      ext_perf_pct,
+        "ext_perf_abs":      ext_perf_abs,
         "ext_label":         ext_label,
         "ext_price":         ext_price,
+        "ytd_pct":           ytd_pct,
         "perf_pct":          reg_perf_pct,
         "perf_ext_label":    ext_label,
         "peg_2y":            peg_2y,
@@ -3451,15 +3614,16 @@ for row_start in range(0, len(ticker_list), n_cols):
                 ccy_sym = get_currency_symbol(ccy)
                 price_now = float(d.get("current_price", hist_df["Close"].iloc[-1]))
 
-                # ── Box 1: Price with % vs SMA 50 & Dual Performance Display ──
-                ma50_val = hist_df[f"MA{MA_SHORT}"].dropna() if f"MA{MA_SHORT}" in hist_df.columns else pd.Series(dtype=float)
-                if len(ma50_val):
-                    sma50_last = float(ma50_val.iloc[-1])
-                    pct_vs_ma  = (price_now / sma50_last - 1.0) * 100.0
-                    subtext_p  = f"{pct_vs_ma:+.1f}% vs SMA 50"
-                    sub_color_p = "#047857" if pct_vs_ma >= 0 else "#B91C1C"
+                # ── Box 1: Price with YTD Return & Dual Performance Display ──
+                ytd_val = d.get("ytd_pct")
+                if ytd_val is None:
+                    ytd_val = compute_ytd_pct(hist_df, price_now)
+
+                if ytd_val is not None and not np.isnan(ytd_val):
+                    subtext_p = f"{ytd_val:+.1f}% YTD"
+                    sub_color_p = "#047857" if ytd_val >= 0 else "#B91C1C"
                 else:
-                    subtext_p = "vs SMA 50 N/A"
+                    subtext_p = "YTD N/A"
                     sub_color_p = MUTED_SLATE
 
                 dual_perf_html = make_dual_perf_pill_html(
@@ -3468,16 +3632,29 @@ for row_start in range(0, len(ticker_list), n_cols):
                     d.get("ext_label"),
                     d.get("ext_price"),
                     ccy_sym,
+                    align="left",
+                    reg_abs=d.get("reg_perf_abs"),
+                    ext_abs=d.get("ext_perf_abs"),
                 )
 
-                box1_html = make_metric_tile_html(
-                    title=f"Price ({ccy})",
-                    value=f"{price_now:.2f}",
-                    subtext=subtext_p,
-                    val_color=TEXT_DARK,
-                    subtext_color=sub_color_p,
-                    inline_badge_html=dual_perf_html,
-                )
+                box1_html = f"""
+                <div class="kpi-mini-box">
+                  <div class="kpi-mini-header">
+                    <span class="kpi-mini-title" title="Price ({ccy})">Price ({ccy})</span>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; width: 100%; flex: 1;">
+                    <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0; flex: 1;">
+                      <span style="font-size: 1.25rem; font-weight: 700; color: {TEXT_DARK}; font-variant-numeric: tabular-nums; line-height: 1.2;">
+                        {price_now:.2f}
+                      </span>
+                      {dual_perf_html}
+                    </div>
+                    <div style="display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-start; flex-shrink: 0; padding-top: 3px;">
+                      <span style="font-size: 0.74rem; font-weight: 600; color: {sub_color_p}; white-space: nowrap; text-align: right;" title="{subtext_p}">{subtext_p}</span>
+                    </div>
+                  </div>
+                </div>
+                """
 
                 # ── Box 2: Distance to Lifetime All-Time High (ATH) ──
                 ath = d.get("ath", price_now)
@@ -3506,7 +3683,7 @@ for row_start in range(0, len(ticker_list), n_cols):
                     dist_str = f"{dist_ath:.1f}%" if dist_ath < -0.05 else "0.0%"
 
                 box2_html = make_metric_tile_html(
-                    title="Distance to ATH",
+                    title="Distance to All-Time High (ATH)",
                     value=dist_str,
                     subtext=f"ATH: {ccy_sym}{ath:.2f}",
                     badge_text=dist_badge_text,
@@ -3750,9 +3927,9 @@ for row_start in range(0, len(ticker_list), n_cols):
                 # ── Detail Bollinger & Trend Chart ──
                 if show_charts:
                     chart_bar_html = f"""
-                    <div class="expand-chart-bar">
+                    <div class="expand-chart-bar" style="margin-top: 16px; margin-bottom: 12px; padding-bottom: 20px; position: relative; z-index: 998; pointer-events: auto;">
                       <span style="font-size: 0.70rem; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.04em;">Trend & Valuation Corridor</span>
-                      <button class="expand-chart-btn" data-ticker="{tk}" title="Open Interactive Full-Screen View with touch pinch-zoom & pan">⛶ Expand Chart</button>
+                      <button class="expand-chart-btn" data-ticker="{tk}" onclick="if(window.deanOpenFullscreen) window.deanOpenFullscreen('{tk}'); if(window.parent && window.parent.deanOpenFullscreen) window.parent.deanOpenFullscreen('{tk}');" style="position: relative; z-index: 999; pointer-events: auto; touch-action: manipulation; cursor: pointer;" title="Open Interactive Full-Screen View with touch pinch-zoom & pan">⛶ Expand Chart</button>
                     </div>
                     """
                     st.html(chart_bar_html)
@@ -3932,7 +4109,7 @@ with st.expander("Full valuation data table", expanded=False):
             "Status": status,
             "Price": round(d.get("current_price", np.nan), 2),
             "12M Target": target_up_str,
-            "Distance to ATH": f"{dist_v:+.1f}%" if not np.isnan(dist_v) else "—",
+            "Distance to All-Time High (ATH)": f"{dist_v:+.1f}%" if not np.isnan(dist_v) else "—",
             z_label: z_v_str,
             "2Y PEG": peg_display,
             "ATH": f"{ccy_s}{ath_v:.2f}" if not np.isnan(ath_v) else "—",
@@ -4607,16 +4784,23 @@ SNAPSHOT_JS = """
     function handleExpandChart(e) {
       const expandBtn = e.target.closest('.expand-chart-btn');
       if (!expandBtn) return;
-      e.preventDefault();
+      if (e.cancelable) e.preventDefault();
       e.stopPropagation();
 
       const ticker = expandBtn.getAttribute('data-ticker') || '';
       const card = expandBtn.closest('[data-testid="stVerticalBlockBorderWrapper"]') || getCardWrapper(ticker);
-      const origPlot = card ? card.querySelector('.js-plotly-plot') : null;
+      let origPlot = card ? (card.querySelector('.js-plotly-plot') || card.querySelector('[data-testid="stPlotlyChart"]')) : null;
+      if (origPlot && origPlot.querySelector && origPlot.querySelector('.js-plotly-plot')) {
+        origPlot = origPlot.querySelector('.js-plotly-plot');
+      }
       openModalForPlot(origPlot, ticker);
     }
     pDoc.addEventListener('click', handleExpandChart, true);
     pDoc.addEventListener('touchend', handleExpandChart, { capture: true, passive: false });
+    if (document !== pDoc) {
+      document.addEventListener('click', handleExpandChart, true);
+      document.addEventListener('touchend', handleExpandChart, { capture: true, passive: false });
+    }
 
     // ── Refocus Chart Button Click on Card ──
     pDoc.addEventListener('click', function(e) {

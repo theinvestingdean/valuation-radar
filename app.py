@@ -140,12 +140,12 @@ STATUS_COLORS = {
     "Overvalued": COLOR_OVERVALUED,
 }
 
-PAGE_BG      = "#F8FAFC"       # Clean slate off-white canvas
+PAGE_BG      = "#F4F6F8"       # Soft modern off-white/gray canvas
 CARD_BG      = "#FFFFFF"       # Pure white cards
 GRID_COLOR   = "#F1F5F9"       # Thin light-gray grid lines
-TEXT_DARK    = "#0F172A"       # Dark slate for headings / primary text
+TEXT_DARK    = "#1F2937"       # Softened dark slate gray for headings / primary text
 MUTED_SLATE  = "#64748B"       # Crisp slate for secondary labels
-BORDER_COLOR = "#E2E8F0"       # Subtle card borders
+BORDER_COLOR = "#E5E7EB"       # Subtle card borders
 ACCENT_BLUE  = "#2563EB"       # Clean royal blue for price action
 
 # ─────────────────────────────────────────────
@@ -161,25 +161,38 @@ st.set_page_config(
 st.markdown(
     f"""
     <style>
-        /* ── Base canvas ── */
-        .stApp {{
-            background-color: {PAGE_BG};
-            color: {TEXT_DARK};
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        }}
-        section[data-testid="stSidebar"] {{
-            background-color: #FFFFFF;
-            border-right: 1px solid {BORDER_COLOR};
+        /* Hide the default Streamlit page navigation menu */
+        [data-testid="stSidebarNav"] {{
+            display: none !important;
         }}
 
-        /* ── Distinct Stock Card Container ── */
+        /* Target the metric tiles and dataframes to look like elevated cards */
+        [data-testid="stMetric"], [data-testid="stDataFrame"] {{
+            background-color: #FFFFFF !important;
+            border: 1px solid #E5E7EB !important;
+            border-radius: 12px !important;
+            padding: 16px !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
+        }}
+
+        /* Ensure the metric labels (e.g., "PRICE (USD)") are a soft slate gray */
+        [data-testid="stMetricLabel"] p {{
+            color: #6B7280 !important;
+            font-weight: 600 !important;
+        }}
+
+        /* ── Elevated Foreground Cards on Canvas ── */
         div[data-testid="stVerticalBlockBorderWrapper"] {{
             background-color: #FFFFFF !important;
             border: 1px solid {BORDER_COLOR} !important;
-            border-radius: 10px !important;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
-            padding: 14px 14px !important;
+            border-radius: 12px !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
+            padding: 18px 18px !important;
             margin-bottom: 20px !important;
+            transition: box-shadow 0.2s ease-in-out, border-color 0.2s ease-in-out !important;
+        }}
+        div[data-testid="stVerticalBlockBorderWrapper"]:hover {{
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -2px rgba(0, 0, 0, 0.04) !important;
         }}
 
         /* ── Uniform Responsive KPI Mini-Boxes ── */
@@ -244,12 +257,20 @@ st.markdown(
 
         /* ── Metric cards for top KPI summary ── */
         div[data-testid="metric-container"] {{
-            background-color: {CARD_BG};
-            border: 1px solid {BORDER_COLOR};
-            border-radius: 8px;
-            padding: 10px 14px;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+            background-color: {CARD_BG} !important;
+            border: 1px solid {BORDER_COLOR} !important;
+            border-radius: 12px !important;
+            padding: 12px 16px !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
             min-height: 84px;
+        }}
+
+        /* ── Executive Highlights Cards ── */
+        .highlights-card {{
+            background-color: {CARD_BG} !important;
+            border: 1px solid {BORDER_COLOR} !important;
+            border-radius: 12px !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
         }}
         div[data-testid="metric-container"] label,
         div[data-testid="metric-container"] [data-testid="stMetricLabel"] p {{
@@ -913,7 +934,8 @@ st.markdown(
             }}
             /* Card inner padding */
             div[data-testid="stVerticalBlockBorderWrapper"] {{
-                padding: 10px 8px !important;
+                padding: 14px 12px !important;
+                border-radius: 12px !important;
             }}
             /* Top 4 KPI metric cards: wrap cleanly into 2x2 grid on mobile */
             div[data-testid="stHorizontalBlock"]:has(div[data-testid="stMetric"]) {{
@@ -3400,7 +3422,7 @@ st.markdown(
     """
     <div class="header-container" style="display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 1.25rem; margin-top: 0.5rem; margin-bottom: 1.5rem;">
       <div>
-        <h1 style="color: #0F172A; font-size: 2.1rem; font-weight: 800; margin: 0; padding: 0; letter-spacing: -0.025em; line-height: 1.2;">
+        <h1 style="color: #1F2937; font-size: 2.1rem; font-weight: 800; margin: 0; padding: 0; letter-spacing: -0.025em; line-height: 1.2;">
           The Stock Valuation Radar
         </h1>
         <p style="color: #64748B; font-size: 14px; margin-top: 6px; margin-bottom: 0; line-height: 1.4;">
@@ -3783,9 +3805,8 @@ for row_start in range(0, len(ticker_list), n_cols):
                     z_badge_text = "N/A"
 
                 box3_html = make_metric_tile_html(
-                    title="Std Dev (50 Days)",
+                    title="STANDARD DEVIATION (50 DAYS)",
                     value=z50_str,
-                    subtext="50-Day Z-Score",
                     badge_text=z_badge_text,
                     badge_class=z_badge_class,
                     val_color=z_color,
@@ -3858,7 +3879,7 @@ for row_start in range(0, len(ticker_list), n_cols):
                     box4_html = make_metric_tile_html(
                         title="Forward P/E",
                         value=fwd_pe_str,
-                        subtext="NTM Multiple",
+                        subtext="Next 12 Months Multiple",
                         badge_text=fwd_badge_text,
                         badge_class=fwd_badge_class,
                         badge_style=fwd_badge_style,
@@ -3878,7 +3899,7 @@ for row_start in range(0, len(ticker_list), n_cols):
                         and cagr_pct > 0
                     ):
                         peg_2y_str = f"{peg_2y:.2f}"
-                        peg_subtext = f"2Y CAGR: {cagr_pct:+.1f}%"
+                        peg_subtext = f"2Y Expected Growth: {cagr_pct:+.1f}%"
                         if peg_2y < 1.00:
                             peg_badge_text = "Undervalued"
                             peg_badge_class = "badge-attractive"
@@ -3893,7 +3914,7 @@ for row_start in range(0, len(ticker_list), n_cols):
                             peg_badge_style = "background-color: #FEE2E2; color: #991B1B; border: 1px solid #FECACA;"
                     else:
                         peg_2y_str = "N/A"
-                        peg_subtext = f"2Y CAGR: {cagr_pct:+.1f}%" if (cagr_pct is not None and not np.isnan(cagr_pct)) else "Consensus Unlisted"
+                        peg_subtext = f"2Y Expected Growth: {cagr_pct:+.1f}%" if (cagr_pct is not None and not np.isnan(cagr_pct)) else "Consensus Unlisted"
                         peg_badge_text = "N/A"
                         peg_badge_class = "badge-na"
                         peg_badge_style = "background-color: #F3F4F6; color: #374151; border: 1px solid #E5E7EB;"

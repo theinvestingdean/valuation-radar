@@ -320,16 +320,24 @@ st.markdown(
             padding: 2px 9px;
             border-radius: 6px;
             letter-spacing: 0.01em;
-            display: inline-block;
+            display: inline-flex !important;
+            align-items: center !important;
             text-decoration: none !important;
             box-shadow: 0 1px 2px rgba(234, 179, 8, 0.20) !important;
             transition: all 0.2s ease-in-out;
+            cursor: pointer !important;
         }}
-        a.dean-badge:hover {{
+        a.dean-badge:hover,
+        .dean-badge:hover {{
             background-color: #FACC15 !important;
             color: #111827 !important;
             border-color: #CA8A04 !important;
-            box-shadow: 0 2px 4px rgba(234, 179, 8, 0.30);
+            box-shadow: 0 3px 6px rgba(234, 179, 8, 0.35) !important;
+            transform: translateY(-1px) !important;
+        }}
+        a.dean-badge:active,
+        .dean-badge:active {{
+            transform: translateY(0px) !important;
         }}
         .header-container {{
             margin-top: 0.5rem !important;
@@ -3376,7 +3384,7 @@ with st.sidebar:
         '<div>Quantitative corridor framework</div>'
         '<div style="white-space: nowrap; margin-top: 4px; display: inline-flex; align-items: center; gap: 5px;">'
         '<span>Curated by</span>'
-        '<a href="https://www.instagram.com/theinvestingdean" target="_blank" rel="noopener noreferrer" class="dean-badge" style="font-size: 0.70rem; padding: 1px 7px;">@theinvestingdean</a>'
+        '<a href="https://www.instagram.com/theinvestingdean" target="_blank" rel="noopener noreferrer" class="dean-badge" title="Visit @theinvestingdean on Instagram" style="font-size: 0.70rem; padding: 2px 7px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px; flex-shrink: 0;"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>@theinvestingdean</a>'
         '</div>'
         '</div>',
         unsafe_allow_html=True,
@@ -3399,7 +3407,7 @@ st.markdown(
           Know when quality stocks enter the Buy Zone, Standard DCA, or Wait for Pullback
         </p>
         <div style="margin-top: 8px;">
-          <a href="https://www.instagram.com/theinvestingdean" target="_blank" rel="noopener noreferrer" class="dean-badge" style="display: inline-block;">@theinvestingdean</a>
+          <a href="https://www.instagram.com/theinvestingdean" target="_blank" rel="noopener noreferrer" class="dean-badge" title="Visit @theinvestingdean on Instagram"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px; flex-shrink: 0;"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>@theinvestingdean</a>
         </div>
       </div>
       <div style="display: flex; align-items: center; gap: 7px; background-color: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 9999px; padding: 6px 14px; margin-top: 4px;">
@@ -4005,7 +4013,7 @@ for row_start in range(0, len(ticker_list), n_cols):
                 st.html(
                     f"""
                     <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 6px; margin-top: 4px; border-top: 1px dashed #E2E8F0; font-size: 0.70rem; color: #94A3B8;">
-                      <span class="dean-badge" style="font-size: 0.65rem; padding: 1px 6px;">@theinvestingdean</span>
+                      <a href="https://www.instagram.com/theinvestingdean" target="_blank" rel="noopener noreferrer" class="dean-badge" title="Visit @theinvestingdean on Instagram" style="font-size: 0.65rem; padding: 1px 6px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px; flex-shrink: 0;"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>@theinvestingdean</a>
                       <span>The Stock Valuation Radar • {val_timeframe} Corridor</span>
                     </div>
                     """

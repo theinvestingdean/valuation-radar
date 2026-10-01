@@ -214,31 +214,23 @@ st.markdown(
             box-sizing: border-box;
         }}
 
-        /* 1. Force the absolute outer wrapper to be solid white with a thick border and 3D shadow */
+        /* 1. Target ONLY the master stock container wrappers */
         div[class*="st-key-stock_card_"],
         div[data-testid="stVerticalBlockBorderWrapper"] {{
             background-color: #FFFFFF !important;
             background-image: none !important;
-            border: 2px solid #94A3B8 !important; /* Thicker, darker structural border */
+            border: 2px solid #94A3B8 !important;
             border-radius: 16px !important;
-            box-shadow: 0px 12px 24px -4px rgba(0, 0, 0, 0.15), 0px 8px 12px -6px rgba(0, 0, 0, 0.1) !important; /* Deep 3D drop shadow */
+            box-shadow: 0px 12px 24px -4px rgba(0, 0, 0, 0.15), 0px 8px 12px -6px rgba(0, 0, 0, 0.1) !important;
             padding: 1.5rem !important;
             margin-bottom: 2.5rem !important;
-            position: relative !important;
-            z-index: 10 !important;
         }}
 
-        /* 2. Brute-force inner nested divs to block any dots from bleeding through */
-        div[class*="st-key-stock_card_"] div,
-        div[data-testid="stVerticalBlockBorderWrapper"] div {{
-            background-image: none !important;
-        }}
-
-        /* 3. Keep the inner metric tiles soft gray so they contrast against the pure white master card */
+        /* 2. Style inner metric tiles safely without affecting charts */
         [data-testid="stMetric"],
         .kpi-mini-box {{
             background-color: #F8FAFC !important; 
-            border: 1px solid #CBD5E1 !important;
+            border: 1px solid #E2E8F0 !important;
             border-radius: 8px !important;
             padding: 12px !important;
             box-shadow: none !important; 
@@ -1625,6 +1617,12 @@ def fetch_ticker_data(ticker: str) -> dict:
     else:
         hist_full.index = pd.to_datetime(hist_full.index)
 
+    # Clean any completely empty bars returned by yfinance at market open/close
+    if not hist_full.empty:
+        all_ohlc_nan = hist_full[["Open", "High", "Low", "Close"]].isna().all(axis=1)
+        if all_ohlc_nan.any():
+            hist_full = hist_full.loc[~all_ohlc_nan].copy()
+
     # ── Live Current Price Resolution ──
     current_price = None
     try:
@@ -1638,19 +1636,32 @@ def fetch_ticker_data(ticker: str) -> dict:
     except Exception:
         pass
 
-    if current_price is None:
+    if current_price is None or np.isnan(current_price):
         rmp = info.get("regularMarketPrice") or info.get("currentPrice")
-        if rmp is not None and isinstance(rmp, (int, float)) and rmp > 0:
+        if rmp is not None and isinstance(rmp, (int, float)) and rmp > 0 and not np.isnan(rmp):
             current_price = float(rmp)
 
-    if current_price is None:
-        current_price = float(hist_full["Close"].iloc[-1])
+    if current_price is None or np.isnan(current_price):
+        valid_closes = hist_full["Close"].dropna()
+        if not valid_closes.empty:
+            current_price = float(valid_closes.iloc[-1])
 
-    # Ensure latest price is reflected in latest bar
-    if not np.isnan(current_price):
-        hist_full["Close"].iloc[-1] = current_price
-        if "High" in hist_full.columns and current_price > hist_full["High"].iloc[-1]:
-            hist_full["High"].iloc[-1] = current_price
+    # Ensure latest price is reflected in latest bar using .loc (avoids ChainedAssignmentError in pandas)
+    if not hist_full.empty and current_price is not None and not np.isnan(current_price):
+        last_idx = hist_full.index[-1]
+        hist_full.loc[last_idx, "Close"] = current_price
+        if "High" in hist_full.columns:
+            cur_high = hist_full.loc[last_idx, "High"]
+            if pd.isna(cur_high) or current_price > cur_high:
+                hist_full.loc[last_idx, "High"] = current_price
+        if "Low" in hist_full.columns:
+            cur_low = hist_full.loc[last_idx, "Low"]
+            if pd.isna(cur_low) or current_price < cur_low:
+                hist_full.loc[last_idx, "Low"] = current_price
+        if "Open" in hist_full.columns and pd.isna(hist_full.loc[last_idx, "Open"]):
+            hist_full.loc[last_idx, "Open"] = current_price
+    elif not hist_full.empty and hist_full["Close"].isna().iloc[-1]:
+        hist_full = hist_full.dropna(subset=["Close"]).copy()
 
     # ── Lifetime All-Time High (ATH) Calculation ──
     ath = float(hist_full["High"].max()) if "High" in hist_full.columns else float(hist_full["Close"].max())
@@ -2089,23 +2100,26 @@ def fetch_ticker_data(ticker: str) -> dict:
         # 90-day fair value corridor (~63 trading days)
         end_date = hist_recent.index[-1]
         start_90 = end_date - pd.Timedelta(days=CORRIDOR_DAYS)
-        window_pe_90 = hist_recent.loc[hist_recent.index >= start_90, "PE"]
+        window_pe_90 = hist_recent.loc[hist_recent.index >= start_90, "PE"].dropna()
 
-        pe_current = float(window_pe_90.iloc[-1]) if len(window_pe_90) else np.nan
-        pe_lo_90   = float(window_pe_90.quantile(0.10))
-        pe_mid_90  = float(window_pe_90.quantile(0.50))
-        pe_hi_90   = float(window_pe_90.quantile(0.90))
+        # If current_price and eps are valid, compute pe_current directly
+        pe_from_price = (current_price / eps) if (current_price is not None and not np.isnan(current_price) and eps and eps > 0) else np.nan
+        pe_current = pe_from_price if not np.isnan(pe_from_price) else (float(window_pe_90.iloc[-1]) if len(window_pe_90) else np.nan)
+
+        pe_lo_90   = float(window_pe_90.quantile(0.10)) if len(window_pe_90) else np.nan
+        pe_mid_90  = float(window_pe_90.quantile(0.50)) if len(window_pe_90) else np.nan
+        pe_hi_90   = float(window_pe_90.quantile(0.90)) if len(window_pe_90) else np.nan
         pe_std_90  = float(window_pe_90.std()) if len(window_pe_90) > 1 else np.nan
 
         # 1-Year fair value corridor (~252 trading days / 365 calendar days)
         start_1y = end_date - pd.Timedelta(days=365)
-        window_pe_1y = hist_recent.loc[hist_recent.index >= start_1y, "PE"]
+        window_pe_1y = hist_recent.loc[hist_recent.index >= start_1y, "PE"].dropna()
         if len(window_pe_1y) < 20:
-            window_pe_1y = hist_recent["PE"].tail(min(len(hist_recent), 252))
+            window_pe_1y = hist_recent["PE"].dropna().tail(min(len(hist_recent["PE"].dropna()), 252))
 
-        pe_lo_1y   = float(window_pe_1y.quantile(0.10))
-        pe_mid_1y  = float(window_pe_1y.quantile(0.50))
-        pe_hi_1y   = float(window_pe_1y.quantile(0.90))
+        pe_lo_1y   = float(window_pe_1y.quantile(0.10)) if len(window_pe_1y) else np.nan
+        pe_mid_1y  = float(window_pe_1y.quantile(0.50)) if len(window_pe_1y) else np.nan
+        pe_hi_1y   = float(window_pe_1y.quantile(0.90)) if len(window_pe_1y) else np.nan
         pe_std_1y  = float(window_pe_1y.std()) if len(window_pe_1y) > 1 else np.nan
 
         result["pe_current"] = pe_current
@@ -2122,8 +2136,8 @@ def fetch_ticker_data(ticker: str) -> dict:
         result["pe_mid"]     = pe_mid_90
         result["pe_hi"]      = pe_hi_90
 
-        fair_val_90 = pe_mid_90 * eps
-        fair_val_1y = pe_mid_1y * eps
+        fair_val_90 = (pe_mid_90 * eps) if (pe_mid_90 and not np.isnan(pe_mid_90)) else np.nan
+        fair_val_1y = (pe_mid_1y * eps) if (pe_mid_1y and not np.isnan(pe_mid_1y)) else np.nan
 
         result["fair_value_90d"] = fair_val_90
         result["fair_value_1y"]  = fair_val_1y
@@ -2133,6 +2147,9 @@ def fetch_ticker_data(ticker: str) -> dict:
         if pe_mid_90 and not np.isnan(pe_mid_90) and pe_mid_90 > 0 and pe_current and not np.isnan(pe_current):
             result["diff_90d"] = ((pe_current / pe_mid_90) - 1.0) * 100.0
             result["upside_90d"] = ((pe_mid_90 / pe_current) - 1.0) * 100.0
+        elif fair_val_90 and not np.isnan(fair_val_90) and fair_val_90 > 0 and current_price and not np.isnan(current_price):
+            result["diff_90d"] = ((current_price / fair_val_90) - 1.0) * 100.0
+            result["upside_90d"] = ((fair_val_90 / current_price) - 1.0) * 100.0
         else:
             result["diff_90d"] = np.nan
             result["upside_90d"] = np.nan
@@ -2140,6 +2157,9 @@ def fetch_ticker_data(ticker: str) -> dict:
         if pe_mid_1y and not np.isnan(pe_mid_1y) and pe_mid_1y > 0 and pe_current and not np.isnan(pe_current):
             result["diff_1y"] = ((pe_current / pe_mid_1y) - 1.0) * 100.0
             result["upside_1y"] = ((pe_mid_1y / pe_current) - 1.0) * 100.0
+        elif fair_val_1y and not np.isnan(fair_val_1y) and fair_val_1y > 0 and current_price and not np.isnan(current_price):
+            result["diff_1y"] = ((current_price / fair_val_1y) - 1.0) * 100.0
+            result["upside_1y"] = ((fair_val_1y / current_price) - 1.0) * 100.0
         else:
             result["diff_1y"] = np.nan
             result["upside_1y"] = np.nan
@@ -2147,30 +2167,30 @@ def fetch_ticker_data(ticker: str) -> dict:
         result["upside_to_median"] = result["upside_90d"]
 
         # Z-Scores relative to corridors
-        result["z_90d"] = float((pe_current - pe_mid_90) / pe_std_90) if pe_std_90 and not np.isnan(pe_std_90) and pe_std_90 > 0 else np.nan
-        result["z_1y"]  = float((pe_current - pe_mid_1y) / pe_std_1y) if pe_std_1y and not np.isnan(pe_std_1y) and pe_std_1y > 0 else np.nan
+        result["z_90d"] = float((pe_current - pe_mid_90) / pe_std_90) if pe_std_90 and not np.isnan(pe_std_90) and pe_std_90 > 0 and pe_current and not np.isnan(pe_current) else np.nan
+        result["z_1y"]  = float((pe_current - pe_mid_1y) / pe_std_1y) if pe_std_1y and not np.isnan(pe_std_1y) and pe_std_1y > 0 and pe_current and not np.isnan(pe_current) else np.nan
 
     else:
         # Price corridor mode (for ETFs and assets without reliable P/E)
         end_date = hist_recent.index[-1]
         start_90 = end_date - pd.Timedelta(days=CORRIDOR_DAYS)
-        window_p_90 = hist_recent.loc[hist_recent.index >= start_90, "Close"]
+        window_p_90 = hist_recent.loc[hist_recent.index >= start_90, "Close"].dropna()
 
-        p_current = float(window_p_90.iloc[-1]) if len(window_p_90) else np.nan
-        p_lo_90   = float(window_p_90.quantile(0.10))
-        p_mid_90  = float(window_p_90.quantile(0.50))
-        p_hi_90   = float(window_p_90.quantile(0.90))
+        p_current = current_price if (current_price is not None and not np.isnan(current_price)) else (float(window_p_90.iloc[-1]) if len(window_p_90) else np.nan)
+        p_lo_90   = float(window_p_90.quantile(0.10)) if len(window_p_90) else np.nan
+        p_mid_90  = float(window_p_90.quantile(0.50)) if len(window_p_90) else np.nan
+        p_hi_90   = float(window_p_90.quantile(0.90)) if len(window_p_90) else np.nan
         p_std_90  = float(window_p_90.std()) if len(window_p_90) > 1 else np.nan
 
         # 1-Year fair value corridor (~252 trading days / 365 calendar days)
         start_1y = end_date - pd.Timedelta(days=365)
-        window_p_1y = hist_recent.loc[hist_recent.index >= start_1y, "Close"]
+        window_p_1y = hist_recent.loc[hist_recent.index >= start_1y, "Close"].dropna()
         if len(window_p_1y) < 20:
-            window_p_1y = hist_recent["Close"].tail(min(len(hist_recent), 252))
+            window_p_1y = hist_recent["Close"].dropna().tail(min(len(hist_recent["Close"].dropna()), 252))
 
-        p_lo_1y   = float(window_p_1y.quantile(0.10))
-        p_mid_1y  = float(window_p_1y.quantile(0.50))
-        p_hi_1y   = float(window_p_1y.quantile(0.90))
+        p_lo_1y   = float(window_p_1y.quantile(0.10)) if len(window_p_1y) else np.nan
+        p_mid_1y  = float(window_p_1y.quantile(0.50)) if len(window_p_1y) else np.nan
+        p_hi_1y   = float(window_p_1y.quantile(0.90)) if len(window_p_1y) else np.nan
         p_std_1y  = float(window_p_1y.std()) if len(window_p_1y) > 1 else np.nan
 
         result["price_current"] = p_current
@@ -2209,8 +2229,8 @@ def fetch_ticker_data(ticker: str) -> dict:
         result["upside_to_median"] = result["upside_90d"]
 
         # Z-Scores relative to corridors
-        result["z_90d"] = float((p_current - p_mid_90) / p_std_90) if p_std_90 and not np.isnan(p_std_90) and p_std_90 > 0 else np.nan
-        result["z_1y"]  = float((p_current - p_mid_1y) / p_std_1y) if p_std_1y and not np.isnan(p_std_1y) and p_std_1y > 0 else np.nan
+        result["z_90d"] = float((p_current - p_mid_90) / p_std_90) if p_std_90 and not np.isnan(p_std_90) and p_std_90 > 0 and p_current and not np.isnan(p_current) else np.nan
+        result["z_1y"]  = float((p_current - p_mid_1y) / p_std_1y) if p_std_1y and not np.isnan(p_std_1y) and p_std_1y > 0 and p_current and not np.isnan(p_current) else np.nan
 
     return result
 
@@ -2225,30 +2245,26 @@ def compute_status(data: dict, timeframe: str = "90-Day") -> str:
     if data.get("error"):
         return "Standard DCA"
 
-    if timeframe == "1-Year":
-        pct = data.get("diff_1y")
-        if pct is None or np.isnan(pct):
-            if data.get("pe_mode"):
-                cur = data.get("pe_current", np.nan)
-                mid = data.get("pe_mid_1y", data.get("pe_mid", np.nan))
-            else:
-                cur = data.get("price_current", np.nan)
-                mid = data.get("price_mid_1y", data.get("price_mid", np.nan))
-            if np.isnan(cur) or np.isnan(mid) or mid == 0:
-                return "Standard DCA"
+    is_1y = (timeframe == "1-Year")
+    pct = data.get("diff_1y" if is_1y else "diff_90d")
+
+    if pct is None or np.isnan(pct):
+        if data.get("pe_mode"):
+            cur = data.get("pe_current", np.nan)
+            mid = data.get("pe_mid_1y" if is_1y else "pe_mid_90d", data.get("pe_mid", np.nan))
+        else:
+            cur = data.get("price_current", np.nan)
+            mid = data.get("price_mid_1y" if is_1y else "price_mid_90d", data.get("price_mid", np.nan))
+
+        if not np.isnan(cur) and not np.isnan(mid) and mid != 0:
             pct = (cur / mid - 1.0) * 100.0
-    else:
-        pct = data.get("diff_90d")
-        if pct is None or np.isnan(pct):
-            if data.get("pe_mode"):
-                cur = data.get("pe_current", np.nan)
-                mid = data.get("pe_mid_90d", data.get("pe_mid", np.nan))
+        else:
+            price_now = data.get("current_price") or data.get("price_current")
+            fair_val = data.get("fair_value_1y" if is_1y else "fair_value_90d", data.get("fair_value_price"))
+            if price_now and fair_val and not np.isnan(price_now) and not np.isnan(fair_val) and fair_val != 0:
+                pct = ((price_now / fair_val) - 1.0) * 100.0
             else:
-                cur = data.get("price_current", np.nan)
-                mid = data.get("price_mid_90d", data.get("price_mid", np.nan))
-            if np.isnan(cur) or np.isnan(mid) or mid == 0:
                 return "Standard DCA"
-            pct = (cur / mid - 1.0) * 100.0
 
     if pct <= -5.0:
         return "Buy Zone"
@@ -3090,32 +3106,62 @@ def make_summary_bar(all_data: dict, timeframe: str = "90-Day") -> go.Figure:
         if d.get("error"):
             continue
         status = compute_status(d, timeframe=timeframe)
-        col    = STATUS_COLORS[status]
+        col    = STATUS_COLORS.get(status, MUTED_SLATE)
 
-        if d.get("pe_mode"):
-            cur  = d.get("pe_current", np.nan)
-            mid  = d.get("pe_mid_1y" if is_1y else "pe_mid_90d", d.get("pe_mid", np.nan))
-            unit = "P/E"
-        else:
-            cur  = d.get("price_current", np.nan)
-            mid  = d.get("price_mid_1y" if is_1y else "price_mid_90d", d.get("price_mid", np.nan))
-            unit = "Price"
+        is_pe = bool(d.get("pe_mode"))
+        cur  = d.get("pe_current") if is_pe else d.get("price_current")
+        mid  = d.get("pe_mid_1y" if is_1y else "pe_mid_90d", d.get("pe_mid")) if is_pe else d.get("price_mid_1y" if is_1y else "price_mid_90d", d.get("price_mid"))
+        unit = "P/E" if is_pe else "Price"
 
         pct = d.get("diff_1y" if is_1y else "diff_90d")
+        price_now = d.get("current_price") or d.get("price_current")
+        fair_val = d.get("fair_value_1y" if is_1y else "fair_value_90d", d.get("fair_value_price"))
+
         if pct is None or np.isnan(pct):
-            if np.isnan(cur) or np.isnan(mid) or mid == 0:
+            if cur is not None and mid is not None and not np.isnan(cur) and not np.isnan(mid) and mid != 0:
+                pct = (cur / mid - 1.0) * 100.0
+            elif price_now is not None and fair_val is not None and not np.isnan(price_now) and not np.isnan(fair_val) and fair_val != 0:
+                pct = ((price_now / fair_val) - 1.0) * 100.0
+                cur = price_now
+                mid = fair_val
+                unit = "Price"
+            else:
                 continue
-            pct = (cur / mid - 1.0) * 100.0
+
+        # Display fallback for hover
+        if cur is None or np.isnan(cur):
+            cur = price_now if (price_now and not np.isnan(price_now)) else 0.0
+            mid = fair_val if (fair_val and not np.isnan(fair_val)) else 0.0
+            unit = "Price"
 
         items.append({
             "ticker": tk,
             "pct":    pct,
             "status": status,
             "color":  col,
-            "cur":    cur,
-            "mid":    mid,
+            "cur":    cur if (cur is not None and not np.isnan(cur)) else 0.0,
+            "mid":    mid if (mid is not None and not np.isnan(mid)) else 0.0,
             "unit":   unit,
         })
+
+    if not items:
+        fig = go.Figure()
+        fig.add_annotation(
+            text="No valuation corridor data available for selected assets",
+            showarrow=False,
+            font=dict(size=13, color=MUTED_SLATE),
+            xref="paper", yref="paper",
+            x=0.5, y=0.5,
+        )
+        fig.update_layout(
+            paper_bgcolor=CARD_BG,
+            plot_bgcolor="#FFFFFF",
+            height=200,
+            xaxis=dict(visible=False),
+            yaxis=dict(visible=False),
+            margin=dict(l=20, r=20, t=20, b=20),
+        )
+        return fig
 
     # Rank by magnitude: descending order by % above/below median
     items = sorted(items, key=lambda x: x["pct"], reverse=True)

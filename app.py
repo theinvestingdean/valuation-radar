@@ -166,8 +166,84 @@ st.markdown(
             display: none !important;
         }}
 
-        /* Target the metric tiles and dataframes to look like elevated cards */
-        [data-testid="stMetric"], [data-testid="stDataFrame"] {{
+        /* Add a premium fintech dot-matrix pattern to the main background */
+        [data-testid="stAppViewContainer"] {{
+            background-color: #f8f9fa !important;
+            background-image: radial-gradient(#d1d5db 1px, transparent 1px) !important;
+            background-size: 24px 24px !important;
+        }}
+
+        /* Make the top Streamlit header transparent so it blends into the pattern */
+        [data-testid="stHeader"] {{
+            background-color: transparent !important;
+        }}
+
+        /* Ensure sidebar remains solid white against the dot-matrix canvas */
+        section[data-testid="stSidebar"] {{
+            background-color: #FFFFFF !important;
+            border-right: 1px solid #E5E7EB !important;
+        }}
+
+        /* ── Signature Yellow Pill Guide Buttons ── */
+        .guide-btn {{
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background-color: #FDE047;
+            color: #1F2937 !important;
+            font-weight: 700;
+            font-size: 14px;
+            padding: 8px 16px;
+            border-radius: 8px;
+            text-decoration: none !important;
+            border: 1px solid #EAB308;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }}
+        .guide-btn:hover {{
+            background-color: #FACC15;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transform: translateY(-1px);
+            text-decoration: none !important;
+            color: #1F2937 !important;
+        }}
+        section[data-testid="stSidebar"] .guide-btn {{
+            width: 100%;
+            justify-content: center;
+            box-sizing: border-box;
+        }}
+
+        /* 1. Force the absolute outer wrapper to be solid white with a thick border and 3D shadow */
+        div[class*="st-key-stock_card_"],
+        div[data-testid="stVerticalBlockBorderWrapper"] {{
+            background-color: #FFFFFF !important;
+            background-image: none !important;
+            border: 2px solid #94A3B8 !important; /* Thicker, darker structural border */
+            border-radius: 16px !important;
+            box-shadow: 0px 12px 24px -4px rgba(0, 0, 0, 0.15), 0px 8px 12px -6px rgba(0, 0, 0, 0.1) !important; /* Deep 3D drop shadow */
+            padding: 1.5rem !important;
+            margin-bottom: 2.5rem !important;
+            position: relative !important;
+            z-index: 10 !important;
+        }}
+
+        /* 2. Brute-force inner nested divs to block any dots from bleeding through */
+        div[class*="st-key-stock_card_"] div,
+        div[data-testid="stVerticalBlockBorderWrapper"] div {{
+            background-image: none !important;
+        }}
+
+        /* 3. Keep the inner metric tiles soft gray so they contrast against the pure white master card */
+        [data-testid="stMetric"],
+        .kpi-mini-box {{
+            background-color: #F8FAFC !important; 
+            border: 1px solid #CBD5E1 !important;
+            border-radius: 8px !important;
+            padding: 12px !important;
+            box-shadow: none !important; 
+        }}
+        [data-testid="stDataFrame"] {{
             background-color: #FFFFFF !important;
             border: 1px solid #E5E7EB !important;
             border-radius: 12px !important;
@@ -181,27 +257,8 @@ st.markdown(
             font-weight: 600 !important;
         }}
 
-        /* ── Elevated Foreground Cards on Canvas ── */
-        div[data-testid="stVerticalBlockBorderWrapper"] {{
-            background-color: #FFFFFF !important;
-            border: 1px solid {BORDER_COLOR} !important;
-            border-radius: 12px !important;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
-            padding: 18px 18px !important;
-            margin-bottom: 20px !important;
-            transition: box-shadow 0.2s ease-in-out, border-color 0.2s ease-in-out !important;
-        }}
-        div[data-testid="stVerticalBlockBorderWrapper"]:hover {{
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -2px rgba(0, 0, 0, 0.04) !important;
-        }}
-
-        /* ── Uniform Responsive KPI Mini-Boxes ── */
+        /* ── Uniform Responsive KPI Mini-Boxes (Card-within-a-Card) ── */
         .kpi-mini-box {{
-            background-color: #FFFFFF;
-            border: 1px solid {BORDER_COLOR};
-            border-radius: 8px;
-            padding: 8px 10px;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
             min-height: 84px;
             display: flex;
             flex-direction: column;
@@ -257,12 +314,11 @@ st.markdown(
 
         /* ── Metric cards for top KPI summary ── */
         div[data-testid="metric-container"] {{
-            background-color: {CARD_BG} !important;
-            border: 1px solid {BORDER_COLOR} !important;
-            border-radius: 12px !important;
-            padding: 12px 16px !important;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
-            min-height: 84px;
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            min-height: auto !important;
         }}
 
         /* ── Executive Highlights Cards ── */
@@ -274,16 +330,18 @@ st.markdown(
         }}
         div[data-testid="metric-container"] label,
         div[data-testid="metric-container"] [data-testid="stMetricLabel"] p {{
-            color: {MUTED_SLATE} !important;
-            font-size: 0.72rem !important;
+            color: #6B7280 !important;
+            font-size: 14px !important;
             font-weight: 600 !important;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
+            margin-bottom: 4px !important;
+            text-transform: none !important;
+            letter-spacing: normal !important;
         }}
         div[data-testid="metric-container"] [data-testid="stMetricValue"] {{
             color: {TEXT_DARK} !important;
-            font-size: 1.35rem !important;
+            font-size: 2.25rem !important;
             font-weight: 700 !important;
+            line-height: 1.2 !important;
         }}
         div[data-testid="metric-container"] [data-testid="stMetricDelta"] {{
             font-size: 0.8rem !important;
@@ -872,10 +930,14 @@ st.markdown(
         /* ── Responsive Mobile Optimizations (< 768px) ── */
         @media (max-width: 768px) {{
             /* Force card grid columns to 1 full-width stacked column on mobile so charts are never squashed */
+            div[data-testid="stHorizontalBlock"]:has(div[class*="st-key-stock_card_"]),
+            div[data-testid="stHorizontalBlock"]:has(.stock-card-container),
             div[data-testid="stHorizontalBlock"]:has(div[data-testid="stVerticalBlockBorderWrapper"]) {{
                 flex-direction: column !important;
                 display: flex !important;
             }}
+            div[data-testid="stHorizontalBlock"]:has(div[class*="st-key-stock_card_"]) > div[data-testid="column"],
+            div[data-testid="stHorizontalBlock"]:has(.stock-card-container) > div[data-testid="column"],
             div[data-testid="stHorizontalBlock"]:has(div[data-testid="stVerticalBlockBorderWrapper"]) > div[data-testid="column"] {{
                 width: 100% !important;
                 min-width: 100% !important;
@@ -933,6 +995,7 @@ st.markdown(
                 padding-bottom: 2rem !important;
             }}
             /* Card inner padding */
+            div[class*="st-key-stock_card_"],
             div[data-testid="stVerticalBlockBorderWrapper"] {{
                 padding: 14px 12px !important;
                 border-radius: 12px !important;
@@ -3175,11 +3238,19 @@ def on_timeframe_change():
 # SIDEBAR CONTROLS
 # ─────────────────────────────────────────────
 with st.sidebar:
-    try:
-        st.page_link("pages/1_User_Guide.py", label="View the Terminology & User Guide", icon="📚")
-        st.markdown("---")
-    except Exception:
-        pass
+    st.markdown(
+        """
+        <a href="/User_Guide" target="_self" class="guide-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+            </svg>
+            <span>View the Terminology & User Guide</span>
+        </a>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.markdown("<div style='margin-bottom: 0.75rem;'></div>", unsafe_allow_html=True)
     st.markdown("### Controls & Filters")
     st.markdown("---")
 
@@ -3441,11 +3512,20 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-try:
-    st.page_link("pages/1_User_Guide.py", label="View the Terminology & User Guide", icon="📚")
-    st.markdown("<div style='margin-bottom: 1rem;'></div>", unsafe_allow_html=True)
-except Exception:
-    pass
+st.markdown(
+    """
+    <div style="margin-bottom: 1.25rem;">
+        <a href="/User_Guide" target="_self" class="guide-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+            </svg>
+            <span>View the Terminology & User Guide</span>
+        </a>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 if not selected:
     st.warning("Please select at least one equity from the sidebar.")
@@ -3530,9 +3610,36 @@ for d in visible.values():
 
 k1, k2, k3, k4 = st.columns(4)
 k1.metric("Tracked Assets", len(selected))
-k2.metric("Buy Zone", counts["Buy Zone"])
-k3.metric("Standard DCA", counts["Standard DCA"])
-k4.metric("Wait for Pullback", counts["Wait for Pullback"])
+
+k2.markdown(
+    f"""
+    <div data-testid="stMetric">
+        <div style="font-size: 14px; color: #6B7280; margin-bottom: 4px;">Buy Zone</div>
+        <div style="font-size: 2.25rem; font-weight: 700; color: #22C55E; line-height: 1.2;">{counts['Buy Zone']}</div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+k3.markdown(
+    f"""
+    <div data-testid="stMetric">
+        <div style="font-size: 14px; color: #6B7280; margin-bottom: 4px;">Standard DCA</div>
+        <div style="font-size: 2.25rem; font-weight: 700; color: #F59E0B; line-height: 1.2;">{counts['Standard DCA']}</div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+k4.markdown(
+    f"""
+    <div data-testid="stMetric">
+        <div style="font-size: 14px; color: #6B7280; margin-bottom: 4px;">Wait for Pullback</div>
+        <div style="font-size: 2.25rem; font-weight: 700; color: #EF4444; line-height: 1.2;">{counts['Wait for Pullback']}</div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 # ── Executive Market Highlights Banner ──
 if visible:
@@ -3648,7 +3755,7 @@ for row_start in range(0, len(ticker_list), n_cols):
             # Anchor tag for direct jumps with clearance
             st.html(f'<div id="card-anchor-{tk}" style="scroll-margin-top: 100px; height: 0; margin: 0; padding: 0;"></div>')
             # Wrap each stock's entire module in a clearly defined card container
-            with st.container(border=True):
+            with st.container(border=True, key=f"stock_card_{tk}"):
                 # ── Safe Header Display ──
                 safe_name = d.get("shortName") or d.get("longName") or d.get("name") or tk
                 is_etf = d.get("is_etf", False)
@@ -4534,6 +4641,10 @@ SNAPSHOT_JS = """
     function getCardWrapper(ticker) {
       const marker = pDoc.getElementById('card-' + ticker) || document.getElementById('card-' + ticker);
       if (!marker) return null;
+
+      // 0. Try finding key-based card container
+      const keyWrapper = marker.closest('[class*="st-key-stock_card_"]');
+      if (keyWrapper) return keyWrapper;
 
       // 1. Try finding ancestor stVerticalBlockBorderWrapper that contains the chart or multiple KPI boxes
       const borderWrapper = marker.closest('[data-testid="stVerticalBlockBorderWrapper"]');

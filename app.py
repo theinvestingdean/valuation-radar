@@ -214,8 +214,10 @@ st.markdown(
             box-sizing: border-box;
         }}
 
-        /* 1. Target ONLY the master stock container wrappers */
+        /* 1. Target master stock container wrappers, executive highlights, and top benchmark master card */
         div[class*="st-key-stock_card_"],
+        div[class*="st-key-executive_market_highlights"],
+        div[class*="st-key-top_benchmark_card"],
         div[data-testid="stVerticalBlockBorderWrapper"] {{
             background-color: #FFFFFF !important;
             background-image: none !important;
@@ -224,6 +226,12 @@ st.markdown(
             box-shadow: 0px 12px 24px -4px rgba(0, 0, 0, 0.15), 0px 8px 12px -6px rgba(0, 0, 0, 0.1) !important;
             padding: 1.5rem !important;
             margin-bottom: 2.5rem !important;
+        }}
+
+        /* Ensure top benchmark chart expands smoothly inside its container */
+        div[class*="st-key-top_benchmark_card"] div[data-testid="stPlotlyChart"],
+        div[class*="st-key-top_benchmark_card"] .js-plotly-plot {{
+            width: 100% !important;
         }}
 
         /* 2. Style inner metric tiles safely without affecting charts */
@@ -988,6 +996,8 @@ st.markdown(
             }}
             /* Card inner padding */
             div[class*="st-key-stock_card_"],
+            div[class*="st-key-executive_market_highlights"],
+            div[class*="st-key-top_benchmark_card"],
             div[data-testid="stVerticalBlockBorderWrapper"] {{
                 padding: 14px 12px !important;
                 border-radius: 12px !important;
@@ -2636,70 +2646,71 @@ def render_executive_market_highlights(visible_data: dict, timeframe: str = "90-
     else:
         signals_html = '<div style="color: #64748B; font-size: 0.80rem; font-style: italic; margin-top: 4px;">No signals flashed in the last 7 days.</div>'
 
-    # Section Header
-    st.html(f"""
-    <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-left: 4px solid #EAB308; border-radius: 10px; padding: 10px 16px; margin: 16px 0 12px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.02); display: flex; justify-content: space-between; align-items: center;">
-      <div style="display: flex; align-items: center; gap: 8px;">
-        <span style="font-size: 1.02rem; font-weight: 800; color: #0F172A; letter-spacing: -0.01em;">Executive Market Highlights</span>
-        <span style="font-size: 0.72rem; font-weight: 700; color: #854D0E; background-color: #FEF9C3; border: 1px solid #FDE047; padding: 2px 8px; border-radius: 9999px;">{framework_badge_lbl}</span>
-      </div>
-    </div>
-    """)
+    with st.container(border=True, key="executive_market_highlights"):
+        # Section Header
+        st.html(f"""
+        <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-left: 4px solid #EAB308; border-radius: 8px; padding: 10px 16px; margin: 0 0 14px 0; box-shadow: 0 1px 2px rgba(0,0,0,0.02); display: flex; justify-content: space-between; align-items: center;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 1.02rem; font-weight: 800; color: #0F172A; letter-spacing: -0.01em;">Executive Market Highlights</span>
+            <span style="font-size: 0.72rem; font-weight: 700; color: #854D0E; background-color: #FEF9C3; border: 1px solid #FDE047; padding: 2px 8px; border-radius: 9999px;">{framework_badge_lbl}</span>
+          </div>
+        </div>
+        """)
 
-    # 4 Cards using native st.columns(4) for desktop grid and mobile vertical stacking
-    c1, c2, c3, c4 = st.columns(4)
-    with c1:
-        st.html(f"""
-        <div class="highlights-card" style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-left: 3px solid #EAB308; border-radius: 8px; padding: 12px 14px; min-height: 105px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between;">
-          <div>
-            <div style="font-size: 0.72rem; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Basket Breadth</div>
-            <div style="font-size: 0.86rem; color: #0F172A; font-weight: 600; line-height: 1.35;">
-              <b>{count_overstretched} of {total_count}</b> assets (<b>{overstretched_pct:.0f}%</b>) &gt; +5% above average.
+        # 4 Cards using native st.columns(4) for desktop grid and mobile vertical stacking
+        c1, c2, c3, c4 = st.columns(4)
+        with c1:
+            st.html(f"""
+            <div class="highlights-card" style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-left: 3px solid #EAB308; border-radius: 8px; padding: 12px 14px; min-height: 105px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between;">
+              <div>
+                <div style="font-size: 0.72rem; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Basket Breadth</div>
+                <div style="font-size: 0.86rem; color: #0F172A; font-weight: 600; line-height: 1.35;">
+                  <b>{count_overstretched} of {total_count}</b> assets (<b>{overstretched_pct:.0f}%</b>) &gt; +5% above average.
+                </div>
+              </div>
+              <div style="font-size: 0.75rem; color: #854D0E; font-weight: 600; margin-top: 6px; padding-top: 4px; border-top: 1px dashed rgba(226, 232, 240, 0.8);">• Bias: {breadth_desc}</div>
             </div>
-          </div>
-          <div style="font-size: 0.75rem; color: #854D0E; font-weight: 600; margin-top: 6px; padding-top: 4px; border-top: 1px dashed rgba(226, 232, 240, 0.8);">• Bias: {breadth_desc}</div>
-        </div>
-        """)
-    with c2:
-        st.html(f"""
-        <div class="highlights-card" style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-left: 3px solid #10B981; border-radius: 8px; padding: 12px 14px; min-height: 105px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between;">
-          <div>
-            <div style="font-size: 0.72rem; font-weight: 700; color: #047857; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Top Value Opportunities</div>
-            <div class="custom-signals-scroll" style="max-height: 220px; overflow-y: auto; padding-right: 5px; display: flex; flex-direction: column; gap: 2px; margin-top: 2px;">
-              {val_html}
+            """)
+        with c2:
+            st.html(f"""
+            <div class="highlights-card" style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-left: 3px solid #10B981; border-radius: 8px; padding: 12px 14px; min-height: 105px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between;">
+              <div>
+                <div style="font-size: 0.72rem; font-weight: 700; color: #047857; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Top Value Opportunities</div>
+                <div class="custom-signals-scroll" style="max-height: 220px; overflow-y: auto; padding-right: 5px; display: flex; flex-direction: column; gap: 2px; margin-top: 2px;">
+                  {val_html}
+                </div>
+              </div>
+              <div style="font-size: 0.70rem; color: #64748B; margin-top: 6px; padding-top: 4px; border-top: 1px dashed rgba(226, 232, 240, 0.8);">Deepest corridor discounts</div>
             </div>
-          </div>
-          <div style="font-size: 0.70rem; color: #64748B; margin-top: 6px; padding-top: 4px; border-top: 1px dashed rgba(226, 232, 240, 0.8);">Deepest corridor discounts</div>
-        </div>
-        """)
-    with c3:
-        st.html(f"""
-        <div class="highlights-card" style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-left: 3px solid #EF4444; border-radius: 8px; padding: 12px 14px; min-height: 105px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between;">
-          <div>
-            <div style="font-size: 0.72rem; font-weight: 700; color: #B91C1C; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Most Overextended</div>
-            <div class="custom-signals-scroll" style="max-height: 220px; overflow-y: auto; padding-right: 5px; display: flex; flex-direction: column; gap: 2px; margin-top: 2px;">
-              {over_html}
+            """)
+        with c3:
+            st.html(f"""
+            <div class="highlights-card" style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-left: 3px solid #EF4444; border-radius: 8px; padding: 12px 14px; min-height: 105px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between;">
+              <div>
+                <div style="font-size: 0.72rem; font-weight: 700; color: #B91C1C; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Most Overextended</div>
+                <div class="custom-signals-scroll" style="max-height: 220px; overflow-y: auto; padding-right: 5px; display: flex; flex-direction: column; gap: 2px; margin-top: 2px;">
+                  {over_html}
+                </div>
+              </div>
+              <div style="font-size: 0.70rem; color: #64748B; margin-top: 6px; padding-top: 4px; border-top: 1px dashed rgba(226, 232, 240, 0.8);">Furthest above corridor median</div>
             </div>
-          </div>
-          <div style="font-size: 0.70rem; color: #64748B; margin-top: 6px; padding-top: 4px; border-top: 1px dashed rgba(226, 232, 240, 0.8);">Furthest above corridor median</div>
-        </div>
-        """)
-    with c4:
-        count_badge = f'<span style="font-size: 0.68rem; font-weight: 800; color: #4338CA; background: #EEF2FF; border: 1px solid #C7D2FE; border-radius: 9999px; padding: 1px 6px;">{len(unique_signals)}</span>' if unique_signals else ''
-        st.html(f"""
-        <div class="highlights-card" style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-left: 3px solid #6366F1; border-radius: 8px; padding: 12px 14px; min-height: 105px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between;">
-          <div>
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
-              <span style="font-size: 0.72rem; font-weight: 700; color: #4338CA; text-transform: uppercase; letter-spacing: 0.05em;">Recent Tactical Signals</span>
-              {count_badge}
+            """)
+        with c4:
+            count_badge = f'<span style="font-size: 0.68rem; font-weight: 800; color: #4338CA; background: #EEF2FF; border: 1px solid #C7D2FE; border-radius: 9999px; padding: 1px 6px;">{len(unique_signals)}</span>' if unique_signals else ''
+            st.html(f"""
+            <div class="highlights-card" style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-left: 3px solid #6366F1; border-radius: 8px; padding: 12px 14px; min-height: 105px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between;">
+              <div>
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                  <span style="font-size: 0.72rem; font-weight: 700; color: #4338CA; text-transform: uppercase; letter-spacing: 0.05em;">Recent Tactical Signals</span>
+                  {count_badge}
+                </div>
+                <div class="custom-signals-scroll" style="max-height: 220px; overflow-y: auto; padding-right: 5px; display: flex; flex-direction: column; gap: 4px; margin-top: 2px;">
+                  {signals_html}
+                </div>
+              </div>
+              <div style="font-size: 0.70rem; color: #64748B; margin-top: 6px; padding-top: 4px; border-top: 1px dashed rgba(226, 232, 240, 0.8);">TID Engine entries (last 7 days)</div>
             </div>
-            <div class="custom-signals-scroll" style="max-height: 220px; overflow-y: auto; padding-right: 5px; display: flex; flex-direction: column; gap: 4px; margin-top: 2px;">
-              {signals_html}
-            </div>
-          </div>
-          <div style="font-size: 0.70rem; color: #64748B; margin-top: 6px; padding-top: 4px; border-top: 1px dashed rgba(226, 232, 240, 0.8);">TID Engine entries (last 7 days)</div>
-        </div>
-        """)
+            """)
 
     # Check and dispatch live notifications for new tactical bar signals
     dispatched_now = check_and_dispatch_signal_alerts(visible_data, timeframe=timeframe)
@@ -3604,88 +3615,89 @@ visible = {
     if STATUS_ALIAS_MAP.get(compute_status(d, timeframe=active_timeframe)) in normalized_filter
 }
 
-# ── 4. Price vs Average (Top Chart & Timeframe Toggle) ──
-val_timeframe = st.session_state.get("val_timeframe", "90-Day")
-active_title = "Price vs 1-Year Average" if val_timeframe == "1-Year" else "Price vs 90-Day Average"
+# ── 4. Price vs Average (Top Chart & Timeframe Toggle) & 5. KPI Summary Row ──
+with st.container(border=True, key="top_benchmark_card"):
+    val_timeframe = st.session_state.get("val_timeframe", "90-Day")
+    active_title = "Price vs 1-Year Average" if val_timeframe == "1-Year" else "Price vs 90-Day Average"
 
-st.markdown(f"### {active_title}")
+    st.markdown(f"### {active_title}")
 
-st.markdown(
-    """
-    <div style="color: #64748B; font-size: 0.875rem; line-height: 1.5; margin-top: -6px; margin-bottom: 4px;">
-      <div>Compares each stock's live price to its average price over the last 90 days or 1 year.</div>
-      <div style="margin-top: 3px;">🟢 Green bars highlight Buy Zone (&lt; -5% below average); &nbsp; 🟡 Amber represents Standard DCA (within 5% of average); &nbsp; 🔴 Red indicates Wait for Pullback (&gt; +5% above average).</div>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
-
-st.segmented_control(
-    "Valuation Timeframe",
-    options=["90-Day", "1-Year"],
-    selection_mode="single",
-    required=True,
-    label_visibility="collapsed",
-    key="val_timeframe_selector",
-    on_change=on_timeframe_change,
-)
-val_timeframe = st.session_state.get("val_timeframe", "90-Day")
-
-
-if visible:
-    st.plotly_chart(
-        make_summary_bar(visible, timeframe=val_timeframe),
-        width="stretch",
-        config={
-            "displayModeBar": False,
-            "staticPlot": True,
-            "scrollZoom": False,
-            "responsive": True,
-        }
+    st.markdown(
+        """
+        <div style="color: #64748B; font-size: 0.875rem; line-height: 1.5; margin-top: -6px; margin-bottom: 4px;">
+          <div>Compares each stock's live price to its average price over the last 90 days or 1 year.</div>
+          <div style="margin-top: 3px;">🟢 Green bars highlight Buy Zone (&lt; -5% below average); &nbsp; 🟡 Amber represents Standard DCA (within 5% of average); &nbsp; 🔴 Red indicates Wait for Pullback (&gt; +5% above average).</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
-else:
-    st.info("No tickers match the selected status filters.")
 
-# ── 5. KPI Summary Row ──
-counts = {"Buy Zone": 0, "Standard DCA": 0, "Wait for Pullback": 0}
-for d in visible.values():
-    s = compute_status(d, timeframe=val_timeframe)
-    canon_s = STATUS_ALIAS_MAP.get(s, s)
-    if canon_s in counts:
-        counts[canon_s] += 1
+    st.segmented_control(
+        "Valuation Timeframe",
+        options=["90-Day", "1-Year"],
+        selection_mode="single",
+        required=True,
+        label_visibility="collapsed",
+        key="val_timeframe_selector",
+        on_change=on_timeframe_change,
+    )
+    val_timeframe = st.session_state.get("val_timeframe", "90-Day")
 
-k1, k2, k3, k4 = st.columns(4)
-k1.metric("Tracked Assets", len(selected))
 
-k2.markdown(
-    f"""
-    <div data-testid="stMetric">
-        <div style="font-size: 14px; color: #6B7280; margin-bottom: 4px;">Buy Zone</div>
-        <div style="font-size: 2.25rem; font-weight: 700; color: #22C55E; line-height: 1.2;">{counts['Buy Zone']}</div>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+    if visible:
+        st.plotly_chart(
+            make_summary_bar(visible, timeframe=val_timeframe),
+            width="stretch",
+            config={
+                "displayModeBar": False,
+                "staticPlot": True,
+                "scrollZoom": False,
+                "responsive": True,
+            }
+        )
+    else:
+        st.info("No tickers match the selected status filters.")
 
-k3.markdown(
-    f"""
-    <div data-testid="stMetric">
-        <div style="font-size: 14px; color: #6B7280; margin-bottom: 4px;">Standard DCA</div>
-        <div style="font-size: 2.25rem; font-weight: 700; color: #F59E0B; line-height: 1.2;">{counts['Standard DCA']}</div>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+    # ── 5. KPI Summary Row ──
+    counts = {"Buy Zone": 0, "Standard DCA": 0, "Wait for Pullback": 0}
+    for d in visible.values():
+        s = compute_status(d, timeframe=val_timeframe)
+        canon_s = STATUS_ALIAS_MAP.get(s, s)
+        if canon_s in counts:
+            counts[canon_s] += 1
 
-k4.markdown(
-    f"""
-    <div data-testid="stMetric">
-        <div style="font-size: 14px; color: #6B7280; margin-bottom: 4px;">Wait for Pullback</div>
-        <div style="font-size: 2.25rem; font-weight: 700; color: #EF4444; line-height: 1.2;">{counts['Wait for Pullback']}</div>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+    k1, k2, k3, k4 = st.columns(4)
+    k1.metric("Tracked Assets", len(selected))
+
+    k2.markdown(
+        f"""
+        <div data-testid="stMetric">
+            <div style="font-size: 14px; color: #6B7280; margin-bottom: 4px;">Buy Zone</div>
+            <div style="font-size: 2.25rem; font-weight: 700; color: #22C55E; line-height: 1.2;">{counts['Buy Zone']}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    k3.markdown(
+        f"""
+        <div data-testid="stMetric">
+            <div style="font-size: 14px; color: #6B7280; margin-bottom: 4px;">Standard DCA</div>
+            <div style="font-size: 2.25rem; font-weight: 700; color: #F59E0B; line-height: 1.2;">{counts['Standard DCA']}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    k4.markdown(
+        f"""
+        <div data-testid="stMetric">
+            <div style="font-size: 14px; color: #6B7280; margin-bottom: 4px;">Wait for Pullback</div>
+            <div style="font-size: 2.25rem; font-weight: 700; color: #EF4444; line-height: 1.2;">{counts['Wait for Pullback']}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 # ── Executive Market Highlights Banner ──
 if visible:

@@ -336,6 +336,18 @@ Every stock card shows key figures that give you the full story behind the price
 
 ---
 
+### 🏛️ Wall Street Consensus & Analyst Score
+
+* **Definition:** The aggregated consensus rating compiled from institutional equity research analysts (e.g., Goldman Sachs, Morgan Stanley, JPMorgan) actively covering the stock.
+* **How the 1.0 to 5.0 Score Works (Lower is Better):**
+  * **1.0 - 1.5** <span style="background-color: #DCFCE7; color: #15803D; padding: 2px 8px; border-radius: 4px; font-weight: 700; border: 1px solid #16A34A;">Strong Buy</span>: Overwhelming institutional conviction; analysts forecast significant outperformance.
+  * **1.6 - 2.5** <span style="background-color: #F0FDF4; color: #16A34A; padding: 2px 8px; border-radius: 4px; font-weight: 600; border: 1px solid #86EFAC;">Buy</span>: General bullish bias across covering investment banks.
+  * **2.6 - 3.5** <span style="background-color: #FEF3C7; color: #D97706; padding: 2px 8px; border-radius: 4px; font-weight: 600; border: 1px solid #FCD34D;">Hold</span>: Neutral outlook; analysts expect the stock to perform in line with the broader market.
+  * **3.6 - 5.0** <span style="background-color: #FEE2E2; color: #DC2626; padding: 2px 8px; border-radius: 4px; font-weight: 600; border: 1px solid #FCA5A5;">Sell / Underperform</span>: Rare bearish rating; analysts recommend trimming or exiting positions.
+* **How to Use with the Radar:** Look for confluence. When high-quality stocks enter the **Buy Zone (-1.5σ to -2.2σ)** while maintaining a **Strong Buy** or **Buy** rating, it confirms that institutional long-term conviction remains intact despite short-term price drops.
+
+---
+
 ## 4. Valuation Corridors & The Dip-Buying System
 
 Stocks naturally move up and down around their historical average price:

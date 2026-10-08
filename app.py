@@ -1630,6 +1630,8 @@ def fetch_ticker_data(ticker: str) -> dict:
             "fwd_pe":        None,
             "target_mean_price": None,
             "target_upside_pct": None,
+            "recommendationKey": None,
+            "recommendationMean": None,
             "tactical_signals":  [],
         }
 
@@ -1667,6 +1669,8 @@ def fetch_ticker_data(ticker: str) -> dict:
             "fwd_pe":        None,
             "target_mean_price": None,
             "target_upside_pct": None,
+            "recommendationKey": None,
+            "recommendationMean": None,
             "tactical_signals":  [],
         }
 
@@ -2149,6 +2153,8 @@ def fetch_ticker_data(ticker: str) -> dict:
         "fwd_pe":            fwd_pe,
         "target_mean_price": target_mean_val,
         "target_upside_pct": target_upside_pct,
+        "recommendationKey": info.get("recommendationKey"),
+        "recommendationMean": info.get("recommendationMean"),
         "tactical_signals":  tactical_signals,
         "error":             None,
     }
@@ -3515,7 +3521,9 @@ with st.sidebar:
         "Sort By",
         options=[
             "Alphabetical",
-            "Best Value (Lowest Z-Score)",
+            "Best Value (Lowest Standard Deviation)",
+            "Highest 12M Analyst Upside",
+            "Biggest Daily Dip",
             "Deepest ATH Drawdown",
             "Lowest 2Y PEG",
         ],
@@ -3812,7 +3820,7 @@ ticker_list = list(visible.keys())
 # Apply user-selected sort order
 if sort_option == "Alphabetical":
     ticker_list = sorted(ticker_list)
-elif sort_option == "Best Value (Lowest Z-Score)":
+elif sort_option == "Best Value (Lowest Standard Deviation)":
     def get_z_score(tk):
         h = visible[tk].get("hist", pd.DataFrame())
         if val_timeframe == "1-Year" and "Z252" in h.columns and len(h["Z252"].dropna()):
@@ -3822,6 +3830,20 @@ elif sort_option == "Best Value (Lowest Z-Score)":
             return float(h[z_col].dropna().iloc[-1])
         return 999.0
     ticker_list = sorted(ticker_list, key=get_z_score)
+elif sort_option == "Highest 12M Analyst Upside":
+    def get_upside(tk):
+        upside = visible[tk].get("target_upside_pct")
+        if upside is not None and not np.isnan(upside):
+            return upside
+        return -999.0
+    ticker_list = sorted(ticker_list, key=get_upside, reverse=True)
+elif sort_option == "Biggest Daily Dip":
+    def get_daily_change(tk):
+        reg_pct = visible[tk].get("reg_perf_pct")
+        if reg_pct is not None and not np.isnan(reg_pct):
+            return reg_pct
+        return 999.0
+    ticker_list = sorted(ticker_list, key=get_daily_change)
 elif sort_option == "Deepest ATH Drawdown":
     def get_ath_dist(tk):
         dist = visible[tk].get("dist_ath", np.nan)
@@ -4255,7 +4277,66 @@ for row_start in range(0, len(ticker_list), n_cols):
                     subtext_color=MUTED_SLATE,
                 )
 
-                # ── Standardized Card Metric Grid (Uniform Mini-Boxes) ──
+                                # Box 8: Wall Street Consensus Rating
+                rec_key = d.get("recommendationKey")
+                rec_mean = d.get("recommendationMean")
+
+                if rec_key and isinstance(rec_key, str) and rec_key != "none":
+                    if rec_key.lower() == "strong_buy":
+                        formatted_rec = "Strong Buy"
+                    else:
+                        formatted_rec = " ".join(word.capitalize() for word in rec_key.split("_"))
+                    
+                    if rec_key.lower() == "strong_buy":
+                        b8_badge_text = "Strong Buy"
+                        b8_badge_style = "background-color: #DCFCE7; color: #15803D; border: 1px solid #16A34A; font-weight: 700;"
+                    elif "buy" in rec_key.lower():
+                        b8_badge_text = "Buy"
+                        b8_badge_style = "background-color: #F0FDF4; color: #16A34A; border: 1px solid #86EFAC; font-weight: 600;"
+                    elif "hold" in rec_key.lower() or "neutral" in rec_key.lower():
+                        b8_badge_text = "Neutral"
+                        b8_badge_style = "background-color: #FEF3C7; color: #D97706; border: 1px solid #FCD34D; font-weight: 600;"
+                    elif "sell" in rec_key.lower() or "underperform" in rec_key.lower():
+                        b8_badge_text = "Bearish"
+                        b8_badge_style = "background-color: #FEE2E2; color: #DC2626; border: 1px solid #FCA5A5; font-weight: 600;"
+                    else:
+                        b8_badge_text = "Unknown"
+                        b8_badge_style = "background-color: #F1F5F9; color: #64748B; border: 1px solid #E2E8F0;"
+
+                    import numpy as np
+                    if rec_mean is not None and not np.isnan(rec_mean):
+                        tooltip_text = "Wall Street Scale: 1.0 (Strong Buy) to 5.0 (Sell). A lower score indicates stronger institutional backing."
+                        b8_sub_html = f'<span title="{tooltip_text}" style="cursor: help; text-decoration: underline dotted #94A3B8; text-underline-offset: 3px; color: #64748B;">Consensus: {rec_mean:.1f} / 5.0</span>'
+                        box8_html = make_metric_tile_html(
+                            title="Wall Street Consensus",
+                            value=formatted_rec,
+                            subtext_html=b8_sub_html,
+                            badge_text=b8_badge_text,
+                            badge_style=b8_badge_style,
+                            val_color="#0F172A",
+                        )
+                    else:
+                        box8_html = make_metric_tile_html(
+                            title="Wall Street Consensus",
+                            value=formatted_rec,
+                            subtext="Wall Street Recommendation",
+                            badge_text=b8_badge_text,
+                            badge_style=b8_badge_style,
+                            val_color="#0F172A",
+                            subtext_color="#64748B",
+                        )
+                else:
+                    box8_html = make_metric_tile_html(
+                        title="Wall Street Consensus",
+                        value="N/A",
+                        subtext="No Rating Available",
+                        badge_text=None,
+                        badge_class=None,
+                        val_color="#94A3B8",
+                        subtext_color="#94A3B8",
+                    )
+
+                # Standardized Card Metric Grid (Uniform Mini-Boxes)
                 r1_c1, r1_c2 = st.columns(2)
                 with r1_c1:
                     st.html(box1_html)
@@ -4274,7 +4355,11 @@ for row_start in range(0, len(ticker_list), n_cols):
                 with r3_c2:
                     st.html(box6_html)
 
-                st.html(box7_html)
+                r4_c1, r4_c2 = st.columns(2)
+                with r4_c1:
+                    st.html(box7_html)
+                with r4_c2:
+                    st.html(box8_html)
 
                 # ── Detail Bollinger & Trend Chart ──
                 if show_charts:

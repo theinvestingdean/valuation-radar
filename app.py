@@ -16,10 +16,37 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
+from datetime import time as dt_time
 import time
 import requests
+import re
 
 # ─────────────────────────────────────────────
+
+def get_market_session_status():
+  ny_tz = ZoneInfo("America/New_York")
+  now_ny = datetime.now(ny_tz)
+
+  # US markets closed on Saturday (5) and Sunday (6)
+  if now_ny.weekday() >= 5:
+    return "market_closed", "at market close"
+
+  current_time = now_ny.time()
+  pre_open = dt_time(4, 0)
+  market_open = dt_time(9, 30)
+  market_close = dt_time(16, 0)
+  post_close = dt_time(20, 0)
+
+  if market_open <= current_time < market_close:
+    return "regular_open", "live market"
+  elif pre_open <= current_time < market_open:
+    return "pre_market", "pre-market"
+  elif market_close <= current_time < post_close:
+    return "post_market", "post-market"
+  else:
+    return "market_closed", "at market close"
+
 # DEFAULT CURATED BASKET (@theinvestingdean)
 # Edit this dictionary anytime to customize the default stocks shown to all visitors:
 # ─────────────────────────────────────────────
@@ -227,6 +254,27 @@ st.markdown(
             padding: 1.5rem !important;
             margin-bottom: 2.5rem !important;
         }}
+        
+        div[class*="st-key-quick_find_container"] {{
+            background-color: #FFFFFF !important;
+            border: 2px solid #94A3B8 !important;
+            border-radius: 12px !important;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.05) !important;
+            padding: 1.2rem !important;
+            margin-bottom: 1.5rem !important;
+        }}
+        div[data-testid="stSelectbox"] div[data-baseweb="select"],
+        div[data-testid="stSelectbox"] div[data-baseweb="select"] > div,
+        div.stSelectbox div[data-baseweb="select"] > div,
+        .st-key-quick_find_ticker div[data-baseweb="select"] > div,
+        .st-key-quick_find_ticker [data-baseweb="select"],
+        div[data-testid="stSelectbox"] > div > div > div {{
+            border: 1px solid #94A3B8 !important;
+            border-radius: 8px !important;
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+            background-color: #F8FAFC !important;
+        }}
+
 
         /* Ensure top benchmark chart expands smoothly inside its container */
         div[class*="st-key-top_benchmark_card"] div[data-testid="stPlotlyChart"],
@@ -1148,7 +1196,8 @@ def make_dual_perf_pill_html(
             else:
                 lbl_r = "0.00 (0.0%)"
         pill_html = f'<span style="font-size: 0.65rem; font-weight: 700; background-color: {bg_r}; color: {col_r}; padding: 1.5px 6px; border-radius: 9999px; line-height: 1.1; white-space: nowrap;">{lbl_r}</span>'
-        label_html = '<span style="font-size: 0.62rem; font-weight: 500; color: #64748B; line-height: 1.1; white-space: nowrap;">at market close</span>'
+        _, mkt_lbl = get_market_session_status()
+        label_html = f'<span style="font-size: 0.62rem; font-weight: 500; color: #64748B; line-height: 1.1; white-space: nowrap;">{mkt_lbl}</span>'
         reg_badge = f'<div style="display: inline-flex; align-items: center; gap: 4px; flex-wrap: wrap;">{pill_html}{label_html}</div>'
 
     # 2. Extended-hours badge (pre-market or post-market)
@@ -1322,7 +1371,7 @@ def evaluate_tactical_dca_signals(df: pd.DataFrame) -> list[tuple]:
         # Note: This tier requires no technical confirmation.
         raw_extreme = bool(row.get("signal_tier_0_capitulation", low <= (row["sma_20"] - (3.0 * row["std_20"]))))
         extreme_override = not np.isnan(last_extreme_price) and (
-            close <= last_extreme_price * 0.97
+            low <= last_extreme_price * 0.97
         )
         extreme_can_trigger = (i - last_extreme_idx >= 5) or extreme_override
 
@@ -1331,7 +1380,7 @@ def evaluate_tactical_dca_signals(df: pd.DataFrame) -> list[tuple]:
             extreme_dca = True
             is_reload = extreme_override and (i - last_extreme_idx < 5)
             last_extreme_idx = i
-            last_extreme_price = close
+            last_extreme_price = low
             label = "DEEPER CRASH" if is_reload else "CAPITULATION"
             signals.append((row.name, low, label, "#F97316"))  # Red / Orange
 
@@ -1347,7 +1396,7 @@ def evaluate_tactical_dca_signals(df: pd.DataFrame) -> list[tuple]:
             and (bool(row.get("macd_curling_up", False)) or bool(row.get("has_lower_defense", False)))
         )))
         heavy_override = not np.isnan(last_heavy_price) and (
-            close <= last_heavy_price * 0.97
+            low <= last_heavy_price * 0.97
         )
         heavy_can_trigger = (i - last_heavy_idx >= 5) or heavy_override
         extreme_cooldown = (i - last_extreme_idx >= 5)
@@ -1357,7 +1406,7 @@ def evaluate_tactical_dca_signals(df: pd.DataFrame) -> list[tuple]:
             heavy_dca = True
             is_reload = heavy_override and (i - last_heavy_idx < 5)
             last_heavy_idx = i
-            last_heavy_price = close
+            last_heavy_price = low
             label = "BETTER VALUE" if is_reload else "DEEPLY OVERSOLD"
             signals.append((row.name, low, label, "#FACC15"))  # Gold / Amber
 
@@ -1372,7 +1421,7 @@ def evaluate_tactical_dca_signals(df: pd.DataFrame) -> list[tuple]:
             and bool(row.get("is_green_candle", False))
         )))
         std_override = not np.isnan(last_std_price) and (
-            close <= last_std_price * 0.97
+            low <= last_std_price * 0.97
         )
         std_can_trigger = (i - last_std_idx >= 5) or std_override
         cross_cooldown = (i - last_heavy_idx >= 5) and (i - last_extreme_idx >= 5)
@@ -1386,7 +1435,7 @@ def evaluate_tactical_dca_signals(df: pd.DataFrame) -> list[tuple]:
         ):
             is_reload = std_override and (i - last_std_idx < 5)
             last_std_idx = i
-            last_std_price = close
+            last_std_price = low
             label = "BETTER DCA" if is_reload else "DCA"
             signals.append((row.name, low, label, "#22C55E"))  # Lime Green
 
@@ -2576,15 +2625,16 @@ def render_executive_market_highlights(visible_data: dict, timeframe: str = "90-
             continue
 
         trading_dates = list(hist.index)
-        window_dates = set(trading_dates[-7:])
         latest_ts = pd.Timestamp(trading_dates[-1])
 
         for sig_ts, sig_low, sig_label, sig_color in signals:
             sig_pdt = pd.Timestamp(sig_ts)
-            if sig_ts in window_dates or sig_pdt in window_dates:
+            cal_days = (latest_ts.date() - sig_pdt.date()).days
+
+            # Strict 7 calendar days lookback
+            if 0 <= cal_days <= 7:
                 trading_idx = trading_dates.index(sig_ts) if sig_ts in trading_dates else len(trading_dates) - 1
                 bars_ago = len(trading_dates) - 1 - trading_idx
-                cal_days = (latest_ts.date() - sig_pdt.date()).days
 
                 if cal_days == 0:
                     time_ago_str = "Today"
@@ -2842,13 +2892,20 @@ def make_price_chart(data: dict) -> go.Figure:
             name="SMA 200", opacity=0.85, showlegend=False,
         ))
 
-    # 10. Daily Close Price (bold primary line on top)
-    if len(price):
-        fig.add_trace(go.Scatter(
-            x=price.index, y=price.values, mode="lines",
-            line=dict(color=ACCENT_BLUE, width=2.2),
-            name="Close", showlegend=False,
+    # 10. Daily Price Candlesticks
+    if len(price) and "Open" in hist.columns:
+        fig.add_trace(go.Candlestick(
+            x=hist.index,
+            open=hist["Open"],
+            high=hist["High"],
+            low=hist["Low"],
+            close=hist["Close"],
+            name="Price",
+            showlegend=False,
+            increasing_line_color="#22C55E",
+            decreasing_line_color="#EF4444"
         ))
+        fig.update_layout(xaxis_rangeslider_visible=False)
         cur_p = float(price.iloc[-1])
         fig.add_trace(go.Scatter(
             x=[price.index[-1]], y=[cur_p], mode="markers",
@@ -3100,6 +3157,26 @@ def make_master_legend_html() -> str:
     """
 
 
+def clean_company_name(raw_name: str) -> str:
+    """
+    Cleans corporate suffixes and legal identifiers from company names for cleaner chart labels.
+    e.g., 'Apple Inc.' -> 'Apple', 'Tesla, Inc.' -> 'Tesla', 'Microsoft Corporation' -> 'Microsoft'
+    """
+    if not raw_name:
+        return ""
+    name = str(raw_name).strip()
+    # Strip ticker in parentheses like "(TSLA)" or "[TSLA]" if present
+    name = re.sub(r'[\(\[\{][A-Za-z0-9\.\-:]+[\)\]\}]', '', name).strip()
+    patterns = [
+        r',?\s+(?:Inc\.?|Incorporated|Corporation|Corp\.?|Co\.?,\s*Ltd\.?|Company\s+Limited|Limited|Ltd\.?|LLC|L\.L\.C\.?|P\.?L\.?C\.?|PLC|S\.?A\.?|N\.?V\.?|AG|SE|Holdings?\s+Inc\.?|Holdings?\s+Ltd\.?|Holdings?\s+PLC|Holdings?)\b',
+        r',?\s+(?:Class\s+[A-Z]|Common\s+Stock|Ordinary\s+Shares)\b',
+    ]
+    for p in patterns:
+        name = re.sub(p, '', name, flags=re.IGNORECASE)
+    name = name.rstrip(' ,.-').strip()
+    return name if name else str(raw_name).strip()
+
+
 def make_summary_bar(all_data: dict, timeframe: str = "90-Day") -> go.Figure:
     """
     Horizontal bar chart showing Price Valuation vs Corridor Median (90-Day or 1-Year).
@@ -3107,6 +3184,8 @@ def make_summary_bar(all_data: dict, timeframe: str = "90-Day") -> go.Figure:
       • Ranked by valuation magnitude (descending order by % Above / Below Fair Value Median)
       • Most overstretched asset (highest %) at the top
       • Deepest discount asset (lowest %) at the bottom
+      • Display full clean company names on y-axis with automargin
+      • Strict label positioning: inside for Buy Zone (green), outside for Standard DCA (amber) & Wait for Pullback (red)
     """
     is_1y = (timeframe == "1-Year")
     timeframe_label = "1-Year" if is_1y else "90-Day"
@@ -3145,8 +3224,17 @@ def make_summary_bar(all_data: dict, timeframe: str = "90-Day") -> go.Figure:
             mid = fair_val if (fair_val and not np.isnan(fair_val)) else 0.0
             unit = "Price"
 
+        # Resolve clean company name
+        raw_name = DEFAULT_TICKERS.get(tk) or d.get("shortName") or d.get("name") or d.get("longName")
+        if not raw_name and "all_tickers" in st.session_state:
+            raw_name = st.session_state["all_tickers"].get(tk, tk)
+        clean_name = clean_company_name(raw_name) if raw_name else tk
+        if not clean_name:
+            clean_name = tk
+
         items.append({
             "ticker": tk,
+            "name":   clean_name,
             "pct":    pct,
             "status": status,
             "color":  col,
@@ -3177,11 +3265,19 @@ def make_summary_bar(all_data: dict, timeframe: str = "90-Day") -> go.Figure:
     # Rank by magnitude: descending order by % above/below median
     items = sorted(items, key=lambda x: x["pct"], reverse=True)
 
-    labels = [x["ticker"] for x in items]
+    # Disambiguate if multiple items share identical company names (e.g. GOOG and GOOGL)
+    name_counts = {}
+    for x in items:
+        name_counts[x["name"]] = name_counts.get(x["name"], 0) + 1
+
+    labels = [
+        f"{x['name']} ({x['ticker']})" if name_counts[x["name"]] > 1 else x["name"]
+        for x in items
+    ]
     vals   = [x["pct"] for x in items]
     colors = [x["color"] for x in items]
     hover  = [
-        f"<b>{x['ticker']}</b><br>Status: {x['status']}<br>Current {x['unit']}: {x['cur']:.2f}<br>"
+        f"<b>{x['name']}</b> ({x['ticker']})<br>Status: {x['status']}<br>Current {x['unit']}: {x['cur']:.2f}<br>"
         f"{timeframe_label} Average {x['unit']}: {x['mid']:.2f}<br>vs Average: {x['pct']:+.1f}%"
         for x in items
     ]
@@ -3189,18 +3285,18 @@ def make_summary_bar(all_data: dict, timeframe: str = "90-Day") -> go.Figure:
     min_val = min(vals) if vals else 0.0
     max_val = max(vals) if vals else 0.0
 
-    # Ensure negative values have dedicated visual clearance between zero line, bar end, and y-axis labels
-    # Force aggressive negative buffer: subtract fixed 30 points from min_val to guarantee space on mobile
-    x_min = min_val - 30.0
-    x_max = max(max_val * 1.15, 15.0)
+    # Ensure buffer space so outside labels and axis lines never clip
+    x_min = min(min_val - 10.0, -12.0) if min_val < 0 else -10.0
+    x_max = max(max_val + 10.0, 15.0)
 
-    # Smart label positioning:
-    # Wide negative bars (abs(v) >= 12.0%) place text inside with white text.
-    # Narrow negative bars (< 12%) and positive bars place text outside with dark text.
+    # Strict Label Placement:
+    # • Green Bars (Buy Zone): Force textposition="inside" (white text #FFFFFF, insidetextanchor="middle")
+    # • Amber Bars (Standard DCA): Force textposition="outside" (dark text #1F2937)
+    # • Red Bars (Wait for Pullback): Force textposition="outside" (dark text #1F2937)
     text_positions = []
     text_colors = []
-    for v in vals:
-        if v < 0 and abs(v) >= 12.0:
+    for x in items:
+        if x["status"] == "Buy Zone":
             text_positions.append("inside")
             text_colors.append("#FFFFFF")
         else:
@@ -3218,7 +3314,8 @@ def make_summary_bar(all_data: dict, timeframe: str = "90-Day") -> go.Figure:
         hoverinfo="text",
         text=[f"{v:+.1f}%" for v in vals],
         textposition=text_positions,
-        textfont=dict(size=10, color=text_colors, family="monospace"),
+        insidetextanchor="middle",
+        textfont=dict(size=11, color=text_colors, family="sans-serif"),
         cliponaxis=False,
     ))
 
@@ -3242,17 +3339,17 @@ def make_summary_bar(all_data: dict, timeframe: str = "90-Day") -> go.Figure:
             fixedrange=True,
         ),
         yaxis=dict(
-            gridcolor=GRID_COLOR,
-            color=TEXT_DARK,
-            tickfont=dict(size=12, weight="bold", color=TEXT_DARK),
-            ticksuffix="   ",
-            linecolor=BORDER_COLOR,
+            automargin=True,
             autorange="reversed",
+            tickfont=dict(size=12, color="#1F2937"),
+            ticksuffix="   ",
+            gridcolor=GRID_COLOR,
+            linecolor=BORDER_COLOR,
             categoryorder="array",
             categoryarray=labels,
             fixedrange=True,
         ),
-        margin=dict(l=65, r=36, t=20, b=40),
+        margin=dict(l=10, r=40, t=20, b=40),
         height=max(420, len(labels) * 24 + 60),
     )
     return fig
@@ -3675,9 +3772,9 @@ with st.container(border=True, key="top_benchmark_card"):
             <div style="font-size: 14px; color: #6B7280; margin-bottom: 4px;">Buy Zone</div>
             <div style="font-size: 2.25rem; font-weight: 700; color: #22C55E; line-height: 1.2;">{counts['Buy Zone']}</div>
         </div>
-        """,
+            """,
         unsafe_allow_html=True,
-    )
+        )
 
     k3.markdown(
         f"""
@@ -3685,9 +3782,9 @@ with st.container(border=True, key="top_benchmark_card"):
             <div style="font-size: 14px; color: #6B7280; margin-bottom: 4px;">Standard DCA</div>
             <div style="font-size: 2.25rem; font-weight: 700; color: #F59E0B; line-height: 1.2;">{counts['Standard DCA']}</div>
         </div>
-        """,
+            """,
         unsafe_allow_html=True,
-    )
+        )
 
     k4.markdown(
         f"""
@@ -3695,9 +3792,9 @@ with st.container(border=True, key="top_benchmark_card"):
             <div style="font-size: 14px; color: #6B7280; margin-bottom: 4px;">Wait for Pullback</div>
             <div style="font-size: 2.25rem; font-weight: 700; color: #EF4444; line-height: 1.2;">{counts['Wait for Pullback']}</div>
         </div>
-        """,
+            """,
         unsafe_allow_html=True,
-    )
+        )
 
 # ── Executive Market Highlights Banner ──
 if visible:
@@ -3741,25 +3838,30 @@ elif sort_option == "Lowest 2Y PEG":
     ticker_list = sorted(ticker_list, key=get_peg)
 
 # ── Quick Find Ticker Search & Direct Navigation ──
-qf_col1, qf_col2 = st.columns([3, 1])
-with qf_col1:
-    quick_find = st.selectbox(
-        "Quick Find",
-        options=ticker_list,
-        index=None,
-        placeholder="Jump directly to a stock card...",
-        format_func=lambda x: f"{x}  ·  {visible.get(x, {}).get('shortName') or visible.get(x, {}).get('name', x)}",
-        key="quick_find_ticker",
-        help="Select any tracked asset to immediately navigate down to its valuation card.",
-    )
-with qf_col2:
-    st.markdown('<div class="qf-spacer" style="height: 28px;"></div>', unsafe_allow_html=True)
-    isolate_card = st.checkbox(
-        "🎯 Filter only this card",
-        value=False,
-        key="isolate_selected_card",
-        help="Check to isolate and only display the selected ticker's card below.",
-    )
+@st.dialog("Full Valuation Chart", width="large")
+def show_expanded_chart(ticker, fig):
+    st.plotly_chart(fig, use_container_width=True)
+
+with st.container(border=True, key="quick_find_container"):
+    qf_col1, qf_col2 = st.columns([3, 1])
+    with qf_col1:
+        quick_find = st.selectbox(
+            "Quick Find",
+            options=ticker_list,
+            index=None,
+            placeholder="Jump directly to a stock card...",
+            format_func=lambda x: f"{x}  ·  {visible.get(x, {}).get('shortName') or visible.get(x, {}).get('name', x)}",
+            key="quick_find_ticker",
+            help="Select any tracked asset to immediately navigate down to its valuation card.",
+        )
+    with qf_col2:
+        st.markdown('<div class="qf-spacer" style="height: 28px;"></div>', unsafe_allow_html=True)
+        isolate_card = st.checkbox(
+            "🎯 Filter only this card",
+            value=False,
+            key="isolate_selected_card",
+            help="Check to isolate and only display the selected ticker's card below.",
+        )
 
 if quick_find:
     if isolate_card:
@@ -3790,7 +3892,7 @@ if quick_find:
             setTimeout(scrollToCard, 700);
         }})();
         </script>
-        """
+            """
         st.components.v1.html(scroll_js, height=0)
 
 # ── Master Chart Legend Bar (Consolidates Repeating Legends) ──
@@ -4176,14 +4278,13 @@ for row_start in range(0, len(ticker_list), n_cols):
 
                 # ── Detail Bollinger & Trend Chart ──
                 if show_charts:
-                    chart_bar_html = f"""
-                    <div class="expand-chart-bar" style="margin-top: 16px; margin-bottom: 12px; padding-bottom: 20px; position: relative; z-index: 998; pointer-events: auto;">
-                      <span style="font-size: 0.70rem; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.04em;">Trend & Valuation Corridor</span>
-                      <button class="expand-chart-btn" data-ticker="{tk}" onclick="if(window.deanOpenFullscreen) window.deanOpenFullscreen('{tk}'); if(window.parent && window.parent.deanOpenFullscreen) window.parent.deanOpenFullscreen('{tk}');" style="position: relative; z-index: 999; pointer-events: auto; touch-action: manipulation; cursor: pointer;" title="Open Interactive Full-Screen View with touch pinch-zoom & pan">⛶ Expand Chart</button>
-                    </div>
-                    """
-                    st.html(chart_bar_html)
-                    fig = make_price_chart(d)
+                    chart_col1, chart_col2 = st.columns([4, 1])
+                    with chart_col1:
+                        st.html('<div style="margin-top: 16px; margin-bottom: 12px;"><span style="font-size: 0.70rem; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.04em;">Trend & Valuation Corridor</span></div>')
+                    with chart_col2:
+                        fig = make_price_chart(d)
+                        if st.button("⛶ Expand Chart", key=f"btn_expand_{tk}", use_container_width=True):
+                            show_expanded_chart(tk, fig)
                     st.plotly_chart(
                         fig,
                         width="stretch",

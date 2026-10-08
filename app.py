@@ -188,6 +188,57 @@ st.set_page_config(
 st.markdown(
     f"""
     <style>
+        /* Pure CSS instant hover tooltip */
+        .custom-tooltip-wrapper {{
+            position: relative;
+            display: inline-block;
+            cursor: help;
+        }}
+
+        .custom-tooltip-wrapper .custom-tooltip-box {{
+            visibility: hidden;
+            opacity: 0;
+            width: 230px;
+            background-color: #0F172A;
+            color: #F8FAFC;
+            text-align: center;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 0.72rem;
+            line-height: 1.35;
+            font-weight: 500;
+            position: absolute;
+            z-index: 9999;
+            bottom: 130%;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.25), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+            transition: opacity 0.15s ease-in-out, visibility 0.15s ease-in-out;
+            pointer-events: none;
+        }}
+
+        /* Tooltip arrow pointer */
+        .custom-tooltip-wrapper .custom-tooltip-box::after {{
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #0F172A transparent transparent transparent;
+        }}
+
+        .custom-tooltip-wrapper:hover .custom-tooltip-box {{
+            visibility: visible;
+            opacity: 1;
+        }}
+        
+        /* Ensure tooltips can break out of containers */
+        .kpi-mini-box, .kpi-mini-subtext {{
+            overflow: visible !important;
+        }}
+
         /* Hide the default Streamlit page navigation menu */
         [data-testid="stSidebarNav"] {{
             display: none !important;
@@ -1312,7 +1363,8 @@ def make_metric_tile_html(
     right_content = f"{value_right_html}" if value_right_html else (f"{inline_badge_html}" if inline_badge_html else "")
 
     if subtext_html is not None:
-        sub_content = f'<div class="kpi-mini-subtext" style="display: flex; align-items: flex-start; justify-content: flex-start; min-height: 18px;">{subtext_html}</div>'
+        title_attr = f' title="{subtext}"' if subtext else ""
+        sub_content = f'<div class="kpi-mini-subtext"{title_attr} style="display: flex; align-items: flex-start; justify-content: flex-start; min-height: 18px; pointer-events: auto;">{subtext_html}</div>'
     elif subtext:
         sub_content = f'<div class="kpi-mini-subtext" style="color: {subtext_color};" title="{subtext}">{subtext}</div>'
     else:
@@ -1861,6 +1913,42 @@ def fetch_ticker_data(ticker: str) -> dict:
     pre_chg_abs = info.get("preMarketChange")
     post_chg = info.get("postMarketChangePercent")
     post_chg_abs = info.get("postMarketChange")
+
+    # VALIDATE POST-MARKET TO PREVENT STALE SPIKES
+    _post_price = info.get("postMarketPrice")
+    _reg_price = info.get("regularMarketPrice") or info.get("currentPrice")
+    _post_time = info.get("postMarketTime")
+    _reg_time = info.get("regularMarketTime")
+
+    if _post_price and _reg_price and _post_time and _reg_time:
+        if _post_time <= _reg_time:
+            info["postMarketChangePercent"] = None
+            info["postMarketChange"] = None
+            info["postMarketPrice"] = None
+            post_chg, post_chg_abs = None, None
+        else:
+            try:
+                from zoneinfo import ZoneInfo
+                from datetime import datetime
+                ny_tz = ZoneInfo("America/New_York")
+                post_dt = datetime.fromtimestamp(_post_time, tz=ny_tz).date()
+                today_ny = datetime.now(ny_tz).date()
+                if post_dt != today_ny:
+                    info["postMarketChangePercent"] = None
+                    info["postMarketChange"] = None
+                    info["postMarketPrice"] = None
+                    post_chg, post_chg_abs = None, None
+            except Exception:
+                pass
+            
+            # 5% deviation sanity check
+            if post_chg is None and _post_price and _reg_price:
+                calculated_chg = ((_post_price - _reg_price) / _reg_price) * 100.0
+                if abs(calculated_chg) > 5.0:
+                    info["postMarketChangePercent"] = None
+                    info["postMarketChange"] = None
+                    info["postMarketPrice"] = None
+                    post_chg, post_chg_abs = None, None
     prev_close = info.get("regularMarketPreviousClose") or info.get("previousClose")
 
     # If reg_chg is not provided directly, calculate vs previous close
@@ -4306,11 +4394,24 @@ for row_start in range(0, len(ticker_list), n_cols):
                     import numpy as np
                     if rec_mean is not None and not np.isnan(rec_mean):
                         tooltip_text = "Wall Street Scale: 1.0 (Strong Buy) to 5.0 (Sell). A lower score indicates stronger institutional backing."
-                        b8_sub_html = f'<span title="{tooltip_text}" style="cursor: help; text-decoration: underline dotted #94A3B8; text-underline-offset: 3px; color: #64748B;">Consensus: {rec_mean:.1f} / 5.0</span>'
+                        b8_sub_html = f"""
+                        <div style="font-size: 0.8rem; color: #64748B; margin-top: 4px;">
+                            <div class="custom-tooltip-wrapper">
+                                <span style="text-decoration: underline dotted #94A3B8; text-underline-offset: 3px;">
+                                    Consensus: {rec_mean:.1f} / 5.0 &#9432;
+                                </span>
+                                <div class="custom-tooltip-box">
+                                    <b>Scale: 1.0 (Strong Buy) to 5.0 (Sell)</b><br>
+                                    A lower score indicates stronger institutional backing.
+                                </div>
+                            </div>
+                        </div>
+                        """
                         box8_html = make_metric_tile_html(
                             title="Wall Street Consensus",
                             value=formatted_rec,
                             subtext_html=b8_sub_html,
+                            subtext=None,
                             badge_text=b8_badge_text,
                             badge_style=b8_badge_style,
                             val_color="#0F172A",
@@ -4598,6 +4699,7 @@ SNAPSHOT_JS = """
             </div>
           </div>
           <style>
+
             #dean-modal-plot-container .js-plotly-plot,
             #dean-modal-plot-container .plot-container,
             #dean-modal-plot-container .svg-container,

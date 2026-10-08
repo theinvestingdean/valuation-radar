@@ -16,6 +16,40 @@ st.set_page_config(
 )
 
 # --- Main Header ---
+st.markdown("""
+<style>
+/* Hide native Streamlit multipage sidebar navigation */
+[data-testid="stSidebarNav"] {
+    display: none !important;
+}
+
+/* Signature Yellow Pill Guide Buttons */
+.guide-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background-color: #FDE047;
+    color: #1F2937 !important;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    text-decoration: none !important;
+    border: 1px solid #EAB308;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+.guide-btn:hover {
+    background-color: #FACC15;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
+    text-decoration: none !important;
+    color: #1F2937 !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
 header_html = """
 <div style="display: flex; flex-direction: column; gap: 4px; margin-bottom: 32px; margin-top: 8px;">
     <div style="display: flex; align-items: center; gap: 14px;">
@@ -25,9 +59,18 @@ header_html = """
         </svg>
         <h1 style="margin: 0; padding: 0; font-size: 2.5rem; font-weight: 800; color: #0F172A; letter-spacing: -0.015em;">Terminology & User Guide</h1>
     </div>
-    <p style="color: #64748B; font-size: 1.05rem; margin-top: 8px; margin-bottom: 0; line-height: 1.5;">
+    <p style="color: #64748B; font-size: 1.05rem; margin-top: 8px; margin-bottom: 16px; line-height: 1.5;">
       A simple, beginner-friendly guide to understanding the dashboard, spotting great buying opportunities, and investing with confidence.
     </p>
+    <div>
+        <a href="/" target="_self" class="guide-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            <span>Back to Valuation Dashboard</span>
+        </a>
+    </div>
 </div>
 """
 st.markdown(header_html, unsafe_allow_html=True)

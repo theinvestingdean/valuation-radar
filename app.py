@@ -4398,7 +4398,7 @@ for row_start in range(0, len(ticker_list), n_cols):
                         <div style="font-size: 0.8rem; color: #64748B; margin-top: 4px;">
                             <div class="custom-tooltip-wrapper">
                                 <span style="text-decoration: underline dotted #94A3B8; text-underline-offset: 3px;">
-                                    Consensus: {rec_mean:.1f} / 5.0 &#9432;
+                                    Consensus: {rec_mean:.1f} / 5.0 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left: 2px; margin-bottom: -2px; display: inline-block; opacity: 0.85;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
                                 </span>
                                 <div class="custom-tooltip-box">
                                     <b>Scale: 1.0 (Strong Buy) to 5.0 (Sell)</b><br>

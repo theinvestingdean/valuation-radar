@@ -15,224 +15,22 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ── Custom Styling ──
-st.markdown(
-    """
-    <style>
-    /* Hide the default Streamlit page navigation menu */
-    [data-testid="stSidebarNav"] {
-        display: none !important;
-    }
-
-    /* Add a premium fintech dot-matrix pattern to the main background */
-    [data-testid="stAppViewContainer"] {
-        background-color: #f8f9fa !important;
-        background-image: radial-gradient(#d1d5db 1px, transparent 1px) !important;
-        background-size: 24px 24px !important;
-    }
-
-    /* Make the top Streamlit header transparent so it blends into the pattern */
-    [data-testid="stHeader"] {
-        background-color: transparent !important;
-    }
-
-    /* Ensure sidebar remains solid white against the dot-matrix canvas */
-    section[data-testid="stSidebar"] {
-        background-color: #FFFFFF !important;
-        border-right: 1px solid #E5E7EB !important;
-    }
-
-    /* ── Signature Yellow Pill Guide Buttons ── */
-    .guide-btn {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        background-color: #FDE047;
-        color: #1F2937 !important;
-        font-weight: 700;
-        font-size: 14px;
-        padding: 8px 16px;
-        border-radius: 8px;
-        text-decoration: none !important;
-        border: 1px solid #EAB308;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-        transition: all 0.2s ease;
-        cursor: pointer;
-    }
-    .guide-btn:hover {
-        background-color: #FACC15;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        transform: translateY(-1px);
-        text-decoration: none !important;
-        color: #1F2937 !important;
-    }
-    section[data-testid="stSidebar"] .guide-btn {
-        width: 100%;
-        justify-content: center;
-        box-sizing: border-box;
-    }
-
-    /* 1. Target ONLY the master stock container wrappers */
-    div[class*="st-key-stock_card_"],
-    div[data-testid="stVerticalBlockBorderWrapper"] {
-        background-color: #FFFFFF !important;
-        background-image: none !important;
-        border: 2px solid #94A3B8 !important;
-        border-radius: 16px !important;
-        box-shadow: 0px 12px 24px -4px rgba(0, 0, 0, 0.15), 0px 8px 12px -6px rgba(0, 0, 0, 0.1) !important;
-        padding: 1.5rem !important;
-        margin-bottom: 2.5rem !important;
-    }
-
-    .guide-container {
-        max-width: 960px;
-        margin: 0 auto;
-        font-size: 16px;
-        line-height: 1.7;
-        color: #1F2937;
-    }
-    .guide-badge-buy {
-        background-color: #ECFDF5;
-        color: #065F46;
-        border: 1px solid #A7F3D0;
-        padding: 3px 10px;
-        border-radius: 9999px;
-        font-weight: 700;
-        font-size: 13px;
-        display: inline-block;
-    }
-    .guide-badge-dca {
-        background-color: #FEF3C7;
-        color: #92400E;
-        border: 1px solid #FDE68A;
-        padding: 3px 10px;
-        border-radius: 9999px;
-        font-weight: 700;
-        font-size: 13px;
-        display: inline-block;
-    }
-    .guide-badge-wait {
-        background-color: #FEE2E2;
-        color: #991B1B;
-        border: 1px solid #FECACA;
-        padding: 3px 10px;
-        border-radius: 9999px;
-        font-weight: 700;
-        font-size: 13px;
-        display: inline-block;
-    }
-    .guide-badge-green {
-        background-color: #DCFCE7;
-        color: #166534;
-        padding: 2px 8px;
-        border-radius: 12px;
-        font-weight: 600;
-        font-size: 13px;
-        display: inline-block;
-    }
-    .guide-badge-amber {
-        background-color: #FEF3C7;
-        color: #92400E;
-        padding: 2px 8px;
-        border-radius: 12px;
-        font-weight: 600;
-        font-size: 13px;
-        display: inline-block;
-    }
-    .guide-badge-red {
-        background-color: #FEE2E2;
-        color: #991B1B;
-        padding: 2px 8px;
-        border-radius: 12px;
-        font-weight: 600;
-        font-size: 13px;
-        display: inline-block;
-    }
-    .dean-badge {
-        font-weight: 700 !important;
-        color: #1F2937 !important;
-        background-color: #FDE047 !important;
-        border: 1px solid #EAB308 !important;
-        padding: 2px 9px;
-        border-radius: 6px;
-        letter-spacing: 0.01em;
-        display: inline-flex !important;
-        align-items: center !important;
-        text-decoration: none !important;
-        box-shadow: 0 1px 2px rgba(234, 179, 8, 0.20) !important;
-        transition: all 0.2s ease-in-out;
-        cursor: pointer !important;
-    }
-    a.dean-badge:hover,
-    .dean-badge:hover {
-        background-color: #FACC15 !important;
-        color: #111827 !important;
-        border-color: #CA8A04 !important;
-        box-shadow: 0 3px 6px rgba(234, 179, 8, 0.35) !important;
-        transform: translateY(-1px) !important;
-    }
-    a.dean-badge:active,
-    .dean-badge:active {
-        transform: translateY(0px) !important;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
-
-# ── Sidebar Navigation Link ──
-with st.sidebar:
-    st.markdown(
-        """
-        <a href="/" target="_self" class="guide-btn">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
-                <path d="M19 12H5"></path>
-                <polyline points="12 19 5 12 12 5"></polyline>
-            </svg>
-            <span>Back to Valuation Radar</span>
-        </a>
-        """,
-        unsafe_allow_html=True,
-    )
-    st.markdown("<div style='margin-bottom: 0.75rem;'></div>", unsafe_allow_html=True)
-    st.markdown("---")
-    st.markdown(
-        """
-        <div style="font-size: 0.72rem; color: #64748B; line-height: 1.5;">
-            <strong>The Stock Valuation Radar</strong><br>
-            Beginner's Guide & Terminology.<br>
-            Curated by <a href="https://www.instagram.com/theinvestingdean" target="_blank" rel="noopener noreferrer" class="dean-badge" title="Visit @theinvestingdean on Instagram" style="font-size: 0.68rem; padding: 2px 7px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px; flex-shrink: 0;"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>@theinvestingdean</a>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-# ── Top Bar Link ──
-col_link, col_space = st.columns([1, 3])
-with col_link:
-    st.markdown(
-        """
-        <a href="/" target="_self" class="guide-btn">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
-                <path d="M19 12H5"></path>
-                <polyline points="12 19 5 12 12 5"></polyline>
-            </svg>
-            <span>Back to Valuation Radar</span>
-        </a>
-        """,
-        unsafe_allow_html=True,
-    )
-
-# ── Main Header ──
-st.title("📚 Terminology & User Guide")
-st.markdown(
-    """
-    <p style="color: #64748B; font-size: 16px; margin-top: -8px; margin-bottom: 24px;">
+# --- Main Header ---
+header_html = """
+<div style="display: flex; flex-direction: column; gap: 4px; margin-bottom: 32px; margin-top: 8px;">
+    <div style="display: flex; align-items: center; gap: 14px;">
+        <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; filter: drop-shadow(0px 2px 3px rgba(99,102,241,0.2));">
+            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+        </svg>
+        <h1 style="margin: 0; padding: 0; font-size: 2.5rem; font-weight: 800; color: #0F172A; letter-spacing: -0.015em;">Terminology & User Guide</h1>
+    </div>
+    <p style="color: #64748B; font-size: 1.05rem; margin-top: 8px; margin-bottom: 0; line-height: 1.5;">
       A simple, beginner-friendly guide to understanding the dashboard, spotting great buying opportunities, and investing with confidence.
     </p>
-    """,
-    unsafe_allow_html=True,
-)
+</div>
+"""
+st.markdown(header_html, unsafe_allow_html=True)
 
 # ── Section 1 & 2 Markdown ──
 st.markdown(
@@ -285,41 +83,44 @@ Every stock card shows key figures that give you the full story behind the price
 
 ### 📅 YTD Return (Year-to-Date)
 - **Definition:** The profit or loss the stock has made since January 1st of the current year.
-- **<span class="guide-badge-green">Green Badge</span>:** The stock has gained value this year.
-- **<span class="guide-badge-red">Red Badge</span>:** The stock has lost value this year.
+- **<span style="background-color: #DCFCE7; color: #15803D; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #16A34A;">Green Badge</span>:** The stock has gained value this year.
+- **<span style="background-color: #FEE2E2; color: #DC2626; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #FCA5A5;">Red Badge</span>:** The stock has lost value this year.
 
 ---
 
 ### 🏔️ Distance to All-Time High (ATH)
 - **Definition:** The highest price the stock has ever reached in its history.
 - **What the colors tell you:**
-  - **<span class="guide-badge-red">Red (Near ATH)</span>:** The stock is trading very close to its record highs. Proceed with caution, as it is relatively expensive.
-  - **<span class="guide-badge-amber">Amber (Moderate Pullback)</span>:** The stock has pulled back from its highs, offering a standard dip.
-  - **<span class="guide-badge-green">Green (Deep Discount)</span>:** The stock is significantly below its record highs, offering a wide margin of safety and a cheaper entry price.
+  - **<span style="background-color: #FEE2E2; color: #DC2626; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #FCA5A5;">Red (Near ATH)</span>:** The stock is trading very close to its record highs. Proceed with caution, as it is relatively expensive.
+  - **<span style="background-color: #FEF3C7; color: #D97706; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #FCD34D;">Amber (Moderate Pullback)</span>:** The stock has pulled back from its highs, offering a standard dip.
+  - **<span style="background-color: #DCFCE7; color: #15803D; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #16A34A;">Green (Deep Discount)</span>:** The stock is significantly below its record highs, offering a wide margin of safety and a cheaper entry price.
 
 ---
 
 ### 📏 Standard Deviation (Z-Score)
 - **Definition:** This measures how far the stock's price has stretched away from its normal **50-day baseline average**.
 - **How to read the score:**
-  - A score of **-1.5** means the stock is **heavily discounted** (a good buying opportunity).
-  - A score near **0** means it is trading right at its **normal average**.
-  - A score of **+1.5** means the stock is **overstretched** and may soon drop back down.
+  - **-1.5 or lower** (<span style="background-color: #DCFCE7; color: #15803D; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #16A34A;">Discounted</span>): The stock is **heavily discounted** (a good buying opportunity).
+  - **Near 0** (<span style="background-color: #FEF3C7; color: #D97706; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #FCD34D;">Normal</span>): The stock is trading right at its **normal average**.
+  - **+1.5 or higher** (<span style="background-color: #FEE2E2; color: #DC2626; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #FCA5A5;">Overstretched</span>): The stock is **overstretched** and may soon drop back down.
 
 ---
 
-### 🏷️ Trailing P/E & Fair Value
-- **P/E Ratio (Price-to-Earnings):** Shows how much you are paying for every £1 or $1 the company makes in profit. A lower number generally means you are getting more profit for your money.
-- **Fair Value Corridor:** The stock's normal average price over the last 90 days or 1 year. Upside shows how much the stock could rise to return back to this normal average.
+### ⚖️ Forward P/E & Fair Value
+  - **Forward P/E Ratio (Price-to-Earnings):** Shows how much you are paying today for every £1 or $1 the company is **expected to make in profit over the next 12 months**.
+    - **Under 20.0** (<span style="background-color: #DCFCE7; color: #15803D; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #16A34A;">Attractive</span>): The stock is cheap relative to its expected earnings.
+    - **Between 20.0 and 35.0** (<span style="background-color: #FEF3C7; color: #D97706; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #FCD34D;">Moderate</span>): The stock is fairly priced or trades at a standard growth premium.
+    - **Over 35.0** (<span style="background-color: #FEE2E2; color: #DC2626; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #FCA5A5;">High Multiple</span>): The stock is expensive. The market has very high expectations for its future.
+  - **Fair Value Corridor:** The stock's normal average price over the last 90 days or 1 year. Upside shows how much the stock could rise to return back to this normal average.
 
 ---
 
 ### 🚀 2-Year Forward PEG Ratio
 - **What it is:** This compares the price of the stock to how fast its profits are expected to grow over the next 2 years.
 - **How to read the score:**
-  - **Under 1.0 (<span class="guide-badge-green">Great Value</span>):** The company's profits are growing faster than its price. A true bargain!
-  - **Between 1.0 and 1.75 (<span class="guide-badge-amber">Fair Value</span>):** The stock is fairly priced for its expected growth.
-  - **Over 1.75 (<span class="guide-badge-red">Expensive</span>):** The stock is pricey. It expects perfection, making it vulnerable to drops if growth slows down.
+  - **Under 1.0 (<span style="background-color: #DCFCE7; color: #15803D; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #16A34A;">Great Value</span>):** The company's profits are growing faster than its price. A true bargain!
+  - **Between 1.0 and 1.75 (<span style="background-color: #FEF3C7; color: #D97706; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #FCD34D;">Fair Value</span>):** The stock is fairly priced for its expected growth.
+  - **Over 1.75 (<span style="background-color: #FEE2E2; color: #DC2626; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #FCA5A5;">Expensive</span>):** The stock is pricey. It expects perfection, making it vulnerable to drops if growth slows down.
 
 ---
 
@@ -330,9 +131,9 @@ Every stock card shows key figures that give you the full story behind the price
 
 ### ⚡ RSI (Momentum Gauge)
 - Think of RSI like a speedometer from 0 to 100:
-  - **Under 30:** <span class="guide-badge-green">Oversold</span> The stock has been sold off too fast and is ready to bounce back up.
-  - **Between 30 and 70:** <span class="guide-badge-amber">Normal</span> A calm, steady trend.
-  - **Over 70:** <span class="guide-badge-red">Overbought</span> The stock has rocketed up too quickly and needs to take a breather.
+  - **Under 30:** <span style="background-color: #DCFCE7; color: #15803D; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #16A34A;">Oversold</span> The stock has been sold off too fast and is ready to bounce back up.
+  - **Between 30 and 70:** <span style="background-color: #FEF3C7; color: #D97706; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #FCD34D;">Normal</span> A calm, steady trend.
+  - **Over 70:** <span style="background-color: #FEE2E2; color: #DC2626; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #FCA5A5;">Overbought</span> The stock has rocketed up too quickly and needs to take a breather.
 
 ---
 
@@ -564,9 +365,9 @@ st.markdown(
 
 | Buying Tier & Dashboard Badge | Where Price Sits on the Chart | What It Means | What to Do |
 | :--- | :--- | :--- | :--- |
-| **Tier 2 (Standard Dip)**<br><span class="guide-badge-green">🟢 Standard DCA</span> | Price touches the **-1.5 line** | The stock is slightly discounted below its normal average. | Good time for your regular scheduled DCA purchase. |
-| **Tier 1 (Deep Dip)**<br><span class="guide-badge-amber">🟡 Deeply Oversold</span> | Price reaches the **-2.0 or -2.2 line** | The stock is heavily discounted. | Great value! Consider investing double your normal amount. |
-| **Tier 0 (Extreme Panic)**<br><span class="guide-badge-red">🔴 Capitulation</span> | Price drops to the **-3.0 line** | The stock has experienced a severe crash or market panic. | Rare generational bargain. Maximum buying opportunity. |
+| **Tier 2 (Standard Dip)**<br><span style="background-color: #DCFCE7; color: #15803D; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #16A34A;">🟢 Standard DCA</span> | Price touches the **-1.5 line** | The stock is slightly discounted below its normal average. | Good time for your regular scheduled DCA purchase. |
+| **Tier 1 (Deep Dip)**<br><span style="background-color: #FEF3C7; color: #D97706; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #FCD34D;">🟡 Deeply Oversold</span> | Price reaches the **-2.0 or -2.2 line** | The stock is heavily discounted. | Great value! Consider investing double your normal amount. |
+| **Tier 0 (Extreme Panic)**<br><span style="background-color: #FEE2E2; color: #DC2626; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #FCA5A5;">🔴 Capitulation</span> | Price drops to the **-3.0 line** | The stock has experienced a severe crash or market panic. | Rare generational bargain. Maximum buying opportunity. |
 
 ### How to Confirm a Bounce Before Buying (2-Step Takeaway)
 To avoid catching a falling knife, let the market prove it has bottomed:

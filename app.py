@@ -4428,64 +4428,7 @@ for row_start in range(0, len(ticker_list), n_cols):
     st.markdown("---")
 
 
-# ── 7. Full Data Table (Safe from KeyError) ──
-with st.expander("Full valuation data table", expanded=False):
-    rows = []
-    for tk, d in all_data.items():
-        status = compute_status(d, timeframe=val_timeframe)
-        safe_name = d.get("shortName") or d.get("longName") or d.get("name") or tk
-        ccy_s = get_currency_symbol(d.get("currency", "USD"))
-        ath_v = d.get("ath", np.nan)
-        dist_v = d.get("dist_ath", np.nan)
 
-        if val_timeframe == "1-Year" and "Z252" in d.get("hist", pd.DataFrame()).columns:
-            z_series = d.get("hist", pd.DataFrame())["Z252"].dropna()
-            z_label = "Std Dev (1Y)"
-        else:
-            z_col = "Z50" if "Z50" in d.get("hist", pd.DataFrame()).columns else ("Z16" if "Z16" in d.get("hist", pd.DataFrame()).columns else None)
-            z_series = d.get("hist", pd.DataFrame())[z_col].dropna() if z_col else pd.Series(dtype=float)
-            z_label = "Std Dev (50d)"
-
-        z_v_str = f"{float(z_series.iloc[-1]):+.2f}σ" if len(z_series) else "—"
-
-        peg_val = d.get("peg_2y")
-        peg_display = f"{peg_val:.2f}" if peg_val is not None and not np.isnan(peg_val) else "—"
-
-        target_up_v = d.get("target_upside_pct")
-        target_up_str = f"{target_up_v:+.1f}%" if (target_up_v is not None and not np.isnan(target_up_v)) else "—"
-
-        row = {
-            "Ticker": tk,
-            "Name": safe_name,
-            "Status": status,
-            "Price": round(d.get("current_price", np.nan), 2),
-            "12M Target": target_up_str,
-            "Distance to All-Time High (ATH)": f"{dist_v:+.1f}%" if not np.isnan(dist_v) else "—",
-            z_label: z_v_str,
-            "2Y PEG": peg_display,
-            "ATH": f"{ccy_s}{ath_v:.2f}" if not np.isnan(ath_v) else "—",
-        }
-        if d.get("error"):
-            row["Error"] = d.get("error")
-        elif d.get("pe_mode"):
-            fv_pe = d.get("pe_mid_1y" if val_timeframe == "1-Year" else "pe_mid_90d", d.get("pe_mid", np.nan))
-            up_pe = d.get("upside_1y" if val_timeframe == "1-Year" else "upside_90d", np.nan)
-            row["Mode"]                 = f"P/E Corridor ({val_timeframe})"
-            row["Current P/E"]          = round(d.get("pe_current", np.nan), 2)
-            row[f"Fair Value P/E ({val_timeframe})"] = round(fv_pe, 2) if not np.isnan(fv_pe) else "—"
-            row["Upside to Fair Value"] = f"{up_pe:+.1f}%" if not np.isnan(up_pe) else "—"
-            row["Upcoming Earnings"]    = d.get("next_earnings") or "—"
-        else:
-            fv_p = d.get("price_mid_1y" if val_timeframe == "1-Year" else "price_mid_90d", d.get("price_mid", np.nan))
-            up_p = d.get("upside_1y" if val_timeframe == "1-Year" else "upside_90d", np.nan)
-            row["Mode"]                   = f"Price Corridor ({val_timeframe})"
-            row[f"Fair Value Price ({val_timeframe})"] = round(fv_p, 2) if not np.isnan(fv_p) else "—"
-            row["Upside to Fair Value"]   = f"{up_p:+.1f}%" if not np.isnan(up_p) else "—"
-            row["Upcoming Earnings"]      = d.get("next_earnings") or "—"
-        rows.append(row)
-
-    df = pd.DataFrame(rows)
-    st.dataframe(df, width="stretch", hide_index=True)
 
 
 # ─────────────────────────────────────────────

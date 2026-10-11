@@ -17,10 +17,12 @@ st.set_page_config(
 
 def render_guide_image(filename, caption):
     filepath = os.path.join("assets", filename)
+    if not os.path.exists(filepath):
+        filepath = filename
     if os.path.exists(filepath):
         st.image(filepath, caption=caption, width=300)
     else:
-        st.info(f"📸 Placeholder: Add `{filename}` to the `assets/` folder to display here.")
+        st.info(f"📸 Placeholder: Add `{filename}` to the repository to display here.")
 
 # --- Main Header ---
 st.markdown("""

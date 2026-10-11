@@ -16,13 +16,19 @@ st.set_page_config(
 )
 
 def render_guide_image(filename, caption):
-    filepath = os.path.join("assets", filename)
-    if not os.path.exists(filepath):
-        filepath = filename
-    if os.path.exists(filepath):
-        st.image(filepath, caption=caption, width=300)
+    # Check assets/ first, then fall back to root directory
+    assets_path = os.path.join("assets", filename)
+    if os.path.exists(assets_path):
+        target_path = assets_path
+    elif os.path.exists(filename):
+        target_path = filename
     else:
-        st.info(f"📸 Placeholder: Add `{filename}` to the repository to display here.")
+        target_path = None
+
+    if target_path:
+        st.image(target_path, caption=caption, width=320)
+    else:
+        st.info(f"📸 Placeholder: Add `{filename}` to display here.")
 
 # --- Main Header ---
 st.markdown("""

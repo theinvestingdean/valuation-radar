@@ -238,9 +238,9 @@ Every stock card shows key figures that give you the full story behind the price
 ### 📏 Standard Deviation (Z-Score)
 - **Definition:** This measures how far the stock's price has stretched away from its normal **50-day baseline average**.
 - **How to read the score:**
-  - **-1.5 or lower** (<span style="background-color: #DCFCE7; color: #15803D; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #16A34A;">Discounted</span>): The stock is **heavily discounted** (a good buying opportunity).
-  - **Near 0** (<span style="background-color: #FEF3C7; color: #D97706; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #FCD34D;">Normal</span>): The stock is trading right at its **normal average**.
-  - **+1.5 or higher** (<span style="background-color: #FEE2E2; color: #DC2626; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #FCA5A5;">Overstretched</span>): The stock is **overstretched** and may soon drop back down.
+  - **-1.2 or lower** (<span style="background-color: #DCFCE7; color: #15803D; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #16A34A;">Oversold</span>): The stock is **oversold** below its normal average (a good buying opportunity).
+  - **Between -1.2 and +1.2** (<span style="background-color: #FEF3C7; color: #D97706; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #FCD34D;">Neutral</span>): The stock is trading right within its **normal average range**.
+  - **+1.2 or higher** (<span style="background-color: #FEE2E2; color: #DC2626; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #FCA5A5;">Overbought</span>): The stock is **overbought** and may soon drop back down.
 """,
         unsafe_allow_html=True,
     )

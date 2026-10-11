@@ -4,6 +4,7 @@ Curated for The Stock Valuation Radar (@theinvestingdean)
 """
 
 import os
+import base64
 import streamlit as st
 import plotly.graph_objects as go
 import numpy as np
@@ -26,7 +27,19 @@ def render_guide_image(filename, caption):
         target_path = None
 
     if target_path:
-        st.image(target_path, caption=caption, width=320)
+        with open(target_path, "rb") as image_file:
+            encoded_string = base64.b64encode(image_file.read()).decode()
+            
+        # Pure HTML rendering completely bypasses Streamlit's fullscreen button
+        html_img = f"""
+        <div style="margin: 1rem 0;">
+            <img src="data:image/png;base64,{encoded_string}" style="max-width: 320px; width: 100%; border-radius: 8px; border: 1px solid #E2E8F0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div style="font-size: 0.85rem; color: #64748B; margin-top: 8px; font-weight: 500;">
+                {caption}
+            </div>
+        </div>
+        """
+        st.markdown(html_img, unsafe_allow_html=True)
     else:
         st.info(f"📸 Placeholder: Add `{filename}` to display here.")
 
@@ -66,6 +79,31 @@ section[data-testid="stSidebar"] .guide-btn {
     width: 100%;
     justify-content: center;
     box-sizing: border-box;
+}
+
+/* 1. Apply the dotted background to the entire app view */
+[data-testid="stAppViewContainer"] {
+    background-color: #FAFAFA !important;
+    background-image: radial-gradient(#E2E8F0 1px, transparent 1px) !important;
+    background-size: 20px 20px !important;
+}
+
+/* 2. Ensure the new bordered containers have a solid white background to stand out against the dots */
+[data-testid="stVerticalBlockBorderWrapper"] {
+    background-color: #FFFFFF !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
+    margin-bottom: 1.5rem !important;
+}
+
+/* 3. Aggressively force hide ALL Streamlit image fullscreen buttons */
+button[title="View fullscreen"],
+[data-testid="StyledFullScreenButton"],
+.stImage button {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -110,13 +148,11 @@ header_html = """
 """
 st.markdown(header_html, unsafe_allow_html=True)
 
-# ── Section 1 & 2 Markdown ──
-st.markdown(
-    """
-<div class="guide-container">
 
----
-
+# ── Section 1: How to Think About Investing ──
+with st.container(border=True):
+    st.markdown(
+        """
 ## 1. How to Think About Investing
 
 ### Buying Stocks on Sale
@@ -127,9 +163,15 @@ The stock market works the exact same way:
 - **The Smart Way to Invest:** Keep calm, look for top-quality companies, and buy them when they are discounted.
 
 **Dollar-Cost Averaging (DCA):** This means investing a set amount of money regularly (like once a month), no matter what the market is doing. The Valuation Radar helps you know when a stock is on sale so you can make the most of your money.
+""",
+        unsafe_allow_html=True,
+    )
 
----
 
+# ── Section 2: The Traffic Light System ──
+with st.container(border=True):
+    st.markdown(
+        """
 ## 2. The Traffic Light System
 
 Every stock on your dashboard has a simple color status that tells you how its current price compares to its normal historical average:
@@ -141,18 +183,15 @@ Every stock on your dashboard has a simple color status that tells you how its c
 | **Wait for Pullback** | <span class="guide-badge-wait">🔴 WAIT FOR PULLBACK</span> | Price is **more than 10% above** its normal average | **Expensive!** The stock is stretched high. Be patient and wait for the price to cool down before buying. |
 
 > **Tip:** You can switch between the **90-Day Average** (short-term swings) and the **1-Year Average** (long-term trend) using the toggle button at the top of the main dashboard.
-
-</div>
 """,
-    unsafe_allow_html=True,
-)
+        unsafe_allow_html=True,
+    )
 
-st.markdown(
-    """
-<div class="guide-container">
 
----
-
+# ── Section 3: Stock Card Metrics Made Simple ──
+with st.container(border=True):
+    st.markdown(
+        """
 ## 3. Stock Card Metrics Made Simple
 
 Every stock card shows key figures that give you the full story behind the price. Here is what each one means:
@@ -172,17 +211,13 @@ Every stock card shows key figures that give you the full story behind the price
 - **Definition:** The profit or loss the stock has made since January 1st of the current year.
 - **<span style="background-color: #DCFCE7; color: #15803D; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #16A34A;">Green Badge</span>:** The stock has gained value this year.
 - **<span style="background-color: #FEE2E2; color: #DC2626; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #FCA5A5;">Red Badge</span>:** The stock has lost value this year.
-
-</div>
 """,
-    unsafe_allow_html=True,
-)
-render_guide_image("guide_ytd.png", "YTD Return Metric")
+        unsafe_allow_html=True,
+    )
+    render_guide_image("guide_ytd.png", "YTD Return Metric")
 
-st.markdown(
-    """
-<div class="guide-container">
-
+    st.markdown(
+        """
 ---
 
 ### 🏔️ Distance to All-Time High (ATH)
@@ -191,17 +226,13 @@ st.markdown(
   - **<span style="background-color: #FEE2E2; color: #DC2626; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #FCA5A5;">Red (Near ATH)</span>:** The stock is trading very close to its record highs. Proceed with caution, as it is relatively expensive.
   - **<span style="background-color: #FEF3C7; color: #D97706; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #FCD34D;">Amber (Moderate Pullback)</span>:** The stock has pulled back from its highs, offering a standard dip.
   - **<span style="background-color: #DCFCE7; color: #15803D; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #16A34A;">Green (Deep Discount)</span>:** The stock is significantly below its record highs, offering a wide margin of safety and a cheaper entry price.
-
-</div>
 """,
-    unsafe_allow_html=True,
-)
-render_guide_image("guide_ath.png", "Distance to ATH Metric")
+        unsafe_allow_html=True,
+    )
+    render_guide_image("guide_ath.png", "Distance to ATH Metric")
 
-st.markdown(
-    """
-<div class="guide-container">
-
+    st.markdown(
+        """
 ---
 
 ### 📏 Standard Deviation (Z-Score)
@@ -210,17 +241,13 @@ st.markdown(
   - **-1.5 or lower** (<span style="background-color: #DCFCE7; color: #15803D; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #16A34A;">Discounted</span>): The stock is **heavily discounted** (a good buying opportunity).
   - **Near 0** (<span style="background-color: #FEF3C7; color: #D97706; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #FCD34D;">Normal</span>): The stock is trading right at its **normal average**.
   - **+1.5 or higher** (<span style="background-color: #FEE2E2; color: #DC2626; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #FCA5A5;">Overstretched</span>): The stock is **overstretched** and may soon drop back down.
-
-</div>
 """,
-    unsafe_allow_html=True,
-)
-render_guide_image("guide_zscore.png", "Standard Deviation Metric")
+        unsafe_allow_html=True,
+    )
+    render_guide_image("guide_zscore.png", "Standard Deviation Metric")
 
-st.markdown(
-    """
-<div class="guide-container">
-
+    st.markdown(
+        """
 ---
 
 ### ⚖️ Forward P/E & Fair Value
@@ -229,17 +256,13 @@ st.markdown(
   - **Between 20.0 and 35.0** (<span style="background-color: #FEF3C7; color: #D97706; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #FCD34D;">Moderate</span>): The stock is fairly priced or trades at a standard growth premium.
   - **Over 35.0** (<span style="background-color: #FEE2E2; color: #DC2626; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #FCA5A5;">High Multiple</span>): The stock is expensive. The market has very high expectations for its future.
 - **Fair Value Corridor:** The stock's normal average price over the last 90 days or 1 year. Upside shows how much the stock could rise to return back to this normal average.
-
-</div>
 """,
-    unsafe_allow_html=True,
-)
-render_guide_image("guide_pe.png", "Forward P/E Metric")
+        unsafe_allow_html=True,
+    )
+    render_guide_image("guide_pe.png", "Forward P/E Metric")
 
-st.markdown(
-    """
-<div class="guide-container">
-
+    st.markdown(
+        """
 ---
 
 ### 🚀 2-Year Forward PEG Ratio
@@ -248,22 +271,13 @@ st.markdown(
   - **Under 1.0 (<span style="background-color: #DCFCE7; color: #15803D; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #16A34A;">Great Value</span>):** The company's profits are growing faster than its price. A true bargain!
   - **Between 1.0 and 1.75 (<span style="background-color: #FEF3C7; color: #D97706; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #FCD34D;">Fair Value</span>):** The stock is fairly priced for its expected growth.
   - **Over 1.75 (<span style="background-color: #FEE2E2; color: #DC2626; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #FCA5A5;">Expensive</span>):** The stock is pricey. It expects perfection, making it vulnerable to drops if growth slows down.
-
-</div>
 """,
-    unsafe_allow_html=True,
-)
-render_guide_image("guide_peg.png", "PEG Ratio Metric")
+        unsafe_allow_html=True,
+    )
+    render_guide_image("guide_peg.png", "PEG Ratio Metric")
 
-st.markdown(
-    """
-<div class="guide-container">
-
----
-
-### 🎯 12-Month Analyst Target
-- What professional Wall Street researchers predict the stock will be worth one year from now, showing the potential percentage gain or loss.
-
+    st.markdown(
+        """
 ---
 
 ### ⚡ RSI (Momentum Gauge)
@@ -276,6 +290,7 @@ st.markdown(
 
 ### 🏛️ Wall Street Consensus & Analyst Score
 
+* **12-Month Analyst Target:** What professional Wall Street researchers predict the stock will be worth one year from now, showing the potential percentage gain or loss.
 * **Definition:** The aggregated consensus rating compiled from institutional equity research analysts (e.g., Goldman Sachs, Morgan Stanley, JPMorgan) actively covering the stock.
 * **How the 1.0 to 5.0 Score Works (Lower is Better):**
   * **1.0 - 1.5** <span style="background-color: #DCFCE7; color: #15803D; padding: 2px 8px; border-radius: 4px; font-weight: 700; border: 1px solid #16A34A;">Strong Buy</span>: Overwhelming institutional conviction; analysts forecast significant outperformance.
@@ -283,216 +298,211 @@ st.markdown(
   * **2.6 - 3.5** <span style="background-color: #FEF3C7; color: #D97706; padding: 2px 8px; border-radius: 4px; font-weight: 600; border: 1px solid #FCD34D;">Hold</span>: Neutral outlook; analysts expect the stock to perform in line with the broader market.
   * **3.6 - 5.0** <span style="background-color: #FEE2E2; color: #DC2626; padding: 2px 8px; border-radius: 4px; font-weight: 600; border: 1px solid #FCA5A5;">Sell / Underperform</span>: Rare bearish rating; analysts recommend trimming or exiting positions.
 * **How to Use with the Radar:** Look for confluence. When high-quality stocks enter the **Buy Zone (-1.5σ to -2.2σ)** while maintaining a **Strong Buy** or **Buy** rating, it confirms that institutional long-term conviction remains intact despite short-term price drops.
-
-</div>
 """,
-    unsafe_allow_html=True,
-)
-render_guide_image("guide_consensus.png", "Wall Street Consensus Metric")
+        unsafe_allow_html=True,
+    )
+    render_guide_image("guide_consensus.png", "Wall Street Consensus Metric")
 
-st.markdown(
-    """
-<div class="guide-container">
 
----
+def render_corridor_simulation():
+    # 1. Base trend path (peaks at +2.3, troughs at -3.1)
+    n_bars = 45
+    x_steps = np.linspace(0, 2 * np.pi, n_bars)
+    trend = 2.6 * np.sin(x_steps) - 0.4
 
+    # 2. Build synthetic OHLC candles following the trend
+    dates = [f"Day {i+1}" for i in range(n_bars)]
+    opens, highs, lows, closes = [], [], [], []
+
+    prev_close = trend[0] - 0.2
+    for i in range(n_bars):
+        op = prev_close
+        # Introduce realistic daily variance around the trajectory
+        cl = trend[i] + np.random.uniform(-0.15, 0.15)
+        body_min, body_max = min(op, cl), max(op, cl)
+
+        # Extra lower wick on Capitulation (near day 33) and Oversold
+        lower_wick_boost = (
+            0.35 if (i in [18, 19, 32, 33]) else np.random.uniform(0.05, 0.2)
+        )
+        hi = body_max + np.random.uniform(0.05, 0.2)
+        lo = body_min - lower_wick_boost
+
+        opens.append(op)
+        closes.append(cl)
+        highs.append(hi)
+        lows.append(lo)
+        prev_close = cl
+
+    fig = go.Figure()
+
+    # 3. Add Corridor Zones (Background rects)
+    fig.add_hrect(
+        y0=2.2,
+        y1=3.8,
+        fillcolor="rgba(239, 68, 68, 0.12)",
+        layer="below",
+        line_width=0,
+    )
+    fig.add_hrect(
+        y0=1.5,
+        y1=2.2,
+        fillcolor="rgba(239, 68, 68, 0.05)",
+        layer="below",
+        line_width=0,
+    )
+    fig.add_hrect(
+        y0=-1.5,
+        y1=-2.2,
+        fillcolor="rgba(34, 197, 94, 0.08)",
+        layer="below",
+        line_width=0,
+    )
+    fig.add_hrect(
+        y0=-2.2,
+        y1=-3.0,
+        fillcolor="rgba(245, 158, 11, 0.10)",
+        layer="below",
+        line_width=0,
+    )
+    fig.add_hrect(
+        y0=-3.0,
+        y1=-4.0,
+        fillcolor="rgba(239, 68, 68, 0.12)",
+        layer="below",
+        line_width=0,
+    )
+
+    # 4. Add Corridor Reference Lines
+    corridors = [
+        (2.2, "#DC2626", "dash", "+2.2σ Line (Extreme Overbought)"),
+        (1.5, "#EF4444", "dash", "+1.5σ Line (Overextended / Wait)"),
+        (0.0, "#64748B", "solid", "Median Line (Normal Fair Value)"),
+        (-1.5, "#22C55E", "dash", "-1.5σ Line: Tier 2 (Standard DCA)"),
+        (-2.2, "#F59E0B", "dash", "-2.2σ Line: Tier 1 (Deeply Oversold)"),
+        (-3.0, "#DC2626", "dash", "-3.0σ Line: Tier 0 (Capitulation)"),
+    ]
+    for y_val, color, dash, label in corridors:
+        fig.add_hline(
+            y=y_val,
+            line=dict(color=color, width=1.5, dash=dash),
+            annotation_text=f"  {label}",
+            annotation_position="right",
+            annotation_font=dict(size=11, color=color, family="sans-serif"),
+        )
+
+    # 5. Plot Synthetic Candlesticks
+    fig.add_trace(
+        go.Candlestick(
+            x=dates,
+            open=opens,
+            high=highs,
+            low=lows,
+            close=closes,
+            increasing_line_color="#22C55E",
+            decreasing_line_color="#EF4444",
+            name="Stock Price",
+        )
+    )
+
+    # 6. Retain Key Tier Callout Annotations
+    fig.add_annotation(
+        x=dates[11],
+        y=highs[11],
+        text="<b>🔴 EXTREME OVERBOUGHT</b><br>Touches +2.2σ",
+        showarrow=True,
+        arrowhead=2,
+        arrowcolor="#DC2626",
+        ax=-55,
+        ay=-35,
+        bgcolor="#FFFFFF",
+        bordercolor="#DC2626",
+        borderwidth=1.5,
+        font=dict(size=10, color="#1F2937"),
+    )
+    fig.add_annotation(
+        x=dates[24],
+        y=lows[24],
+        text="<b>🟢 TIER 2: STANDARD DCA</b><br>Crosses -1.5σ",
+        showarrow=True,
+        arrowhead=2,
+        arrowcolor="#22C55E",
+        ax=-50,
+        ay=-35,
+        bgcolor="#FFFFFF",
+        bordercolor="#22C55E",
+        borderwidth=1.5,
+        font=dict(size=10, color="#1F2937"),
+    )
+    fig.add_annotation(
+        x=dates[27],
+        y=lows[27],
+        text="<b>🟡 TIER 1: DEEPLY OVERSOLD</b><br>Wick touches -2.2σ",
+        showarrow=True,
+        arrowhead=2,
+        arrowcolor="#F59E0B",
+        ax=-60,
+        ay=35,
+        bgcolor="#FFFFFF",
+        bordercolor="#F59E0B",
+        borderwidth=1.5,
+        font=dict(size=10, color="#1F2937"),
+    )
+    fig.add_annotation(
+        x=dates[33],
+        y=lows[33],
+        text="<b>🟠 TIER 0: CAPITULATION</b><br>Intraday wick to -3.0σ",
+        showarrow=True,
+        arrowhead=2,
+        arrowcolor="#DC2626",
+        ax=45,
+        ay=35,
+        bgcolor="#FFFFFF",
+        bordercolor="#DC2626",
+        borderwidth=1.5,
+        font=dict(size=10, color="#1F2937"),
+    )
+
+    fig.update_layout(
+        height=550,
+        margin=dict(l=20, r=220, t=30, b=30),
+        plot_bgcolor="#FFFFFF",
+        paper_bgcolor="#FFFFFF",
+        dragmode=False,
+        xaxis=dict(
+            showgrid=True,
+            gridcolor="#F1F5F9",
+            showticklabels=False,
+            fixedrange=True,
+            rangeslider_visible=False,
+        ),
+        yaxis=dict(
+            showgrid=True,
+            gridcolor="#F1F5F9",
+            zeroline=False,
+            range=[-3.8, 3.2],
+            title="Valuation Deviation (Z-Score)",
+            fixedrange=True,
+        ),
+        showlegend=False,
+    )
+
+    return fig
+
+
+# ── Section 4: Valuation Corridors & The Dip-Buying System ──
+with st.container(border=True):
+    st.markdown(
+        """
 ## 4. Valuation Corridors & The Dip-Buying System
 
 Stocks naturally move up and down around their historical average price:
 - **Median Line (Middle):** The stock's normal average price where it usually trades.
 - When market dips or temporary bad news push the price below this average, it creates clear, discounted buying zones.
-
-</div>
 """,
-    unsafe_allow_html=True,
-)
-
-def render_corridor_simulation():
-  # 1. Base trend path (peaks at +2.3, troughs at -3.1)
-  n_bars = 45
-  x_steps = np.linspace(0, 2 * np.pi, n_bars)
-  trend = 2.6 * np.sin(x_steps) - 0.4
-
-  # 2. Build synthetic OHLC candles following the trend
-  dates = [f"Day {i+1}" for i in range(n_bars)]
-  opens, highs, lows, closes = [], [], [], []
-
-  prev_close = trend[0] - 0.2
-  for i in range(n_bars):
-    op = prev_close
-    # Introduce realistic daily variance around the trajectory
-    cl = trend[i] + np.random.uniform(-0.15, 0.15)
-    body_min, body_max = min(op, cl), max(op, cl)
-
-    # Extra lower wick on Capitulation (near day 33) and Oversold
-    lower_wick_boost = (
-        0.35 if (i in [18, 19, 32, 33]) else np.random.uniform(0.05, 0.2)
-    )
-    hi = body_max + np.random.uniform(0.05, 0.2)
-    lo = body_min - lower_wick_boost
-
-    opens.append(op)
-    closes.append(cl)
-    highs.append(hi)
-    lows.append(lo)
-    prev_close = cl
-
-  fig = go.Figure()
-
-  # 3. Add Corridor Zones (Background rects)
-  fig.add_hrect(
-      y0=2.2,
-      y1=3.8,
-      fillcolor="rgba(239, 68, 68, 0.12)",
-      layer="below",
-      line_width=0,
-  )
-  fig.add_hrect(
-      y0=1.5,
-      y1=2.2,
-      fillcolor="rgba(239, 68, 68, 0.05)",
-      layer="below",
-      line_width=0,
-  )
-  fig.add_hrect(
-      y0=-1.5,
-      y1=-2.2,
-      fillcolor="rgba(34, 197, 94, 0.08)",
-      layer="below",
-      line_width=0,
-  )
-  fig.add_hrect(
-      y0=-2.2,
-      y1=-3.0,
-      fillcolor="rgba(245, 158, 11, 0.10)",
-      layer="below",
-      line_width=0,
-  )
-  fig.add_hrect(
-      y0=-3.0,
-      y1=-4.0,
-      fillcolor="rgba(239, 68, 68, 0.12)",
-      layer="below",
-      line_width=0,
-  )
-
-  # 4. Add Corridor Reference Lines
-  corridors = [
-      (2.2, "#DC2626", "dash", "+2.2σ Line (Extreme Overbought)"),
-      (1.5, "#EF4444", "dash", "+1.5σ Line (Overextended / Wait)"),
-      (0.0, "#64748B", "solid", "Median Line (Normal Fair Value)"),
-      (-1.5, "#22C55E", "dash", "-1.5σ Line: Tier 2 (Standard DCA)"),
-      (-2.2, "#F59E0B", "dash", "-2.2σ Line: Tier 1 (Deeply Oversold)"),
-      (-3.0, "#DC2626", "dash", "-3.0σ Line: Tier 0 (Capitulation)"),
-  ]
-  for y_val, color, dash, label in corridors:
-    fig.add_hline(
-        y=y_val,
-        line=dict(color=color, width=1.5, dash=dash),
-        annotation_text=f"  {label}",
-        annotation_position="right",
-        annotation_font=dict(size=11, color=color, family="sans-serif"),
+        unsafe_allow_html=True,
     )
 
-  # 5. Plot Synthetic Candlesticks
-  fig.add_trace(
-      go.Candlestick(
-          x=dates,
-          open=opens,
-          high=highs,
-          low=lows,
-          close=closes,
-          increasing_line_color="#22C55E",
-          decreasing_line_color="#EF4444",
-          name="Stock Price",
-      )
-  )
-
-  # 6. Retain Key Tier Callout Annotations
-  fig.add_annotation(
-      x=dates[11],
-      y=highs[11],
-      text="<b>🔴 EXTREME OVERBOUGHT</b><br>Touches +2.2σ",
-      showarrow=True,
-      arrowhead=2,
-      arrowcolor="#DC2626",
-      ax=-55,
-      ay=-35,
-      bgcolor="#FFFFFF",
-      bordercolor="#DC2626",
-      borderwidth=1.5,
-      font=dict(size=10, color="#1F2937"),
-  )
-  fig.add_annotation(
-      x=dates[24],
-      y=lows[24],
-      text="<b>🟢 TIER 2: STANDARD DCA</b><br>Crosses -1.5σ",
-      showarrow=True,
-      arrowhead=2,
-      arrowcolor="#22C55E",
-      ax=-50,
-      ay=-35,
-      bgcolor="#FFFFFF",
-      bordercolor="#22C55E",
-      borderwidth=1.5,
-      font=dict(size=10, color="#1F2937"),
-  )
-  fig.add_annotation(
-      x=dates[27],
-      y=lows[27],
-      text="<b>🟡 TIER 1: DEEPLY OVERSOLD</b><br>Wick touches -2.2σ",
-      showarrow=True,
-      arrowhead=2,
-      arrowcolor="#F59E0B",
-      ax=-60,
-      ay=35,
-      bgcolor="#FFFFFF",
-      bordercolor="#F59E0B",
-      borderwidth=1.5,
-      font=dict(size=10, color="#1F2937"),
-  )
-  fig.add_annotation(
-      x=dates[33],
-      y=lows[33],
-      text="<b>🟠 TIER 0: CAPITULATION</b><br>Intraday wick to -3.0σ",
-      showarrow=True,
-      arrowhead=2,
-      arrowcolor="#DC2626",
-      ax=45,
-      ay=35,
-      bgcolor="#FFFFFF",
-      bordercolor="#DC2626",
-      borderwidth=1.5,
-      font=dict(size=10, color="#1F2937"),
-  )
-
-  fig.update_layout(
-      height=550,
-      margin=dict(l=20, r=220, t=30, b=30),
-      plot_bgcolor="#FFFFFF",
-      paper_bgcolor="#FFFFFF",
-      dragmode=False,
-      xaxis=dict(
-          showgrid=True,
-          gridcolor="#F1F5F9",
-          showticklabels=False,
-          fixedrange=True,
-          rangeslider_visible=False,
-      ),
-      yaxis=dict(
-          showgrid=True,
-          gridcolor="#F1F5F9",
-          zeroline=False,
-          range=[-3.8, 3.2],
-          title="Valuation Deviation (Z-Score)",
-          fixedrange=True,
-      ),
-      showlegend=False,
-  )
-
-  return fig
-
-with st.container(border=True):
     st.plotly_chart(
         render_corridor_simulation(),
         use_container_width=True,
@@ -502,12 +512,8 @@ with st.container(border=True):
         }
     )
 
-
-# ── Section 4 Breakdown & Final Sections ──
-st.markdown(
-    """
-<div class="guide-container">
-
+    st.markdown(
+        """
 ### The Three Buying Tiers
 
 | Buying Tier & Dashboard Badge | Where Price Sits on the Chart | What It Means | What to Do |
@@ -520,47 +526,25 @@ st.markdown(
 To avoid catching a falling knife, let the market prove it has bottomed:
 1. **Look for a Bottom Wick:** The price dropped during the day, but strong buyers quickly pushed it back up before the close.
 2. **Wait for a Green Day:** Let the stock finish the day higher than it opened. This proves buyers have fully taken back control.
+""",
+        unsafe_allow_html=True,
+    )
 
----
 
+# ── Section 5: Helpful Dashboard Tools ──
+with st.container(border=True):
+    st.markdown(
+        """
 ## 5. Helpful Dashboard Tools
 
 - 🔍 **Quick Find:** Type any stock ticker in the Quick Find bar to jump straight to its card without scrolling.
 - ⛶ **Expand Chart:** Tap the Expand button under any chart to open a full-screen view with pinch-to-zoom on your phone.
-
----
-
-## 6. Frequently Asked Questions (FAQ)
-
-**Q: What are the main stock market hours?**  
-*A: All times are in **UK Time**! The official US market is open from **2:30 PM to 9:00 PM (UK Time)**. Before 2:30 PM is pre-market, and after 9:00 PM is post-market.*
-
-**Q: Should I stop investing if a stock is in "Wait for Pullback"?**  
-*A: If you invest automatically every month for the next 10 years, sticking to your routine is fine. But do not dump big lumps of cash into a stock while it is red. Wait for it to pull back into Standard DCA or the Buy Zone.*
-
-**Q: How often does the market data update?**  
-*A: Live from Yahoo Finance! You can click the "Refresh Market Data" button in the sidebar anytime to synchronize the freshest numbers.*
-
-</div>
 """,
-    unsafe_allow_html=True,
-)
+        unsafe_allow_html=True,
+    )
 
-st.markdown(
-    """
-<div class="guide-container">
 
----
-
-## 7. Step-by-Step: How to Evaluate a Stock
-
-When comparing two stocks (for example, Meta vs. Microsoft) and deciding where to allocate your cash, follow this 4-step framework to build a high-conviction thesis:
-
-</div>
-""",
-    unsafe_allow_html=True,
-)
-
+# ── Section 6: Step-by-Step: How to Evaluate a Stock ──
 eval_html = """
 <style>
 .eval-grid {
@@ -614,7 +598,7 @@ eval_html = """
     <div class="eval-text">
       Look at the <b>Standard Deviation (Z-Score)</b>.<br><br>
       Never buy a stock in the <span class="badge-red">Overextended (+1.5σ)</span> zone. Wait for the hype to cool down.<br><br>
-      Prioritize stocks that have dropped into the <span class="badge-green">Standard DCA (-1.5σ)</span> or <span class="badge-green">Deeply Oversold (-2.2σ)</span> zones.
+      Prioritize stocks that have dropped into the <span class="badge-amber">Standard DCA (-1.5σ)</span> or <span class="badge-green">Deeply Oversold (-2.2σ)</span> zones.
     </div>
   </div>
   
@@ -647,4 +631,42 @@ eval_html = """
   </div>
 </div>
 """
-st.html(eval_html)
+
+with st.container(border=True):
+    st.markdown(
+        """
+## 6. Step-by-Step: How to Evaluate a Stock
+
+When comparing two stocks (for example, Meta vs. Microsoft) and deciding where to allocate your cash, follow this 4-step framework to build a high-conviction thesis:
+""",
+        unsafe_allow_html=True,
+    )
+    st.html(eval_html)
+
+
+# ── Section 7: Frequently Asked Questions (FAQ) ──
+with st.container(border=True):
+    st.markdown(
+        """
+## 7. Frequently Asked Questions (FAQ)
+
+**Q: What are the main US stock market hours?**
+* All times are in **UK Time**: The official US market is open from **2:30 PM to 9:00 PM (UK Time)**. Before 2:30 PM is pre-market, and after 9:00 PM is post-market.
+
+**Q: Why does a stock say "Wait for Pullback" if Wall Street rates it a "Strong Buy"?**
+* Wall Street analyst targets look out **12 months into the future**, whereas the Valuation Radar tracks **current price stretch over 50 days**. Even if a company has great long-term prospects, buying when price is overextended (+1.5σ or higher) increases your risk of suffering a short-term correction. Be patient and wait for the pullback.
+
+**Q: What should I do if a stock triggers "Capitulation (-3.0σ)"?**
+* Capitulation (-3.0σ) is a rare, generational buying opportunity caused by severe panic selling or market corrections. However, never dump your entire cash reserve at once. Scale in with your first tranche, and look for daily price stabilization before deploying further capital.
+
+**Q: Should I use the 90-Day or 1-Year timeframe toggle on the bar chart?**
+* Use **90-Day** for tactical, swing-style dip buying (capturing quick earnings pullbacks and monthly dips). Use **1-Year** for macro DCA accumulation into secular long-term winners at major cyclical discounts.
+
+**Q: Should I stop investing if a stock is in "Wait for Pullback"?**
+* If you invest automatically every month for the next 10+ years, sticking to your routine is fine. But do not dump big lumps of cash into a stock while it is red. Wait for it to pull back into Standard DCA or the Buy Zone.
+
+**Q: How often does the market data update?**
+* Live prices refresh automatically. You can click the **"Refresh Market Data"** button in the sidebar anytime to synchronize the freshest numbers from the exchange.
+""",
+        unsafe_allow_html=True,
+    )

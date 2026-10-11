@@ -15,6 +15,13 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+def render_guide_image(filename, caption):
+    filepath = os.path.join("assets", filename)
+    if os.path.exists(filepath):
+        st.image(filepath, caption=caption, width=300)
+    else:
+        st.info(f"📸 Placeholder: Add `{filename}` to the `assets/` folder to display here.")
+
 # --- Main Header ---
 st.markdown("""
 <style>
@@ -47,8 +54,28 @@ st.markdown("""
     text-decoration: none !important;
     color: #1F2937 !important;
 }
+section[data-testid="stSidebar"] .guide-btn {
+    width: 100%;
+    justify-content: center;
+    box-sizing: border-box;
+}
 </style>
 """, unsafe_allow_html=True)
+
+with st.sidebar:
+    st.markdown(
+        """
+        <a href="/" target="_self" class="guide-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            <span>Back to Valuation Dashboard</span>
+        </a>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.markdown("<div style='margin-bottom: 0.75rem;'></div>", unsafe_allow_html=True)
 
 header_html = """
 <div style="display: flex; flex-direction: column; gap: 4px; margin-bottom: 32px; margin-top: 8px;">
@@ -107,6 +134,15 @@ Every stock on your dashboard has a simple color status that tells you how its c
 
 > **Tip:** You can switch between the **90-Day Average** (short-term swings) and the **1-Year Average** (long-term trend) using the toggle button at the top of the main dashboard.
 
+</div>
+""",
+    unsafe_allow_html=True,
+)
+
+st.markdown(
+    """
+<div class="guide-container">
+
 ---
 
 ## 3. Stock Card Metrics Made Simple
@@ -129,6 +165,16 @@ Every stock card shows key figures that give you the full story behind the price
 - **<span style="background-color: #DCFCE7; color: #15803D; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #16A34A;">Green Badge</span>:** The stock has gained value this year.
 - **<span style="background-color: #FEE2E2; color: #DC2626; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #FCA5A5;">Red Badge</span>:** The stock has lost value this year.
 
+</div>
+""",
+    unsafe_allow_html=True,
+)
+render_guide_image("guide_ytd.png", "YTD Return Metric")
+
+st.markdown(
+    """
+<div class="guide-container">
+
 ---
 
 ### 🏔️ Distance to All-Time High (ATH)
@@ -137,6 +183,16 @@ Every stock card shows key figures that give you the full story behind the price
   - **<span style="background-color: #FEE2E2; color: #DC2626; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #FCA5A5;">Red (Near ATH)</span>:** The stock is trading very close to its record highs. Proceed with caution, as it is relatively expensive.
   - **<span style="background-color: #FEF3C7; color: #D97706; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #FCD34D;">Amber (Moderate Pullback)</span>:** The stock has pulled back from its highs, offering a standard dip.
   - **<span style="background-color: #DCFCE7; color: #15803D; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #16A34A;">Green (Deep Discount)</span>:** The stock is significantly below its record highs, offering a wide margin of safety and a cheaper entry price.
+
+</div>
+""",
+    unsafe_allow_html=True,
+)
+render_guide_image("guide_ath.png", "Distance to ATH Metric")
+
+st.markdown(
+    """
+<div class="guide-container">
 
 ---
 
@@ -147,14 +203,34 @@ Every stock card shows key figures that give you the full story behind the price
   - **Near 0** (<span style="background-color: #FEF3C7; color: #D97706; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #FCD34D;">Normal</span>): The stock is trading right at its **normal average**.
   - **+1.5 or higher** (<span style="background-color: #FEE2E2; color: #DC2626; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #FCA5A5;">Overstretched</span>): The stock is **overstretched** and may soon drop back down.
 
+</div>
+""",
+    unsafe_allow_html=True,
+)
+render_guide_image("guide_zscore.png", "Standard Deviation Metric")
+
+st.markdown(
+    """
+<div class="guide-container">
+
 ---
 
 ### ⚖️ Forward P/E & Fair Value
-  - **Forward P/E Ratio (Price-to-Earnings):** Shows how much you are paying today for every £1 or $1 the company is **expected to make in profit over the next 12 months**.
-    - **Under 20.0** (<span style="background-color: #DCFCE7; color: #15803D; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #16A34A;">Attractive</span>): The stock is cheap relative to its expected earnings.
-    - **Between 20.0 and 35.0** (<span style="background-color: #FEF3C7; color: #D97706; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #FCD34D;">Moderate</span>): The stock is fairly priced or trades at a standard growth premium.
-    - **Over 35.0** (<span style="background-color: #FEE2E2; color: #DC2626; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #FCA5A5;">High Multiple</span>): The stock is expensive. The market has very high expectations for its future.
-  - **Fair Value Corridor:** The stock's normal average price over the last 90 days or 1 year. Upside shows how much the stock could rise to return back to this normal average.
+- **Forward P/E Ratio (Price-to-Earnings):** Shows how much you are paying today for every £1 or $1 the company is **expected to make in profit over the next 12 months**.
+  - **Under 20.0** (<span style="background-color: #DCFCE7; color: #15803D; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #16A34A;">Attractive</span>): The stock is cheap relative to its expected earnings.
+  - **Between 20.0 and 35.0** (<span style="background-color: #FEF3C7; color: #D97706; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #FCD34D;">Moderate</span>): The stock is fairly priced or trades at a standard growth premium.
+  - **Over 35.0** (<span style="background-color: #FEE2E2; color: #DC2626; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #FCA5A5;">High Multiple</span>): The stock is expensive. The market has very high expectations for its future.
+- **Fair Value Corridor:** The stock's normal average price over the last 90 days or 1 year. Upside shows how much the stock could rise to return back to this normal average.
+
+</div>
+""",
+    unsafe_allow_html=True,
+)
+render_guide_image("guide_pe.png", "Forward P/E Metric")
+
+st.markdown(
+    """
+<div class="guide-container">
 
 ---
 
@@ -164,6 +240,16 @@ Every stock card shows key figures that give you the full story behind the price
   - **Under 1.0 (<span style="background-color: #DCFCE7; color: #15803D; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #16A34A;">Great Value</span>):** The company's profits are growing faster than its price. A true bargain!
   - **Between 1.0 and 1.75 (<span style="background-color: #FEF3C7; color: #D97706; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #FCD34D;">Fair Value</span>):** The stock is fairly priced for its expected growth.
   - **Over 1.75 (<span style="background-color: #FEE2E2; color: #DC2626; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #FCA5A5;">Expensive</span>):** The stock is pricey. It expects perfection, making it vulnerable to drops if growth slows down.
+
+</div>
+""",
+    unsafe_allow_html=True,
+)
+render_guide_image("guide_peg.png", "PEG Ratio Metric")
+
+st.markdown(
+    """
+<div class="guide-container">
 
 ---
 
@@ -189,6 +275,16 @@ Every stock card shows key figures that give you the full story behind the price
   * **2.6 - 3.5** <span style="background-color: #FEF3C7; color: #D97706; padding: 2px 8px; border-radius: 4px; font-weight: 600; border: 1px solid #FCD34D;">Hold</span>: Neutral outlook; analysts expect the stock to perform in line with the broader market.
   * **3.6 - 5.0** <span style="background-color: #FEE2E2; color: #DC2626; padding: 2px 8px; border-radius: 4px; font-weight: 600; border: 1px solid #FCA5A5;">Sell / Underperform</span>: Rare bearish rating; analysts recommend trimming or exiting positions.
 * **How to Use with the Radar:** Look for confluence. When high-quality stocks enter the **Buy Zone (-1.5σ to -2.2σ)** while maintaining a **Strong Buy** or **Buy** rating, it confirms that institutional long-term conviction remains intact despite short-term price drops.
+
+</div>
+""",
+    unsafe_allow_html=True,
+)
+render_guide_image("guide_consensus.png", "Wall Street Consensus Metric")
+
+st.markdown(
+    """
+<div class="guide-container">
 
 ---
 
@@ -423,9 +519,6 @@ To avoid catching a falling knife, let the market prove it has bottomed:
 
 - 🔍 **Quick Find:** Type any stock ticker in the Quick Find bar to jump straight to its card without scrolling.
 - ⛶ **Expand Chart:** Tap the Expand button under any chart to open a full-screen view with pinch-to-zoom on your phone.
-- 🎯 **Refocus Chart:** Tap Refocus to reset the chart back to the perfect 6-to-9 month view.
-- 📸 **Export 4:5 Card:** Tap the camera icon on any stock card to download a clean image ready to share on Instagram or Twitter.
-- ⏱️ **Timeframe Toggle:** Switch between 90-Day and 1-Year valuation averages with a single click.
 
 ---
 
@@ -444,3 +537,106 @@ To avoid catching a falling knife, let the market prove it has bottomed:
 """,
     unsafe_allow_html=True,
 )
+
+st.markdown(
+    """
+<div class="guide-container">
+
+---
+
+## 7. Step-by-Step: How to Evaluate a Stock
+
+When comparing two stocks (for example, Meta vs. Microsoft) and deciding where to allocate your cash, follow this 4-step framework to build a high-conviction thesis:
+
+</div>
+""",
+    unsafe_allow_html=True,
+)
+
+eval_html = """
+<style>
+.eval-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+  margin-bottom: 28px;
+}
+.eval-card {
+  background-color: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+.eval-step {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #64748B;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+.eval-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0F172A;
+  margin-bottom: 12px;
+}
+.eval-text {
+  font-size: 0.95rem;
+  color: #334155;
+  line-height: 1.5;
+}
+.badge-red {
+  background-color: #FEE2E2; color: #DC2626; padding: 2px 6px; border-radius: 4px; font-weight: 600; border: 1px solid #FCA5A5;
+}
+.badge-green {
+  background-color: #DCFCE7; color: #15803D; padding: 2px 6px; border-radius: 4px; font-weight: 600; border: 1px solid #16A34A;
+}
+.badge-amber {
+  background-color: #FEF3C7; color: #D97706; padding: 2px 6px; border-radius: 4px; font-weight: 600; border: 1px solid #FCD34D;
+}
+</style>
+
+<div class="eval-grid">
+  <div class="eval-card">
+    <div class="eval-step">Step 1</div>
+    <div class="eval-title">🎯 Check the Corridor (The "When")</div>
+    <div class="eval-text">
+      Look at the <b>Standard Deviation (Z-Score)</b>.<br><br>
+      Never buy a stock in the <span class="badge-red">Overextended (+1.5σ)</span> zone. Wait for the hype to cool down.<br><br>
+      Prioritize stocks that have dropped into the <span class="badge-green">Standard DCA (-1.5σ)</span> or <span class="badge-green">Deeply Oversold (-2.2σ)</span> zones.
+    </div>
+  </div>
+  
+  <div class="eval-card">
+    <div class="eval-step">Step 2</div>
+    <div class="eval-title">🏛️ Check Consensus (The "Who")</div>
+    <div class="eval-text">
+      Does smart money agree with you? A dropping price is only a good deal if institutions still believe in the underlying company.<br><br>
+      Look for a <span class="badge-green">Strong Buy</span> or <span class="badge-green">Buy</span> rating from Wall Street, coupled with a healthy positive <b>12-Month Target Upside</b>.
+    </div>
+  </div>
+
+  <div class="eval-card">
+    <div class="eval-step">Step 3</div>
+    <div class="eval-title">⚖️ Check the PEG (The "Price")</div>
+    <div class="eval-text">
+      A stock might be down, but is it cheap relative to its growth? Look at the <b>2-Year Forward PEG Ratio</b>.<br><br>
+      A PEG under 1.0 is <span class="badge-green">Undervalued</span>. Between 1.0 and 1.5 is <span class="badge-amber">Fair Value</span>.<br><br>
+      If the PEG is flashing <span class="badge-red">High Multiple</span>, you are paying a premium price for slowing growth.
+    </div>
+  </div>
+
+  <div class="eval-card">
+    <div class="eval-step">Step 4</div>
+    <div class="eval-title">🛒 Make Your Decision (The "Action")</div>
+    <div class="eval-text">
+      If the stock is in a <span class="badge-green">Buy Zone</span>, Wall Street rates it a <span class="badge-green">Strong Buy</span>, and the PEG is <span class="badge-green">Undervalued</span>, you have a high-conviction setup.<br><br>
+      Look at the badge at the top left of the stock card. Execute your normal scheduled purchase for a <b>Standard DCA</b>, or consider doubling your normal amount if it flashes <b>Deeply Oversold</b> or <b>Capitulation</b>.
+    </div>
+  </div>
+</div>
+"""
+st.html(eval_html)

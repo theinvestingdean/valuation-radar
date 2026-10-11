@@ -3153,16 +3153,16 @@ def make_price_chart(data: dict) -> go.Figure:
             gridcolor=GRID_COLOR, showgrid=True, zeroline=False,
             color=MUTED_SLATE, linecolor=BORDER_COLOR,
             range=x_range,
-            fixedrange=True,
+            fixedrange=False,
         ),
         yaxis=dict(
             title=f"Price ({ccy})",
             gridcolor=GRID_COLOR, showgrid=True, zeroline=False,
             color=MUTED_SLATE, linecolor=BORDER_COLOR,
             range=y_range,
-            fixedrange=True,
+            fixedrange=False,
         ),
-        dragmode=False,
+        dragmode="zoom",
         hovermode=False,
         height=290,
     )
@@ -3950,7 +3950,16 @@ elif sort_option == "Lowest 2Y PEG":
 # ── Quick Find Ticker Search & Direct Navigation ──
 @st.dialog("Full Valuation Chart", width="large")
 def show_expanded_chart(ticker, fig):
-    st.plotly_chart(fig, use_container_width=True)
+    fig.update_layout(
+        xaxis=dict(fixedrange=False),
+        yaxis=dict(fixedrange=False),
+        dragmode="zoom",
+    )
+    st.plotly_chart(
+        fig,
+        use_container_width=True,
+        config={"displayModeBar": True, "scrollZoom": True},
+    )
 
 with st.container(border=True, key="quick_find_container"):
     qf_col1, qf_col2 = st.columns([3, 1])
@@ -4046,7 +4055,6 @@ for row_start in range(0, len(ticker_list), n_cols):
                     </div>
                     <div style="display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin-left: auto;">
                       {badge_html(status)}
-                      <button class="save-card-btn" data-ticker="{tk}" title="Export high-resolution 4:5 portrait card (1080x1350) for Instagram & social media">📸 Save Card (4:5)</button>
                     </div>
                   </div>
                 </div>

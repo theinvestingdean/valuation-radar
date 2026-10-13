@@ -111,6 +111,7 @@ TRADINGVIEW_EXCHANGE_MAP = {
     "UBER": "NYSE:UBER",
     "COIN": "NASDAQ:COIN",
     "MSTR": "NASDAQ:MSTR",
+    "UMAC": "AMEX:UMAC",
     # International & GDR / ADR
     "SMSN.L": "KRX:005930",
     "SMSN.IL": "KRX:005930",
@@ -1507,7 +1508,16 @@ def fetch_tradingview_target(ticker: str) -> dict:
     elif raw_t.endswith(".L"):
         symbols.append(f"LSE:{raw_t[:-2]}")
     else:
-        symbols.extend([f"NASDAQ:{raw_t}", f"NYSE:{raw_t}"])
+        # Broaden search across all major US exchanges (NASDAQ, NYSE, AMEX, ARCA, BATS, CBOE, OTC)
+        symbols.extend([
+            f"NASDAQ:{raw_t}",
+            f"NYSE:{raw_t}",
+            f"AMEX:{raw_t}",
+            f"NYSEARCA:{raw_t}",
+            f"BATS:{raw_t}",
+            f"CBOE:{raw_t}",
+            f"OTC:{raw_t}",
+        ])
 
     url = "https://scanner.tradingview.com/global/scan"
     headers = {
@@ -1534,6 +1544,21 @@ def fetch_tradingview_target(ticker: str) -> dict:
                     return d
             if data:
                 return dict(zip(columns, data[0].get("d", [])))
+
+        # Fallback: search by symbol name across all global exchanges
+        payload_filter = {
+            "filter": [{"left": "name", "operation": "equal", "right": raw_t}],
+            "columns": columns,
+        }
+        r2 = requests.post(url, json=payload_filter, headers=headers, timeout=6)
+        if r2.status_code == 200:
+            data2 = r2.json().get("data", [])
+            for row in data2:
+                d = dict(zip(columns, row.get("d", [])))
+                if d.get("price_target_1y") or d.get("price_target_average") or d.get("recommendation_mark"):
+                    return d
+            if data2:
+                return dict(zip(columns, data2[0].get("d", [])))
     except Exception:
         pass
     return {}

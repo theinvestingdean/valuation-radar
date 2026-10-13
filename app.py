@@ -1516,7 +1516,8 @@ def fetch_tradingview_target(ticker: str) -> dict:
     columns = [
         "name", "close", "currency",
         "price_target_1y", "price_target_average", "price_target_median",
-        "price_target_high", "price_target_low", "recommendation_mark", "recommendation_total"
+        "price_target_high", "price_target_low", "recommendation_mark", "recommendation_total",
+        "price_earnings_ttm", "earnings_per_share_forecast_next_fy", "earnings_per_share_diluted_ttm"
     ]
     payload = {
         "symbols": {"tickers": symbols},
@@ -1529,7 +1530,7 @@ def fetch_tradingview_target(ticker: str) -> dict:
             data = r.json().get("data", [])
             for row in data:
                 d = dict(zip(columns, row.get("d", [])))
-                if d.get("price_target_1y") or d.get("price_target_average"):
+                if d.get("price_target_1y") or d.get("price_target_average") or d.get("recommendation_mark"):
                     return d
             if data:
                 return dict(zip(columns, data[0].get("d", [])))
@@ -2022,12 +2023,31 @@ def fetch_ticker_data(ticker: str) -> dict:
     aum = info.get("totalAssets") or info.get("netAssets")
     fund_family = info.get("fundFamily") or ("VanEck" if ticker == "SMGB.L" else "Vanguard" if ticker in {"VUAG.L", "VWRP.L"} else "")
 
+    # ── Fetch TradingView fundamental & analyst data early (Resilient Fallback for Cloud IPs) ──
+    tv_data = fetch_tradingview_target(ticker)
+
     # ── Foreign GDRs & Currency Pairing Normalization (e.g., SMSN.L / SMSN.IL) ──
     # Overseas GDRs where prices trade in USD/GBP but EPS has a local currency / GDR unit mismatch
     # (e.g. Samsung London GDR SMSN.IL / SMSN.L trading at ~$5,110 USD with yfinance ratio normalization)
     fwd_pe  = info.get("forwardPE")
     fwd_eps = info.get("forwardEps")
     eps     = info.get("trailingEps")
+
+    # Resilient fallback to TradingView fundamentals if yfinance info is unavailable/blocked (e.g. Streamlit Cloud)
+    if not is_etf:
+        if fwd_eps is None or (isinstance(fwd_eps, (int, float)) and (np.isnan(fwd_eps) or fwd_eps <= 0)):
+            tv_fwd_eps = tv_data.get("earnings_per_share_forecast_next_fy")
+            if tv_fwd_eps is not None and not np.isnan(tv_fwd_eps) and tv_fwd_eps > 0:
+                fwd_eps = float(tv_fwd_eps)
+
+        if fwd_pe is None or (isinstance(fwd_pe, (int, float)) and (np.isnan(fwd_pe) or fwd_pe <= 0)):
+            if fwd_eps is not None and fwd_eps > 0 and current_price is not None and current_price > 0:
+                fwd_pe = current_price / fwd_eps
+
+        if eps is None or (isinstance(eps, (int, float)) and (np.isnan(eps) or eps <= 0)):
+            tv_trailing_eps = tv_data.get("earnings_per_share_diluted_ttm")
+            if tv_trailing_eps is not None and not np.isnan(tv_trailing_eps) and tv_trailing_eps > 0:
+                eps = float(tv_trailing_eps)
 
     price_ccy = str(info.get("currency", "USD")).upper()
     fin_ccy   = str(info.get("financialCurrency", "")).upper()
@@ -2182,13 +2202,94 @@ def fetch_ticker_data(ticker: str) -> dict:
     if raw_yahoo_target is None or (isinstance(raw_yahoo_target, (int, float)) and (np.isnan(raw_yahoo_target) or raw_yahoo_target <= 0)):
         raw_yahoo_target = info.get("targetMedianPrice")
 
-    tv_data = fetch_tradingview_target(ticker)
     target_mean_val, target_upside_pct = normalize_analyst_target(
         ticker=ticker,
         live_price=current_price,
         tv_data=tv_data,
         raw_yahoo_target=raw_yahoo_target,
     )
+
+    # ── Wall Street Consensus & Recommendation Resolution (Yahoo + Consensus Table + TradingView) ──
+    rec_key = info.get("recommendationKey")
+    if rec_key and (isinstance(rec_key, str) and rec_key.strip().lower() in {"none", ""}):
+        rec_key = None
+
+    rec_mean = info.get("recommendationMean")
+    if rec_mean is not None and (np.isnan(rec_mean) or rec_mean <= 0):
+        rec_mean = None
+
+    # Step A: Check Yahoo obj.recommendations / obj.recommendations_summary if missing
+    if not is_etf and (rec_key is None or rec_mean is None):
+        try:
+            rec_summary = getattr(obj, "recommendations_summary", None)
+            if rec_summary is None or (isinstance(rec_summary, pd.DataFrame) and rec_summary.empty):
+                rec_summary = getattr(obj, "recommendations", None)
+            if rec_summary is not None and isinstance(rec_summary, pd.DataFrame) and not rec_summary.empty:
+                r0 = rec_summary.iloc[0]
+                sb = float(r0.get("strongBuy", 0) or 0)
+                b  = float(r0.get("buy", 0) or 0)
+                h  = float(r0.get("hold", 0) or 0)
+                s  = float(r0.get("sell", 0) or 0)
+                ss = float(r0.get("strongSell", 0) or 0)
+                tot = sb + b + h + s + ss
+                if tot > 0:
+                    if rec_mean is None:
+                        rec_mean = (sb * 1.0 + b * 2.0 + h * 3.0 + s * 4.0 + ss * 5.0) / tot
+                    if rec_key is None:
+                        if rec_mean <= 1.5:
+                            rec_key = "strong_buy"
+                        elif rec_mean <= 2.5:
+                            rec_key = "buy"
+                        elif rec_mean <= 3.5:
+                            rec_key = "hold"
+                        elif rec_mean <= 4.5:
+                            rec_key = "underperform"
+                        else:
+                            rec_key = "sell"
+        except Exception:
+            pass
+
+    # Step B: Fallback to TradingView scanner recommendation_mark
+    if not is_etf and (rec_key is None or rec_mean is None):
+        tv_mark = tv_data.get("recommendation_mark")
+        if tv_mark is not None and not np.isnan(tv_mark) and tv_mark > 0:
+            if rec_mean is None:
+                rec_mean = float(tv_mark)
+            if rec_key is None:
+                if rec_mean <= 1.5:
+                    rec_key = "strong_buy"
+                elif rec_mean <= 2.5:
+                    rec_key = "buy"
+                elif rec_mean <= 3.5:
+                    rec_key = "hold"
+                elif rec_mean <= 4.5:
+                    rec_key = "underperform"
+                else:
+                    rec_key = "sell"
+
+    # Step C: Cross-infer one from the other if one is still missing
+    if not is_etf:
+        if rec_key is not None and rec_mean is None:
+            rk = str(rec_key).lower()
+            if "strong_buy" in rk:
+                rec_mean = 1.3
+            elif "buy" in rk:
+                rec_mean = 2.0
+            elif "hold" in rk or "neutral" in rk:
+                rec_mean = 3.0
+            elif "sell" in rk or "underperform" in rk:
+                rec_mean = 4.0
+        elif rec_mean is not None and rec_key is None:
+            if rec_mean <= 1.5:
+                rec_key = "strong_buy"
+            elif rec_mean <= 2.5:
+                rec_key = "buy"
+            elif rec_mean <= 3.5:
+                rec_key = "hold"
+            elif rec_mean <= 4.5:
+                rec_key = "underperform"
+            else:
+                rec_key = "sell"
 
     # ── Slice the last ~350 trading days for the interactive price chart ──
     hist_recent = hist_full.tail(350).copy()
@@ -2241,8 +2342,8 @@ def fetch_ticker_data(ticker: str) -> dict:
         "fwd_pe":            fwd_pe,
         "target_mean_price": target_mean_val,
         "target_upside_pct": target_upside_pct,
-        "recommendationKey": info.get("recommendationKey"),
-        "recommendationMean": info.get("recommendationMean"),
+        "recommendationKey": rec_key,
+        "recommendationMean": rec_mean,
         "tactical_signals":  tactical_signals,
         "error":             None,
     }
@@ -2439,33 +2540,6 @@ def badge_html(status: str) -> str:
     return f'<span class="badge {css}">● {status}</span>'
 
 
-def send_telegram_alert(bot_token: str, chat_id: str, message: str) -> tuple[bool, str]:
-    """
-    Sends an instant push notification via the official Telegram Bot API.
-    Supports HTML parsing mode and returns (success: bool, status_message: str).
-    """
-    token = (bot_token or "").strip()
-    chat = (chat_id or "").strip()
-    if not token or not chat:
-        return False, "Missing Telegram Bot Token or Chat ID."
-    try:
-        url = f"https://api.telegram.org/bot{token}/sendMessage"
-        payload = {
-            "chat_id": chat,
-            "text": message,
-            "parse_mode": "HTML",
-            "disable_web_page_preview": True,
-        }
-        res = requests.post(url, json=payload, timeout=8)
-        data = res.json()
-        if data.get("ok"):
-            return True, "Telegram alert sent successfully!"
-        else:
-            return False, f"Telegram API Error: {data.get('description', 'Unknown error')}"
-    except Exception as ex:
-        return False, f"Telegram Connection Error: {ex}"
-
-
 def send_email_alert(
     smtp_server: str,
     smtp_port: int,
@@ -2561,52 +2635,35 @@ def check_and_dispatch_signal_alerts(all_data: dict, timeframe: str = "90-Day") 
                         canonical_label = "DCA"
                         emoji = "🎯"
 
-                    channel = st.session_state.get("alert_channel", "Telegram Bot")
                     success = False
-
-                    if channel == "Telegram Bot":
-                        token = st.session_state.get("tg_bot_token", "").strip()
-                        chat_id = st.session_state.get("tg_chat_id", "").strip()
-                        if token and chat_id:
-                            tg_msg = (
-                                f"{emoji} <b>VALUATION RADAR SIGNAL TRIGGERED</b>\n\n"
-                                f"🎯 <b>Equity:</b> <code>{tk}</code> ({d.get('name', tk)})\n"
-                                f"⚡ <b>Signal:</b> <b>{canonical_label}</b>\n"
-                                f"💵 <b>Current Price:</b> ${cur_price:.2f}\n"
-                                f"📊 <b>Corridor Deviation:</b> {pct_diff:+.1f}%\n"
-                                f"📅 <b>Bar Date:</b> {date_str}\n\n"
-                                f"<i>The Stock Valuation Radar • @theinvestingdean</i>"
-                            )
-                            success, _ = send_telegram_alert(token, chat_id, tg_msg)
-                    else:
-                        smtp_srv = st.session_state.get("email_smtp_server", "smtp.gmail.com").strip()
-                        smtp_p = int(st.session_state.get("email_smtp_port", 587))
-                        sender = st.session_state.get("email_sender", "").strip()
-                        pwd = st.session_state.get("email_password", "").strip()
-                        rcvr = st.session_state.get("email_receiver", "").strip()
-                        if sender and pwd and rcvr:
-                            sub = f"{emoji} Valuation Radar Alert: {tk} triggered [{canonical_label}]"
-                            html_body = f"""
-                            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 520px; border: 1px solid #E2E8F0; border-radius: 10px; padding: 20px; background: #FFFFFF;">
-                              <div style="border-bottom: 2px solid #EAB308; padding-bottom: 10px; margin-bottom: 14px;">
-                                <h2 style="margin: 0; color: #0F172A; font-size: 1.25rem;">The Stock Valuation Radar</h2>
-                                <span style="font-size: 0.80rem; color: #854D0E; font-weight: 700;">Tactical Entry Notification</span>
-                              </div>
-                              <p style="font-size: 1.05rem; color: #1E293B;">
-                                <b>{tk}</b> has flashed a tactical <b>{canonical_label}</b> signal!
-                              </p>
-                              <table style="width: 100%; border-collapse: collapse; font-size: 0.90rem; margin: 14px 0;">
-                                <tr><td style="color: #64748B; padding: 4px 0;">Signal:</td><td style="font-weight: 700; color: #0F172A;">{canonical_label}</td></tr>
-                                <tr><td style="color: #64748B; padding: 4px 0;">Price:</td><td style="font-weight: 700; color: #0F172A;">${cur_price:.2f}</td></tr>
-                                <tr><td style="color: #64748B; padding: 4px 0;">Corridor Deviation:</td><td style="font-weight: 700; color: #0F172A;">{pct_diff:+.1f}%</td></tr>
-                                <tr><td style="color: #64748B; padding: 4px 0;">Bar Date:</td><td style="color: #0F172A;">{date_str}</td></tr>
-                              </table>
-                              <div style="margin-top: 20px; padding-top: 10px; border-top: 1px dashed #E2E8F0; font-size: 0.75rem; color: #94A3B8;">
-                                Automated alert by @theinvestingdean
-                              </div>
-                            </div>
-                            """
-                            success, _ = send_email_alert(smtp_srv, smtp_p, sender, pwd, rcvr, sub, html_body)
+                    smtp_srv = st.session_state.get("email_smtp_server", "smtp.gmail.com").strip()
+                    smtp_p = int(st.session_state.get("email_smtp_port", 587))
+                    sender = st.session_state.get("email_sender", "").strip()
+                    pwd = st.session_state.get("email_password", "").strip()
+                    rcvr = st.session_state.get("email_receiver", "").strip()
+                    if sender and pwd and rcvr:
+                        sub = f"{emoji} Valuation Radar Alert: {tk} triggered [{canonical_label}]"
+                        html_body = f"""
+                        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 520px; border: 1px solid #E2E8F0; border-radius: 10px; padding: 20px; background: #FFFFFF;">
+                          <div style="border-bottom: 2px solid #EAB308; padding-bottom: 10px; margin-bottom: 14px;">
+                            <h2 style="margin: 0; color: #0F172A; font-size: 1.25rem;">The Stock Valuation Radar</h2>
+                            <span style="font-size: 0.80rem; color: #854D0E; font-weight: 700;">Tactical Entry Notification</span>
+                          </div>
+                          <p style="font-size: 1.05rem; color: #1E293B;">
+                            <b>{tk}</b> has flashed a tactical <b>{canonical_label}</b> signal!
+                          </p>
+                          <table style="width: 100%; border-collapse: collapse; font-size: 0.90rem; margin: 14px 0;">
+                            <tr><td style="color: #64748B; padding: 4px 0;">Signal:</td><td style="font-weight: 700; color: #0F172A;">{canonical_label}</td></tr>
+                            <tr><td style="color: #64748B; padding: 4px 0;">Price:</td><td style="font-weight: 700; color: #0F172A;">${cur_price:.2f}</td></tr>
+                            <tr><td style="color: #64748B; padding: 4px 0;">Corridor Deviation:</td><td style="font-weight: 700; color: #0F172A;">{pct_diff:+.1f}%</td></tr>
+                            <tr><td style="color: #64748B; padding: 4px 0;">Bar Date:</td><td style="color: #0F172A;">{date_str}</td></tr>
+                          </table>
+                          <div style="margin-top: 20px; padding-top: 10px; border-top: 1px dashed #E2E8F0; font-size: 0.75rem; color: #94A3B8;">
+                            Automated alert by @theinvestingdean
+                          </div>
+                        </div>
+                        """
+                        success, _ = send_email_alert(smtp_srv, smtp_p, sender, pwd, rcvr, sub, html_body)
 
                     if success:
                         st.session_state["dispatched_alerts"].add(dedup_key)
@@ -3620,96 +3677,58 @@ with st.sidebar:
     )
 
     st.markdown("---")
-    with st.expander("🔔 Live Signal Alerts (Telegram / Email)", expanded=st.session_state.get("alerts_enabled", False)):
+    with st.expander("🔔 Live Signal Alerts (Email)", expanded=st.session_state.get("alerts_enabled", False)):
         alerts_enabled = st.toggle(
             "Enable Live Signal Alerts",
             value=st.session_state.get("alerts_enabled", False),
             key="alerts_enabled",
-            help="Automatically send instant mobile push alerts when an equity in your basket triggers a DCA, DEEPLY OVERSOLD, or CAPITULATION signal.",
+            help="Automatically send instant email alerts when an equity in your basket triggers a DCA, DEEPLY OVERSOLD, or CAPITULATION signal.",
         )
-        alert_channel = st.radio(
-            "Alert Channel",
-            options=["Telegram Bot", "Email (SMTP)"],
-            horizontal=True,
-            key="alert_channel",
+        smtp_srv = st.text_input(
+            "SMTP Server",
+            value=st.session_state.get("email_smtp_server", "smtp.gmail.com"),
+            key="email_smtp_server",
         )
-        if alert_channel == "Telegram Bot":
-            tg_token = st.text_input(
-                "Telegram Bot Token",
-                value=st.session_state.get("tg_bot_token", ""),
-                key="tg_bot_token",
-                type="password",
-                placeholder="123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ",
-                help="Obtain from @BotFather on Telegram",
-            )
-            tg_chat = st.text_input(
-                "Telegram Chat ID",
-                value=st.session_state.get("tg_chat_id", ""),
-                key="tg_chat_id",
-                placeholder="e.g. 987654321 or @your_channel",
-                help="Your personal Telegram User ID or Channel Username",
-            )
-            if st.button("📤 Send Test Telegram Alert", use_container_width=True):
-                if not tg_token or not tg_chat:
-                    st.error("Please enter both Bot Token and Chat ID.")
+        smtp_p = st.number_input(
+            "SMTP Port",
+            value=int(st.session_state.get("email_smtp_port", 587)),
+            key="email_smtp_port",
+        )
+        sender = st.text_input(
+            "Sender Email",
+            value=st.session_state.get("email_sender", ""),
+            key="email_sender",
+            placeholder="sender@gmail.com",
+        )
+        pwd = st.text_input(
+            "App Password",
+            value=st.session_state.get("email_password", ""),
+            key="email_password",
+            type="password",
+            placeholder="App-specific password",
+        )
+        rcvr = st.text_input(
+            "Destination Email",
+            value=st.session_state.get("email_receiver", ""),
+            key="email_receiver",
+            placeholder="your.email@example.com",
+        )
+        if st.button("📤 Send Test Email Alert", use_container_width=True):
+            if not sender or not pwd or not rcvr:
+                st.error("Please enter Sender Email, App Password, and Destination Email.")
+            else:
+                test_html = """
+                <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 500px; border: 1px solid #E2E8F0; border-radius: 8px; padding: 18px;">
+                  <h3 style="color: #0F172A; margin-top: 0;">✅ Test Alert: Valuation Radar Connected</h3>
+                  <p style="color: #334155;">Your email configuration is working! Live tactical buy signals will be sent to this address.</p>
+                  <div style="margin-top: 14px; font-size: 0.75rem; color: #94A3B8;">@theinvestingdean</div>
+                </div>
+                """
+                ok, msg = send_email_alert(smtp_srv, smtp_p, sender, pwd, rcvr, "Test Alert: Valuation Radar Connected", test_html)
+                if ok:
+                    st.success("Test email sent! Check your inbox.")
                 else:
-                    test_msg = (
-                        "🚨 <b>TEST ALERT: Valuation Radar Connected</b>\n\n"
-                        "✅ Your Telegram Bot credentials are verified!\n"
-                        "Live tactical signals (DCA, DEEPLY OVERSOLD, CAPITULATION) will be pushed here instantly.\n\n"
-                        "<i>The Stock Valuation Radar • @theinvestingdean</i>"
-                    )
-                    ok, msg = send_telegram_alert(tg_token, tg_chat, test_msg)
-                    if ok:
-                        st.success("Test alert sent! Check your Telegram.")
-                    else:
-                        st.error(msg)
-        else:
-            smtp_srv = st.text_input(
-                "SMTP Server",
-                value=st.session_state.get("email_smtp_server", "smtp.gmail.com"),
-                key="email_smtp_server",
-            )
-            smtp_p = st.number_input(
-                "SMTP Port",
-                value=int(st.session_state.get("email_smtp_port", 587)),
-                key="email_smtp_port",
-            )
-            sender = st.text_input(
-                "Sender Email",
-                value=st.session_state.get("email_sender", ""),
-                key="email_sender",
-                placeholder="sender@gmail.com",
-            )
-            pwd = st.text_input(
-                "App Password",
-                value=st.session_state.get("email_password", ""),
-                key="email_password",
-                type="password",
-                placeholder="App-specific password",
-            )
-            rcvr = st.text_input(
-                "Destination Email",
-                value=st.session_state.get("email_receiver", ""),
-                key="email_receiver",
-                placeholder="your.email@example.com",
-            )
-            if st.button("📤 Send Test Email Alert", use_container_width=True):
-                if not sender or not pwd or not rcvr:
-                    st.error("Please enter Sender Email, App Password, and Destination Email.")
-                else:
-                    test_html = """
-                    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 500px; border: 1px solid #E2E8F0; border-radius: 8px; padding: 18px;">
-                      <h3 style="color: #0F172A; margin-top: 0;">✅ Test Alert: Valuation Radar Connected</h3>
-                      <p style="color: #334155;">Your email configuration is working! Live tactical buy signals will be sent to this address.</p>
-                      <div style="margin-top: 14px; font-size: 0.75rem; color: #94A3B8;">@theinvestingdean</div>
-                    </div>
-                    """
-                    ok, msg = send_email_alert(smtp_srv, smtp_p, sender, pwd, rcvr, "Test Alert: Valuation Radar Connected", test_html)
-                    if ok:
-                        st.success("Test email sent! Check your inbox.")
-                    else:
-                        st.error(msg)
+                    st.error(msg)
 
         dispatched_count = len(st.session_state.get("dispatched_alerts", set()))
         st.caption(f"🛡️ Deduplication cache: {dispatched_count} bar alerts dispatched this session.")
@@ -4373,9 +4392,22 @@ for row_start in range(0, len(ticker_list), n_cols):
                     subtext_color=MUTED_SLATE,
                 )
 
-                                # Box 8: Wall Street Consensus Rating
+                # Box 8: Wall Street Consensus Rating
                 rec_key = d.get("recommendationKey")
                 rec_mean = d.get("recommendationMean")
+
+                # If rec_key is missing or "none", infer from rec_mean if available
+                if (not rec_key or str(rec_key).lower() == "none") and rec_mean is not None and not np.isnan(rec_mean) and rec_mean > 0:
+                    if rec_mean <= 1.5:
+                        rec_key = "strong_buy"
+                    elif rec_mean <= 2.5:
+                        rec_key = "buy"
+                    elif rec_mean <= 3.5:
+                        rec_key = "hold"
+                    elif rec_mean <= 4.5:
+                        rec_key = "underperform"
+                    else:
+                        rec_key = "sell"
 
                 if rec_key and isinstance(rec_key, str) and rec_key != "none":
                     if rec_key.lower() == "strong_buy":
@@ -4438,7 +4470,7 @@ for row_start in range(0, len(ticker_list), n_cols):
                     box8_html = make_metric_tile_html(
                         title="Wall Street Consensus",
                         value="N/A",
-                        subtext="No Rating Available",
+                        subtext="ETF Asset (No Rating)" if is_etf else "Consensus Unlisted",
                         badge_text=None,
                         badge_class=None,
                         val_color="#94A3B8",

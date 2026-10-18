@@ -426,6 +426,15 @@ st.markdown(
             padding: 20px 24px !important;
         }}
 
+        /* Prevent Valuation Guardrail toggle text from clipping or wrapping */
+        div[class*="st-key-dca_allocator_card_wrapper"] div[data-testid="stToggle"] label p,
+        div[class*="st-key-dca_allocator_card_wrapper"] div[data-testid="stToggle"] label span {{
+            white-space: nowrap !important;
+            font-size: 0.90rem !important;
+            font-weight: 700 !important;
+            color: #1F2937 !important;
+        }}
+
         /* 1. Target master stock container wrappers, executive highlights, and top benchmark master card */
         div[class*="st-key-stock_card_"],
         div[class*="st-key-executive_market_highlights"],
@@ -831,6 +840,109 @@ st.markdown(
             border-color: #CA8A04 !important;
             color: #111827 !important;
             box-shadow: 0 3px 10px rgba(234, 179, 8, 0.40) !important;
+        }}
+
+        /* ── Search Bar Input & Form: Remove Overlapping "Press Enter" Overlay ── */
+        [data-testid="InputInstructions"],
+        div[data-testid="InputInstructions"],
+        div[data-testid="stTextInput"] div[data-testid="InputInstructions"],
+        div[class*="st-key-add_ticker_form"] [data-testid="InputInstructions"],
+        section[data-testid="stSidebar"] [data-testid="InputInstructions"] {{
+            display: none !important;
+            visibility: hidden !important;
+            height: 0 !important;
+            max-height: 0 !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+            position: absolute !important;
+            overflow: hidden !important;
+        }}
+
+        /* ── Brand Yellow "Plus" Add Button ── */
+        div[class*="st-key-add_ticker_form"] div[data-testid="stFormSubmitButton"] button,
+        div[data-testid="stFormSubmitButton"] button,
+        button[kind="secondaryFormSubmit"],
+        button[data-testid="baseButton-secondaryFormSubmit"],
+        button[data-testid="stBaseButton-secondaryFormSubmit"] {{
+            background: linear-gradient(135deg, #FDE047 0%, #FACC15 100%) !important;
+            border: 1.5px solid #EAB308 !important;
+            color: #1F2937 !important;
+            font-weight: 800 !important;
+            font-size: 1.15rem !important;
+            line-height: 1 !important;
+            border-radius: 8px !important;
+            box-shadow: 0 1px 3px rgba(234, 179, 8, 0.35) !important;
+            transition: all 0.15s ease-in-out !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            min-height: 38px !important;
+            height: 38px !important;
+            padding: 0 6px !important;
+            white-space: nowrap !important;
+        }}
+
+        div[class*="st-key-add_ticker_form"] div[data-testid="stFormSubmitButton"] button:hover,
+        div[data-testid="stFormSubmitButton"] button:hover {{
+            background: #EAB308 !important;
+            border-color: #CA8A04 !important;
+            color: #111827 !important;
+            box-shadow: 0 3px 8px rgba(202, 138, 4, 0.45) !important;
+            transform: translateY(-1px) !important;
+        }}
+
+        div[class*="st-key-add_ticker_form"] div[data-testid="stFormSubmitButton"] button p,
+        div[class*="st-key-add_ticker_form"] div[data-testid="stFormSubmitButton"] button span {{
+            font-size: 1.15rem !important;
+            font-weight: 800 !important;
+            color: #1F2937 !important;
+            line-height: 1 !important;
+        }}
+
+        /* ── Candidate Listing Pick Buttons (Brand Yellow) ── */
+        div[class*="st-key-btn_pick_"] button {{
+            background: linear-gradient(135deg, #FDE047 0%, #FACC15 100%) !important;
+            border: 1.5px solid #EAB308 !important;
+            color: #1F2937 !important;
+            font-weight: 800 !important;
+            font-size: 1.05rem !important;
+            line-height: 1 !important;
+            border-radius: 8px !important;
+            box-shadow: 0 1px 3px rgba(234, 179, 8, 0.35) !important;
+            transition: all 0.15s ease-in-out !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            min-height: 34px !important;
+            height: 34px !important;
+            padding: 0 4px !important;
+            white-space: nowrap !important;
+        }}
+        div[class*="st-key-btn_pick_"] button:hover {{
+            background: #EAB308 !important;
+            border-color: #CA8A04 !important;
+            color: #111827 !important;
+            box-shadow: 0 3px 8px rgba(202, 138, 4, 0.45) !important;
+            transform: translateY(-1px) !important;
+        }}
+
+        /* ── Expand Chart Button: Prevent Text Truncation & Optimize Fit ── */
+        div[class*="st-key-btn_expand_"] .stButton > button,
+        div[class*="st-key-btn_expand_"] button {{
+            padding: 4px 10px !important;
+            font-size: 0.80rem !important;
+            white-space: nowrap !important;
+            min-height: 0 !important;
+            height: 32px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }}
+        div[class*="st-key-btn_expand_"] button p,
+        div[class*="st-key-btn_expand_"] button span {{
+            white-space: nowrap !important;
+            font-size: 0.80rem !important;
+            font-weight: 700 !important;
         }}
 
         /* ── DCA Target Preset Buttons: Refined Outline Pill Cards (Toned down from solid yellow) ── */
@@ -3346,20 +3458,22 @@ def render_dca_allocator_card(visible_data: dict, val_timeframe: str = "90-Day")
         st.session_state["dca_selected_stocks"] = [tk for tk in st.session_state.get("dca_selected_stocks", []) if tk in valid_tickers]
 
         # ── 1. Cash Budget & Deployment Strategy ──
-        c_top1, c_top2, c_top3, c_top4 = st.columns([0.8, 1.8, 3.0, 1.6])
-        with c_top1:
-            ccy_symbol = st.selectbox("Currency", options=["£", "$", "€"], index=0, key="dca_ccy")
-        with c_top2:
-            budget = st.number_input(
-                "Available to Invest",
-                min_value=10.0,
-                max_value=1_000_000.0,
-                value=500.0,
-                step=50.0,
-                format="%.2f",
-                key="dca_budget",
-            )
-        with c_top3:
+        c_left, c_right = st.columns([1.1, 1.4])
+        with c_left:
+            sub1, sub2 = st.columns([0.75, 1.85])
+            with sub1:
+                ccy_symbol = st.selectbox("Currency", options=["£", "$", "€"], index=0, key="dca_ccy")
+            with sub2:
+                budget = st.number_input(
+                    "Available to Invest",
+                    min_value=10.0,
+                    max_value=1_000_000.0,
+                    value=500.0,
+                    step=50.0,
+                    format="%.2f",
+                    key="dca_budget",
+                )
+        with c_right:
             deploy_mode = st.segmented_control(
                 "Deploy Cash",
                 options=["25%", "50%", "75%", "100%", "Custom"],
@@ -3396,12 +3510,13 @@ def render_dca_allocator_card(visible_data: dict, val_timeframe: str = "90-Day")
             deploy_cash = deployed_cash
             reserve_cash = budget - deployed_cash
 
+        # ── Summary & Valuation Guardrail ──
+        c_sub_left, c_sub_right = st.columns([1.1, 1.4])
+        with c_sub_left:
             st.caption(
                 f"💼 **Deploying {int(deploy_pct*100)}%:** {ccy_symbol}{deployed_cash:,.2f} &nbsp;•&nbsp; **Cash (Reserve):** {ccy_symbol}{reserve_cash:,.2f}"
             )
-
-        with c_top4:
-            st.markdown("<div style='margin-top: 4px;'></div>", unsafe_allow_html=True)
+        with c_sub_right:
             guardrail = st.toggle(
                 "🛡️ Valuation Guardrail",
                 value=True,
@@ -4281,6 +4396,193 @@ def on_timeframe_change():
 
 
 # ─────────────────────────────────────────────
+# COMPANY NAME & TICKER RESOLUTION ENGINE
+# ─────────────────────────────────────────────
+COMMON_EQUITY_ALIASES = {
+    # Tech, AI & Semiconductors
+    "apple": ("AAPL", "Apple"),
+    "microsoft": ("MSFT", "Microsoft"),
+    "google": ("GOOGL", "Alphabet"),
+    "alphabet": ("GOOGL", "Alphabet"),
+    "nvidia": ("NVDA", "NVIDIA"),
+    "amazon": ("AMZN", "Amazon"),
+    "meta": ("META", "Meta Platforms"),
+    "facebook": ("META", "Meta Platforms"),
+    "tesla": ("TSLA", "Tesla"),
+    "broadcom": ("AVGO", "Broadcom"),
+    "palantir": ("PLTR", "Palantir Technologies"),
+    "micron": ("MU", "Micron Technology"),
+    "amd": ("AMD", "Advanced Micro Devices"),
+    "intel": ("INTC", "Intel"),
+    "oracle": ("ORCL", "Oracle"),
+    "salesforce": ("CRM", "Salesforce"),
+    "qualcomm": ("QCOM", "QUALCOMM"),
+    "arm": ("ARM", "ARM Holdings"),
+    "taiwan semi": ("TSM", "Taiwan Semiconductor"),
+    "tsmc": ("TSM", "Taiwan Semiconductor"),
+    "asml": ("ASML", "ASML Holding"),
+    "netflix": ("NFLX", "Netflix"),
+    "spotify": ("SPOT", "Spotify Technology"),
+    "uber": ("UBER", "Uber"),
+    "airbnb": ("ABNB", "Airbnb"),
+    "crowdstrike": ("CRWD", "CrowdStrike"),
+    "coinbase": ("COIN", "Coinbase"),
+    "microstrategy": ("MSTR", "MicroStrategy"),
+    "snowflake": ("SNOW", "Snowflake"),
+    "adobe": ("ADBE", "Adobe"),
+    "cisco": ("CSCO", "Cisco Systems"),
+    "ibm": ("IBM", "IBM"),
+    "service now": ("NOW", "ServiceNow"),
+    "servicenow": ("NOW", "ServiceNow"),
+    "palo alto": ("PANW", "Palo Alto Networks"),
+    # Blue Chip, Consumer, Healthcare & Industrial
+    "boeing": ("BA", "The Boeing Company"),
+    "ferrari": ("RACE", "Ferrari"),
+    "costco": ("COST", "Costco Wholesale"),
+    "walmart": ("WMT", "Walmart"),
+    "target": ("TGT", "Target"),
+    "disney": ("DIS", "Walt Disney"),
+    "coca cola": ("KO", "The Coca-Cola Company"),
+    "coke": ("KO", "The Coca-Cola Company"),
+    "pepsi": ("PEP", "PepsiCo"),
+    "mcdonalds": ("MCD", "McDonald's"),
+    "starbucks": ("SBUX", "Starbucks"),
+    "nike": ("NKE", "NIKE"),
+    "berkshire": ("BRK-B", "Berkshire Hathaway"),
+    "berkshire hathaway": ("BRK-B", "Berkshire Hathaway"),
+    "eli lilly": ("LLY", "Eli Lilly"),
+    "lilly": ("LLY", "Eli Lilly"),
+    "novo nordisk": ("NVO", "Novo Nordisk"),
+    "novo": ("NVO", "Novo Nordisk"),
+    "jpmorgan": ("JPM", "JPMorgan Chase"),
+    "jp morgan": ("JPM", "JPMorgan Chase"),
+    "visa": ("V", "Visa"),
+    "mastercard": ("MA", "Mastercard"),
+    "exxon": ("XOM", "Exxon Mobil"),
+    "chevron": ("CVX", "Chevron"),
+    "ford": ("F", "Ford Motor Company"),
+    "general motors": ("GM", "General Motors"),
+    "lockheed": ("LMT", "Lockheed Martin"),
+    # Major Indices & Popular ETFs
+    "s&p 500": ("SPY", "SPDR S&P 500 ETF Trust"),
+    "sp500": ("SPY", "SPDR S&P 500 ETF Trust"),
+    "s&p": ("SPY", "SPDR S&P 500 ETF Trust"),
+    "nasdaq": ("QQQ", "Invesco QQQ Trust"),
+    "nasdaq 100": ("QQQ", "Invesco QQQ Trust"),
+    "dow": ("DIA", "SPDR Dow Jones Industrial ETF"),
+    "dow jones": ("DIA", "SPDR Dow Jones Industrial ETF"),
+    "russell": ("IWM", "iShares Russell 2000 ETF"),
+    "russell 2000": ("IWM", "iShares Russell 2000 ETF"),
+    "vanguard s&p 500": ("VOO", "Vanguard S&P 500 ETF"),
+    "voo": ("VOO", "Vanguard S&P 500 ETF"),
+    "vanguard total stock": ("VTI", "Vanguard Total Stock Market ETF"),
+    "vti": ("VTI", "Vanguard Total Stock Market ETF"),
+    "schwab dividend": ("SCHD", "Schwab U.S. Dividend Equity ETF"),
+    "schd": ("SCHD", "Schwab U.S. Dividend Equity ETF"),
+}
+
+
+def get_exchange_flag(exchange_str: str) -> str:
+    exch = str(exchange_str).lower()
+    if "london" in exch or "lse" in exch:
+        return "🇬🇧"
+    elif "nyse" in exch or "nasdaq" in exch or "amex" in exch or "otc" in exch:
+        return "🇺🇸"
+    elif "toronto" in exch or "tsx" in exch:
+        return "🇨🇦"
+    elif "xetra" in exch or "ger" in exch or "frankfurt" in exch:
+        return "🇩🇪"
+    elif "paris" in exch:
+        return "🇫🇷"
+    elif "milan" in exch:
+        return "🇮🇹"
+    elif "amsterdam" in exch:
+        return "🇳🇱"
+    elif "tokyo" in exch or "jp" in exch:
+        return "🇯🇵"
+    elif "korea" in exch or "krx" in exch:
+        return "🇰🇷"
+    elif "hong kong" in exch or "hkex" in exch:
+        return "🇭🇰"
+    elif "swiss" in exch or "six" in exch:
+        return "🇨🇭"
+    elif "australia" in exch or "asx" in exch:
+        return "🇦🇺"
+    return "🌐"
+
+
+def search_and_resolve_equity(query: str):
+    """
+    Intelligently resolves a stock ticker symbol OR company name.
+    If the query is an exact ticker or has 1 unambiguous match, returns {"status": "single", ...}.
+    If multiple exchange listings or similar companies exist, returns {"status": "multiple", "candidates": [...]}.
+    """
+    clean = query.strip()
+    if not clean:
+        return None
+
+    # 1. Direct clean ticker verification (e.g. RR.L, AAPL, NVDA, BA, SMGB.L, VUAG.L)
+    sym_candidate = clean.upper()
+    is_direct_ticker_format = (
+        ("." in sym_candidate or "-" in sym_candidate or len(sym_candidate) <= 5)
+        and sym_candidate.replace(".", "").replace("-", "").isalnum()
+    )
+    if is_direct_ticker_format:
+        try:
+            t = yf.Ticker(sym_candidate)
+            hist = t.history(period="5d")
+            if not hist.empty and "Close" in hist.columns:
+                inf = t.info or {}
+                raw_name = inf.get("shortName") or inf.get("longName") or sym_candidate
+                exch = inf.get("exchange", "")
+                return {
+                    "status": "single",
+                    "symbol": sym_candidate,
+                    "name": clean_company_name(raw_name),
+                    "exchange": exch,
+                    "flag": get_exchange_flag(exch),
+                }
+        except Exception:
+            pass
+
+    # 2. Query Yahoo Finance Search API for company names and multi-exchange listings
+    try:
+        s = yf.Search(clean, max_results=10)
+        quotes = s.quotes or []
+        candidates = []
+        seen = set()
+
+        for q in quotes:
+            sym = q.get("symbol")
+            qtype = q.get("quoteType")
+            if not sym or qtype not in ("EQUITY", "ETF"):
+                continue
+            exch = q.get("exchDisp") or q.get("exchange") or ""
+            # Avoid duplicate ticker symbols
+            if sym in seen:
+                continue
+            seen.add(sym)
+
+            raw_name = q.get("shortname") or q.get("longname") or sym
+            candidates.append({
+                "symbol": sym,
+                "name": clean_company_name(raw_name),
+                "exchange": exch,
+                "type": qtype,
+                "flag": get_exchange_flag(exch),
+            })
+
+        if len(candidates) == 1:
+            return {"status": "single", **candidates[0]}
+        elif len(candidates) > 1:
+            return {"status": "multiple", "candidates": candidates[:6], "query": clean}
+    except Exception as e:
+        logger.error(f"Error searching Yahoo Finance for '{query}': {e}")
+
+    return None
+
+
+# ─────────────────────────────────────────────
 # SIDEBAR CONTROLS
 # ─────────────────────────────────────────────
 with st.sidebar:
@@ -4311,10 +4613,18 @@ with st.sidebar:
     if not safe_defaults and current_options:
         safe_defaults = list(DEFAULT_TICKERS.keys())
 
+    # Format options nicely with both Ticker and Company Name for effortless searching
+    def format_equity_option(sym: str) -> str:
+        name = st.session_state.get("all_tickers", {}).get(sym)
+        if name and name != sym:
+            return f"{sym} · {name}"
+        return sym
+
     selected = st.multiselect(
         "Select Equities & ETFs",
         options=current_options,
         default=safe_defaults,
+        format_func=format_equity_option,
         help="Select which equities to include in the valuation monitor",
     )
 
@@ -4323,54 +4633,115 @@ with st.sidebar:
         st.session_state["selected_equities"] = selected
         st.query_params["watchlist"] = ",".join(selected)
 
-    # ── ➕ Add Custom Ticker UI ──
+    # ── 🔍 Add Stock / Search Company UI ──
     st.markdown("<div style='margin-top: -6px; margin-bottom: 2px;'></div>", unsafe_allow_html=True)
-    add_col1, add_col2 = st.columns([3, 1])
-    with add_col1:
-        new_ticker_input = st.text_input(
-            "Add Custom Ticker",
-            placeholder="Symbol (e.g. AAPL, META)",
-            label_visibility="collapsed",
-            key="custom_ticker_input",
-        ).strip().upper()
-    with add_col2:
-        add_clicked = st.button("➕ Add", use_container_width=True, help="Validate and add ticker to active monitor")
+    with st.form("add_ticker_form", clear_on_submit=True, border=False):
+        add_col1, add_col2 = st.columns([3.8, 1.2])
+        with add_col1:
+            search_query = st.text_input(
+                "Add Stock by Name or Ticker",
+                placeholder="Search company or ticker...",
+                label_visibility="collapsed",
+                help="Type any company name (e.g. Palantir, Ferrari, Costco) or stock symbol (e.g. PLTR, AAPL) and press Enter or the ➕ button",
+            )
+        with add_col2:
+            add_clicked = st.form_submit_button(
+                "➕",
+                use_container_width=True,
+                help="Search company name or symbol and add to active radar",
+            )
 
-    if add_clicked and new_ticker_input:
-        sym = new_ticker_input
-        if sym in selected:
-            st.info(f"{sym} is already active.")
-        elif sym in st.session_state["all_tickers"]:
-            new_sel = list(selected)
-            new_sel.append(sym)
-            st.session_state["selected_equities"] = new_sel
-            st.query_params["watchlist"] = ",".join(new_sel)
-            st.rerun()
-        else:
-            with st.spinner(f"Verifying {sym} on Yahoo Finance…"):
-                try:
-                    obj = yf.Ticker(sym)
-                    test_hist = obj.history(period="5d")
-                    if test_hist.empty or "Close" not in test_hist.columns:
-                        st.error(f"'{sym}' could not be resolved on Yahoo Finance. Please verify the symbol.")
+    st.caption("💡 Search by company name (*Ferrari, Palantir, Boeing*) or ticker (*AAPL, SPY*).")
+
+    if add_clicked and search_query.strip():
+        q_clean = search_query.strip()
+        with st.spinner(f"Searching for '{q_clean}'…"):
+            res = search_and_resolve_equity(q_clean)
+            if res:
+                if res.get("status") == "single":
+                    sym = res["symbol"]
+                    co_name = res["name"]
+                    if sym in selected:
+                        st.info(f"**{sym}** ({co_name}) is already active in your dashboard.")
                     else:
-                        co_name = sym
-                        try:
-                            inf = obj.info or {}
-                            co_name = inf.get("shortName") or inf.get("longName") or sym
-                        except Exception:
-                            pass
                         st.session_state["all_tickers"][sym] = co_name
                         new_sel = list(selected)
                         if sym not in new_sel:
                             new_sel.append(sym)
                         st.session_state["selected_equities"] = new_sel
                         st.query_params["watchlist"] = ",".join(new_sel)
-                        st.success(f"Added {sym} ({co_name})!")
-                        time.sleep(0.3)
+                        st.session_state["search_selection_prompt"] = None
+                        st.toast(f"Added {sym} · {co_name}", icon="✅")
+                        time.sleep(0.2)
                         st.rerun()
-                except Exception as ex:
-                    st.error(f"Error fetching {sym}: {ex}")
+                elif res.get("status") == "multiple":
+                    st.session_state["search_selection_prompt"] = {
+                        "query": q_clean,
+                        "candidates": res.get("candidates", []),
+                    }
+                    st.rerun()
+            else:
+                st.error(f"Could not find a stock or ETF for '{q_clean}'. Try typing the company name or exact ticker symbol.")
+
+    # ── Multi-Listing Selection Card (Prevents assuming wrong exchange/company) ──
+    if st.session_state.get("search_selection_prompt"):
+        prompt_data = st.session_state["search_selection_prompt"]
+        q_text = prompt_data.get("query", "")
+        candidates = prompt_data.get("candidates", [])
+
+        st.markdown(
+            f"""
+            <div style="background:#FFFFFF; border:1.5px solid #EAB308; border-radius:10px; padding:10px 12px; margin-top:8px; margin-bottom:8px; box-shadow:0 3px 8px rgba(234,179,8,0.12);">
+                <div style="font-size:0.84rem; font-weight:800; color:#0F172A; margin-bottom:2px;">
+                    🔍 Multiple Listings for "{q_text}"
+                </div>
+                <div style="font-size:0.73rem; color:#64748B; margin-bottom:4px; line-height:1.35;">
+                    Please select the exact exchange you wish to monitor:
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        for c in candidates:
+            c_sym = c["symbol"]
+            c_name = c["name"]
+            c_exch = c.get("exchange", "")
+            c_flag = c.get("flag", "🌐")
+            c_type = c.get("type", "EQUITY")
+            is_active = c_sym in selected
+
+            cand_col1, cand_col2 = st.columns([3.8, 1.2])
+            with cand_col1:
+                st.markdown(
+                    f"""
+                    <div style="line-height:1.2; padding: 4px 0;">
+                        <span style="font-weight:800; font-size:0.88rem; color:#0F172A;">{c_sym}</span>
+                        <span style="font-size:0.78rem; color:#334155; font-weight:600;"> · {c_name}</span><br>
+                        <span style="font-size:0.72rem; color:#64748B;">{c_flag} {c_exch} · {c_type}</span>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+            with cand_col2:
+                if is_active:
+                    st.caption("Active")
+                else:
+                    if st.button("➕", key=f"btn_pick_{c_sym}", help=f"Add {c_sym} ({c_exch}) to active monitor"):
+                        st.session_state["all_tickers"][c_sym] = c_name
+                        new_sel = list(selected)
+                        if c_sym not in new_sel:
+                            new_sel.append(c_sym)
+                        st.session_state["selected_equities"] = new_sel
+                        st.query_params["watchlist"] = ",".join(new_sel)
+                        st.session_state["search_selection_prompt"] = None
+                        st.toast(f"Added {c_sym} · {c_name} ({c_exch})", icon="✅")
+                        time.sleep(0.2)
+                        st.rerun()
+
+        if st.button("✕ Dismiss", key="btn_dismiss_search_prompt", help="Close listing choices", use_container_width=True):
+            st.session_state["search_selection_prompt"] = None
+            st.rerun()
 
     # ── Reset to Default Basket ──
     reset_col1, reset_col2 = st.columns([3, 2])
@@ -4581,17 +4952,17 @@ with st.container(border=True, key="top_benchmark_card"):
           <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 8px 14px; margin-top: 8px; font-size: 0.82rem;">
             <div style="display: inline-flex; align-items: center; gap: 6px;">
               <span class="badge badge-attractive">● BUY ZONE</span>
-              <span style="color: #475569;"><b>&lt; -5%</b> below average</span>
+              <span style="color: #475569;"><b>More than 5% below average</b> (On sale)</span>
             </div>
             <span style="color: #CBD5E1;">•</span>
             <div style="display: inline-flex; align-items: center; gap: 6px;">
               <span class="badge badge-neutral">● STANDARD DCA</span>
-              <span style="color: #475569;"><b>±5%</b> within average</span>
+              <span style="color: #475569;"><b>Within 5% of average</b> (Fair price)</span>
             </div>
             <span style="color: #CBD5E1;">•</span>
             <div style="display: inline-flex; align-items: center; gap: 6px;">
               <span class="badge badge-overvalued">● WAIT FOR PULLBACK</span>
-              <span style="color: #475569;"><b>&gt; +5%</b> above average</span>
+              <span style="color: #475569;"><b>More than 5% above average</b> (Expensive)</span>
             </div>
           </div>
         </div>
@@ -4874,13 +5245,13 @@ for row_start in range(0, len(ticker_list), n_cols):
 
                 header_html = f"""
                 <div id="card-{tk}" class="stock-card-container" style="scroll-margin-top: 100px;">
-                  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #F1F5F9;">
-                    <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px; min-width: 130px;">
+                  <div style="margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #F1F5F9;">
+                    <div style="display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px;">
                       <span style="font-size: 1.25rem; font-weight: 800; color: {TEXT_DARK}; letter-spacing: -0.01em;">{tk}</span>
-                      <span style="font-size: 0.82rem; color: {MUTED_SLATE}; margin-left: 2px; font-weight: 500;">{safe_name}</span>
+                      <span style="font-size: 0.84rem; color: {MUTED_SLATE}; margin-left: 2px; font-weight: 500;">{safe_name}</span>
                       {asset_badge_html}
                     </div>
-                    <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-left: auto;">
+                    <div style="display: flex; align-items: center; justify-content: flex-end; gap: 6px; flex-wrap: wrap; margin-top: 6px;">
                       {conviction_badge_html}
                       {badge_html(status)}
                     </div>
@@ -5313,9 +5684,9 @@ for row_start in range(0, len(ticker_list), n_cols):
 
                 # ── Detail Bollinger & Trend Chart ──
                 if show_charts:
-                    chart_col1, chart_col2 = st.columns([4, 1])
+                    chart_col1, chart_col2 = st.columns([2.3, 1.7])
                     with chart_col1:
-                        st.html('<div style="margin-top: 16px; margin-bottom: 12px;"><span style="font-size: 0.70rem; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.04em;">Trend & Valuation Corridor</span></div>')
+                        st.html('<div style="margin-top: 14px; margin-bottom: 8px;"><span style="font-size: 0.70rem; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.04em;">Trend & Valuation Corridor</span></div>')
                     with chart_col2:
                         fig = make_price_chart(d)
                         if st.button("⛶ Expand Chart", key=f"btn_expand_{tk}", use_container_width=True):

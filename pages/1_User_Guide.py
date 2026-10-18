@@ -327,7 +327,7 @@ overview_visual_html = """
           <span class="badge-green" style="font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: 9999px;">● BUY ZONE</span>
           <span style="font-weight: 700; color: #15803D; font-size: 0.88rem;">Green Bars (Prime Accumulation)</span>
         </div>
-        <span style="font-size: 0.74rem; font-weight: 700; color: #15803D; background: #F0FDF4; border: 1px dashed #86EFAC; padding: 2px 7px; border-radius: 4px;">&lt; -5% below average</span>
+        <span style="font-size: 0.74rem; font-weight: 700; color: #15803D; background: #F0FDF4; border: 1px dashed #86EFAC; padding: 2px 7px; border-radius: 4px;">More than 5% below average (On sale)</span>
       </div>
       <div style="font-size: 0.82rem; color: #334155; line-height: 1.45;">
         <b>Deep Discounts:</b> Highlights assets currently trading at the deepest discounts below their historical baseline. The top of the chart is where you hunt for high-conviction value entries.
@@ -342,7 +342,7 @@ overview_visual_html = """
           <span class="badge-amber" style="font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: 9999px;">● STANDARD DCA</span>
           <span style="font-weight: 700; color: #B45309; font-size: 0.88rem;">Amber Bars (Fair-Value Mean)</span>
         </div>
-        <span style="font-size: 0.74rem; font-weight: 700; color: #B45309; background: #FFFBEB; border: 1px dashed #FDE68A; padding: 2px 7px; border-radius: 4px;">-5% to +10% average</span>
+        <span style="font-size: 0.74rem; font-weight: 700; color: #B45309; background: #FFFBEB; border: 1px dashed #FDE68A; padding: 2px 7px; border-radius: 4px;">Within 5% of average (Fair price)</span>
       </div>
       <div style="font-size: 0.82rem; color: #334155; line-height: 1.45;">
         <b>Routine Scheduled DCA:</b> Assets trading right around their fair-value average. Great for steady monthly accumulation without overpaying.
@@ -357,7 +357,7 @@ overview_visual_html = """
           <span class="badge-red" style="font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: 9999px;">● WAIT FOR PULLBACK</span>
           <span style="font-weight: 700; color: #DC2626; font-size: 0.88rem;">Red Bars (Overextended)</span>
         </div>
-        <span style="font-size: 0.74rem; font-weight: 700; color: #DC2626; background: #FEF2F2; border: 1px dashed #FECACA; padding: 2px 7px; border-radius: 4px;">&gt; +10% above average</span>
+        <span style="font-size: 0.74rem; font-weight: 700; color: #DC2626; background: #FEF2F2; border: 1px dashed #FECACA; padding: 2px 7px; border-radius: 4px;">More than 5% above average (Expensive)</span>
       </div>
       <div style="font-size: 0.82rem; color: #334155; line-height: 1.45;">
         <b>Wait for Pullback:</b> Assets stretched furthest into overextended territory. Elevated risk of short-term retracement—exercise discipline and wait for mean reversion.
@@ -491,21 +491,21 @@ Every stock on your dashboard has a simple color status that tells you how its c
 
 | Status | What It Looks Like | What It Means in Plain English | What You Should Do |
 | :--- | :---: | :--- | :--- |
-| **Buy Zone** | <span class="guide-badge-buy">🟢 BUY ZONE</span> | Price is **more than 5% below** its normal average | **Prime buying time!** The stock is on sale. A great time to add to your investments. |
-| **Standard DCA** | <span class="guide-badge-dca">🟡 STANDARD DCA</span> | Price is **between 5% below and 10% above** average | **Fair price.** Continue with your normal scheduled investments as usual. |
-| **Wait for Pullback** | <span class="guide-badge-wait">🔴 WAIT FOR PULLBACK</span> | Price is **more than 10% above** its normal average | **Expensive!** The stock is stretched high. Be patient and wait for the price to cool down before buying. |
+| **Buy Zone** | <span class="guide-badge-buy">🟢 BUY ZONE</span> | Price is **more than 5% below** its normal average (On sale) | **Prime buying time!** The stock is on sale. A great time to add to your investments. |
+| **Standard DCA** | <span class="guide-badge-dca">🟡 STANDARD DCA</span> | Price is **within 5% of its normal average** (Fair price) | **Fair price.** Continue with your normal scheduled investments as usual. |
+| **Wait for Pullback** | <span class="guide-badge-wait">🔴 WAIT FOR PULLBACK</span> | Price is **more than 5% above** its normal average (Expensive) | **Expensive!** The stock is stretched high. Be patient and wait for the price to cool down before buying. |
 """,
         unsafe_allow_html=True,
     )
     st.html(overview_visual_html)
 
 
-# ── Section 3: Smart DCA Allocator & Tranche Calculator ──
+# ── Section 3: Smart Investment Splitter ──
 alloc_guide_html = """
 <style>
 .alloc-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: 12px;
   margin-top: 16px;
   margin-bottom: 24px;
@@ -535,16 +535,16 @@ alloc_guide_html = """
   width: fit-content;
 }
 .alloc-title {
-  font-size: 1.05rem;
+  font-size: 1.02rem;
   font-weight: 800;
   color: #0F172A;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   letter-spacing: -0.01em;
 }
 .alloc-text {
-  font-size: 0.90rem;
+  font-size: 0.86rem;
   color: #334155;
-  line-height: 1.55;
+  line-height: 1.5;
 }
 .alloc-badge-green, .alloc-badge-amber, .alloc-badge-red, .alloc-badge-yellow {
   display: inline-block !important;
@@ -552,7 +552,7 @@ alloc_guide_html = """
   padding: 2px 7px;
   border-radius: 5px;
   font-weight: 700;
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   line-height: 1.25;
   vertical-align: middle;
 }
@@ -566,14 +566,10 @@ alloc_guide_html = """
   <div class="alloc-card">
     <div>
       <div class="alloc-step">Step 1</div>
-      <div class="alloc-title">💷 Set Budget & Dry Powder</div>
+      <div class="alloc-title">💷 Available to Invest</div>
       <div class="alloc-text">
-        Enter the cash amount you want to invest (e.g., <b>£500</b>) and pick your currency (<b>£</b>, <b>$</b>, <b>€</b>).<br><br>
-        <b>Choose your strategy:</b><br>
-        • <b>100% Fully Deployed:</b><br>
-        Invests your entire budget today.<br><br>
-        • <b>Hold 25% Dry Powder:</b><br>
-        Deploys 75% now and reserves 25% cash for rare <span class="alloc-badge-amber">-2.2σ Deep Dips</span> or <span class="alloc-badge-red">-3.0σ Panics</span>.
+        Enter the total cash amount you have available in your account (e.g., <b>£1,000</b>) and choose your currency (<b>£</b>, <b>$</b>, or <b>€</b>).<br><br>
+        This establishes your total cash pool available for disciplined capital deployment.
       </div>
     </div>
   </div>
@@ -581,14 +577,14 @@ alloc_guide_html = """
   <div class="alloc-card">
     <div>
       <div class="alloc-step">Step 2</div>
-      <div class="alloc-title">🎯 Pick Your Targets (Caveat Filter)</div>
+      <div class="alloc-title">⚡ Cash to Deploy Tranches</div>
       <div class="alloc-text">
-        Choose <b>only</b> the specific assets you wish to accumulate right now. All other watched stocks are ignored.<br><br>
-        <b>Quick Presets:</b><br>
-        • <span class="alloc-badge-yellow">⚡ Top 3 Conviction</span><br>
-        Instantly selects your top 3 bargain opportunities.<br><br>
-        • <span class="alloc-badge-yellow">🟢 All Buy Zone</span><br>
-        Selects all stocks in discounted territory.
+        Pick how much of your available funds to put to work today:<br><br>
+        • <b>25% (First Tranche):</b> Invest a quarter; keep 75% cash for lower dips.<br>
+        • <b>50% (Standard Dip):</b> Balanced entry; deploy half and keep half in reserve.<br>
+        • <b>75% (Aggressive Accumulation):</b> Heavy dip buy; leaves 25% dry powder.<br>
+        • <b>100% (Deploy All):</b> Deploys all available cash today.<br>
+        • <b>Custom %:</b> Enter any custom percentage or exact cash sum.
       </div>
     </div>
   </div>
@@ -596,6 +592,24 @@ alloc_guide_html = """
   <div class="alloc-card">
     <div>
       <div class="alloc-step">Step 3</div>
+      <div class="alloc-title">🎯 Quick Target Presets</div>
+      <div class="alloc-text">
+        Quickly filter which equities receive capital today:<br><br>
+        • <span class="alloc-badge-yellow">⚡ Top 3 Conviction Stocks</span><br>
+        Focus on the 3 highest-rated conviction score stocks.<br><br>
+        • <span class="alloc-badge-green">🟢 All Buy Zone Stocks</span><br>
+        Target all stocks trading at a discount in the Buy Zone (&lt; -5%).<br><br>
+        • <span class="alloc-badge-yellow">📋 Select All</span><br>
+        Split cash across your entire watched portfolio.<br><br>
+        • <span class="alloc-badge-amber">🧹 Clear Selection</span><br>
+        Reset to hand-pick individual stocks manually from the multiselect dropdown below.
+      </div>
+    </div>
+  </div>
+
+  <div class="alloc-card">
+    <div>
+      <div class="alloc-step">Step 4</div>
       <div class="alloc-title">⚖️ Dynamic Tranche Weighting</div>
       <div class="alloc-text">
         Money is <b>not</b> divided evenly. The calculator weights every pound based on discount and quality:<br><br>
@@ -607,13 +621,13 @@ alloc_guide_html = """
 
   <div class="alloc-card">
     <div>
-      <div class="alloc-step">Step 4</div>
-      <div class="alloc-title">🛡️ Valuation Guardrail (Strict Protection)</div>
+      <div class="alloc-step">Step 5</div>
+      <div class="alloc-title">🛡️ Valuation Guardrail</div>
       <div class="alloc-text">
         Active by default. Automatically allocates <b>£0.00 (0.0% / 0 shares)</b> to protect your capital:<br><br>
         • <span class="alloc-badge-red">Score &lt; 4.5</span> (Low Conviction)<br>
         • <span class="alloc-badge-red">● Wait for Pullback</span> (+1.5σ Overextended)<br><br>
-        <b>100% of your capital</b> is redirected into genuine bargains at the top. Toggle off anytime to force a token buy.
+        <b>100% of your capital</b> is redirected into genuine approved bargains. Toggle off anytime to force a token buy.
       </div>
     </div>
   </div>
@@ -621,7 +635,11 @@ alloc_guide_html = """
 """
 
 alloc_table_html = """
-<div style="overflow-x: auto; margin-top: 14px; border: 1.5px solid #E2E8F0; border-radius: 10px; background: #FFFFFF; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+<div style="font-size: 0.80rem; color: #475569; margin-top: 14px; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; font-weight: 500;">
+  <span style="font-size: 0.95rem;">👉</span>
+  <span><b>Mobile Tip:</b> Swipe or scroll horizontally across the table to view all columns, including share count estimates and execution strategies.</span>
+</div>
+<div style="overflow-x: auto; margin-top: 6px; border: 1.5px solid #E2E8F0; border-radius: 10px; background: #FFFFFF; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
   <div style="background-color: #F8FAFC; padding: 10px 14px; border-bottom: 1.5px solid #E2E8F0; font-size: 0.85rem; font-weight: 800; color: #0F172A; display: flex; justify-content: space-between; align-items: center;">
     <span>📋 Visual Example: £500 Budget Allocation with Valuation Guardrail Active</span>
     <span style="font-size: 0.72rem; font-weight: 700; color: #15803D; background-color: #DCFCE7; border: 1px solid #16A34A; padding: 2px 8px; border-radius: 6px;">🛡️ 3 Approved · 2 Protected</span>
@@ -641,8 +659,8 @@ alloc_table_html = """
     <tbody>
       <tr style="border-bottom: 1px solid #F1F5F9;">
         <td style="padding: 10px 12px; font-weight: 700; color: #0F172A;">NVDA<br><span style="font-weight: 400; font-size: 0.74rem; color: #64748B;">NVIDIA</span></td>
-        <td style="padding: 10px 8px;"><span style="background: #FEF3C7; color: #D97706; border: 1px solid #FCD34D; padding: 2px 7px; border-radius: 4px; font-weight: 700; font-size: 0.75rem;">● Standard DCA</span></td>
-        <td style="padding: 10px 8px;"><span style="background: #DCFCE7; color: #15803D; border: 1px solid #16A34A; padding: 2px 7px; border-radius: 6px; font-weight: 700; font-size: 0.75rem;">⚡ 8.5 / 10</span></td>
+        <td style="padding: 10px 8px;"><span style="background: #FEF3C7; color: #D97706; border: 1px solid #FCD34D; padding: 2px 7px; border-radius: 4px; font-weight: 700; font-size: 0.75rem; white-space: nowrap !important; display: inline-block !important;">● Standard DCA</span></td>
+        <td style="padding: 10px 8px;"><span style="background: #DCFCE7; color: #15803D; border: 1px solid #16A34A; padding: 2px 7px; border-radius: 6px; font-weight: 700; font-size: 0.75rem; white-space: nowrap !important; display: inline-block !important;">⚡ 8.5 / 10</span></td>
         <td style="padding: 10px 8px; text-align: right; font-weight: 700; color: #1E293B;">43.3%</td>
         <td style="padding: 10px 8px; text-align: right; font-weight: 800; color: #0F172A; font-size: 0.92rem;">£216.72</td>
         <td style="padding: 10px 8px; text-align: right; color: #475569; font-weight: 600;">~1.00 shs</td>
@@ -650,8 +668,8 @@ alloc_table_html = """
       </tr>
       <tr style="border-bottom: 1px solid #F1F5F9;">
         <td style="padding: 10px 12px; font-weight: 700; color: #0F172A;">AMZN<br><span style="font-weight: 400; font-size: 0.74rem; color: #64748B;">Amazon.com</span></td>
-        <td style="padding: 10px 8px;"><span style="background: #FEF3C7; color: #D97706; border: 1px solid #FCD34D; padding: 2px 7px; border-radius: 4px; font-weight: 700; font-size: 0.75rem;">● Standard DCA</span></td>
-        <td style="padding: 10px 8px;"><span style="background: #FEF3C7; color: #D97706; border: 1px solid #FCD34D; padding: 2px 7px; border-radius: 6px; font-weight: 700; font-size: 0.75rem;">⚡ 7.1 / 10</span></td>
+        <td style="padding: 10px 8px;"><span style="background: #FEF3C7; color: #D97706; border: 1px solid #FCD34D; padding: 2px 7px; border-radius: 4px; font-weight: 700; font-size: 0.75rem; white-space: nowrap !important; display: inline-block !important;">● Standard DCA</span></td>
+        <td style="padding: 10px 8px;"><span style="background: #FEF3C7; color: #D97706; border: 1px solid #FCD34D; padding: 2px 7px; border-radius: 6px; font-weight: 700; font-size: 0.75rem; white-space: nowrap !important; display: inline-block !important;">⚡ 7.1 / 10</span></td>
         <td style="padding: 10px 8px; text-align: right; font-weight: 700; color: #1E293B;">33.7%</td>
         <td style="padding: 10px 8px; text-align: right; font-weight: 800; color: #0F172A; font-size: 0.92rem;">£168.45</td>
         <td style="padding: 10px 8px; text-align: right; color: #475569; font-weight: 600;">~0.66 shs</td>
@@ -659,8 +677,8 @@ alloc_table_html = """
       </tr>
       <tr style="border-bottom: 1px solid #F1F5F9;">
         <td style="padding: 10px 12px; font-weight: 700; color: #0F172A;">GOOG<br><span style="font-weight: 400; font-size: 0.74rem; color: #64748B;">Alphabet</span></td>
-        <td style="padding: 10px 8px;"><span style="background: #FEF3C7; color: #D97706; border: 1px solid #FCD34D; padding: 2px 7px; border-radius: 4px; font-weight: 700; font-size: 0.75rem;">● Standard DCA</span></td>
-        <td style="padding: 10px 8px;"><span style="background: #FEF3C7; color: #D97706; border: 1px solid #FCD34D; padding: 2px 7px; border-radius: 6px; font-weight: 700; font-size: 0.75rem;">⚡ 5.4 / 10</span></td>
+        <td style="padding: 10px 8px;"><span style="background: #FEF3C7; color: #D97706; border: 1px solid #FCD34D; padding: 2px 7px; border-radius: 4px; font-weight: 700; font-size: 0.75rem; white-space: nowrap !important; display: inline-block !important;">● Standard DCA</span></td>
+        <td style="padding: 10px 8px;"><span style="background: #FEF3C7; color: #D97706; border: 1px solid #FCD34D; padding: 2px 7px; border-radius: 6px; font-weight: 700; font-size: 0.75rem; white-space: nowrap !important; display: inline-block !important;">⚡ 5.4 / 10</span></td>
         <td style="padding: 10px 8px; text-align: right; font-weight: 700; color: #1E293B;">23.0%</td>
         <td style="padding: 10px 8px; text-align: right; font-weight: 800; color: #0F172A; font-size: 0.92rem;">£114.83</td>
         <td style="padding: 10px 8px; text-align: right; color: #475569; font-weight: 600;">~0.33 shs</td>
@@ -668,8 +686,8 @@ alloc_table_html = """
       </tr>
       <tr style="border-bottom: 1px solid #F1F5F9; background-color: #FFFDFD;">
         <td style="padding: 10px 12px; font-weight: 700; color: #0F172A;">META<br><span style="font-weight: 400; font-size: 0.74rem; color: #64748B;">Meta Platforms</span></td>
-        <td style="padding: 10px 8px;"><span style="background: #FEE2E2; color: #DC2626; border: 1px solid #FCA5A5; padding: 2px 7px; border-radius: 4px; font-weight: 700; font-size: 0.75rem;">● Wait for Pullback</span></td>
-        <td style="padding: 10px 8px;"><span style="background: #FEF3C7; color: #D97706; border: 1px solid #FCD34D; padding: 2px 7px; border-radius: 6px; font-weight: 700; font-size: 0.75rem;">⚡ 5.1 / 10</span></td>
+        <td style="padding: 10px 8px;"><span style="background: #FEE2E2; color: #DC2626; border: 1px solid #FCA5A5; padding: 2px 7px; border-radius: 4px; font-weight: 700; font-size: 0.75rem; white-space: nowrap !important; display: inline-block !important;">● Wait for Pullback</span></td>
+        <td style="padding: 10px 8px;"><span style="background: #FEF3C7; color: #D97706; border: 1px solid #FCD34D; padding: 2px 7px; border-radius: 6px; font-weight: 700; font-size: 0.75rem; white-space: nowrap !important; display: inline-block !important;">⚡ 5.1 / 10</span></td>
         <td style="padding: 10px 8px; text-align: right; color: #94A3B8; font-weight: 500;">0.0%</td>
         <td style="padding: 10px 8px; text-align: right; color: #94A3B8; font-weight: 600;">£0.00</td>
         <td style="padding: 10px 8px; text-align: right; color: #94A3B8; font-weight: 500;">0.00 shs</td>
@@ -677,8 +695,8 @@ alloc_table_html = """
       </tr>
       <tr style="border-bottom: 1px solid #F1F5F9; background-color: #FFFDFD;">
         <td style="padding: 10px 12px; font-weight: 700; color: #0F172A;">TSLA<br><span style="font-weight: 400; font-size: 0.74rem; color: #64748B;">Tesla</span></td>
-        <td style="padding: 10px 8px;"><span style="background: #FEF3C7; color: #D97706; border: 1px solid #FCD34D; padding: 2px 7px; border-radius: 4px; font-weight: 700; font-size: 0.75rem;">● Standard DCA</span></td>
-        <td style="padding: 10px 8px;"><span style="background: #FEE2E2; color: #DC2626; border: 1px solid #FCA5A5; padding: 2px 7px; border-radius: 6px; font-weight: 700; font-size: 0.75rem;">⚡ 3.9 / 10</span></td>
+        <td style="padding: 10px 8px;"><span style="background: #FEF3C7; color: #D97706; border: 1px solid #FCD34D; padding: 2px 7px; border-radius: 4px; font-weight: 700; font-size: 0.75rem; white-space: nowrap !important; display: inline-block !important;">● Standard DCA</span></td>
+        <td style="padding: 10px 8px;"><span style="background: #FEE2E2; color: #DC2626; border: 1px solid #FCA5A5; padding: 2px 7px; border-radius: 6px; font-weight: 700; font-size: 0.75rem; white-space: nowrap !important; display: inline-block !important;">⚡ 3.9 / 10</span></td>
         <td style="padding: 10px 8px; text-align: right; color: #94A3B8; font-weight: 500;">0.0%</td>
         <td style="padding: 10px 8px; text-align: right; color: #94A3B8; font-weight: 600;">£0.00</td>
         <td style="padding: 10px 8px; text-align: right; color: #94A3B8; font-weight: 500;">0.00 shs</td>
@@ -695,12 +713,12 @@ with st.container(border=True):
 <div style="background: linear-gradient(135deg, #FDE047 0%, #FACC15 100%); border: 1.5px solid #EAB308; border-radius: 12px; padding: 14px 20px; color: #1F2937; display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
   <div style="display: flex; align-items: center; gap: 10px;">
     <span style="font-size: 1.4rem;">🎯</span>
-    <span style="font-size: 1.25rem; font-weight: 800; letter-spacing: -0.01em;">3. Smart DCA Allocator & Tranche Calculator</span>
+    <span style="font-size: 1.25rem; font-weight: 800; letter-spacing: -0.01em;">3. Smart Investment Splitter</span>
   </div>
   <span style="font-size: 0.75rem; font-weight: 800; color: #854D0E; background-color: #FEF9C3; border: 1px solid #FDE047; padding: 3px 10px; border-radius: 9999px; text-transform: uppercase; letter-spacing: 0.05em;">Capital Deployment Engine</span>
 </div>
 
-Instead of guessing how much money to invest into each stock every month, the **Smart DCA Allocator** does the math for you. It translates your custom cash budget into an exact, disciplined purchase plan based on **Valuation Corridors** and **⚡ Radar Conviction Scores**.
+Instead of guessing how much money to invest into each stock every month, the **Smart Investment Splitter** does the quantitative math for you. Enter your available cash budget to receive a disciplined, mathematically weighted investment plan based on **Valuation Corridors** and **⚡ Radar Conviction Scores**.
 """,
         unsafe_allow_html=True,
     )
@@ -1206,11 +1224,12 @@ eval_html = """
   <div class="eval-card">
     <div>
       <div class="eval-step">Step 4</div>
-      <div class="eval-title">💷 The "Action" (Smart DCA Allocator)</div>
+      <div class="eval-title">💷 The "Action" (Smart Investment Splitter)</div>
       <div class="eval-text">
         Eliminate guesswork and emotion from position sizing:<br><br>
-        • Open the <b>Smart DCA Allocator</b> (Section 3).<br><br>
-        • Enter your cash budget (e.g. £500) and pick your targets.<br><br>
+        • Open the <b>Smart Investment Splitter</b> (Section 3).<br><br>
+        • Enter your available cash (e.g. £1,000) and pick a deployment tranche (25%, 50%, 75%, 100%, or Custom).<br><br>
+        • Choose a target preset (e.g. <span class="badge-yellow">⚡ Top 3 Conviction</span> or <span class="badge-green">🟢 All Buy Zone</span>).<br><br>
         • The engine auto-weights your cash, gives a <b>1.6x boost</b> to Buy Zone bargains, and relies on the <span class="badge-green">🛡️ Valuation Guardrail</span> to assign <b>£0.00</b> to overextended or low-conviction assets.
       </div>
     </div>
@@ -1231,16 +1250,169 @@ With the composite **⚡ Radar Conviction Score (1.0 to 10.0)**, evaluating any 
 
 
 # ── Section 7: Helpful Dashboard Tools ──
+tools_guide_html = """
+<style>
+.tools-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+  margin-top: 16px;
+  margin-bottom: 24px;
+}
+.tool-card {
+  background: #FFFFFF;
+  border: 1.5px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 16px 16px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.tool-badge {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #854D0E;
+  background-color: #FEF9C3;
+  border: 1px solid #FDE047;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  display: inline-block;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 8px;
+  width: fit-content;
+}
+.tool-title {
+  font-size: 1.02rem;
+  font-weight: 800;
+  color: #0F172A;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.tool-desc {
+  font-size: 0.85rem;
+  color: #475569;
+  line-height: 1.5;
+}
+.tool-sort-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 10px;
+  font-size: 0.80rem;
+  color: #334155;
+}
+.tool-sort-item {
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 6px;
+  padding: 5px 8px;
+}
+</style>
+
+<div class="tools-grid">
+  <!-- Card 1: Sidebar Sort By Filter -->
+  <div class="tool-card">
+    <div>
+      <div class="tool-badge">Sidebar Control</div>
+      <div class="tool-title">🎛️ 8 Quantitative Sorting Modes</div>
+      <div class="tool-desc">
+        The sidebar <b>"Sort By"</b> selectbox organizes stock cards based on your preferred quantitative priority. The options are arranged in alphabetical order:
+      </div>
+      <div class="tool-sort-list">
+        <div class="tool-sort-item"><b>• Alphabetical (A–Z):</b> Traditional alphabetical sorting by ticker symbol.</div>
+        <div class="tool-sort-item"><b>• Best Value (Lowest Standard Deviation):</b> Deepest discount below historical baseline (lowest Z-score).</div>
+        <div class="tool-sort-item"><b>• Biggest Daily Dip:</b> Largest percentage drop today—ideal for day-of dip hunters.</div>
+        <div class="tool-sort-item"><b>• Deepest ATH Drawdown:</b> Furthest pullback percentage from all-time highs.</div>
+        <div class="tool-sort-item"><b>• Highest 12M Analyst Upside:</b> Greatest potential upside to Wall Street consensus targets.</div>
+        <div class="tool-sort-item"><b>• Highest Conviction Score:</b> Core multi-factor ranking model (1.0 to 10.0 scale, default).</div>
+        <div class="tool-sort-item"><b>• Lowest 2Y PEG:</b> Cheapest forward valuation multiple relative to projected growth (&lt; 1.0).</div>
+        <div class="tool-sort-item"><b>• Lowest Wall Street Consensus:</b> Strongest institutional buy backing (1.0 = Strong Buy).</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card 2: Collapsible Master Chart Guide -->
+  <div class="tool-card">
+    <div>
+      <div class="tool-badge">Dashboard Header</div>
+      <div class="tool-title">📖 Master Chart Guide Expander</div>
+      <div class="tool-desc">
+        Positioned directly above the stock cards in a collapsible expander box. Keeps your screen sleek and compact on mobile phones while offering 1-click instant access to the full visual corridor reference, median fair value line, and standard deviation tiers (-1.5σ, -2.2σ, -3.0σ).
+      </div>
+    </div>
+  </div>
+
+  <!-- Card 3: Live Signal Alerts -->
+  <div class="tool-card">
+    <div>
+      <div class="tool-badge">Real-Time Alerts</div>
+      <div class="tool-title">🔔 Live Email Notifications</div>
+      <div class="tool-desc">
+        Located in the sidebar under <b>"Live Signal Alerts (Email)"</b>. Connect your SMTP credentials (e.g. Gmail App Password) to receive automated email notifications whenever any equity in your basket triggers Tier 1 (Standard DCA), Tier 2 (Deeply Oversold), or Tier 3 (Capitulation). Built-in session deduplication ensures you never receive duplicate alerts for the same signal.
+      </div>
+    </div>
+  </div>
+
+  <!-- Card 4: Quick Find Bar -->
+  <div class="tool-card">
+    <div>
+      <div class="tool-badge">Fast Navigation</div>
+      <div class="tool-title">🔍 Quick Find Bar & Direct Jump</div>
+      <div class="tool-desc">
+        Located immediately above the stock cards. Type or select any watched ticker (e.g. <code>NVDA</code>, <code>MSFT</code>) to jump directly to its individual asset card without scrolling through your entire portfolio.
+      </div>
+    </div>
+  </div>
+
+  <!-- Card 5: Interactive Full-Screen Charts -->
+  <div class="tool-card">
+    <div>
+      <div class="tool-badge">Interactive Modal</div>
+      <div class="tool-title">⛶ Full-Screen Valuation Charts</div>
+      <div class="tool-desc">
+        Click the <b>"Expand"</b> button or chart modal icon under any stock card to open a full-width popup with interactive pan, zoom, and mobile pinch-to-zoom to inspect daily candlesticks and standard deviation boundaries with pinpoint precision.
+      </div>
+    </div>
+  </div>
+
+  <!-- Card 6: Dynamic Layout -->
+  <div class="tool-card">
+    <div>
+      <div class="tool-badge">Responsive Design</div>
+      <div class="tool-title">📱 Desktop & Mobile Adaptive Layout</div>
+      <div class="tool-desc">
+        Customize your desktop dashboard view with the sidebar layout selector (choose between <b>1 full-width column</b> or <b>2 side-by-side columns</b>). On mobile phones, cards automatically stack into 1 full-width column with optimized touch targets.
+      </div>
+    </div>
+  </div>
+
+  <!-- Card 7: Smart Company Search & Basket Customizer -->
+  <div class="tool-card">
+    <div>
+      <div class="tool-badge">Smart Search</div>
+      <div class="tool-title">🔍 Search by Company Name or Ticker</div>
+      <div class="tool-desc">
+        Don't know a company's ticker symbol? Simply type its everyday name (e.g. <b>Rolls Royce</b>, <b>Ferrari</b>, <b>Shell</b>, <b>Costco</b>). If a company is listed across multiple exchanges (such as a primary British London listing <code>RR.L</code> vs a US OTC ADR <code>RYCEY</code>), the dashboard displays a clear listing selector so you can choose the exact exchange you want. Tap <b>"Reset Basket"</b> anytime to restore the default Magnificent 7 tech leaders.
+      </div>
+    </div>
+  </div>
+</div>
+"""
+
 with st.container(border=True):
     st.markdown(
         """
 ## 7. Helpful Dashboard Tools
 
-- 🔍 **Quick Find Bar:** Type any stock ticker (or select from the dropdown) in the Quick Find bar to jump straight to its card without scrolling through your entire radar.
-- ⛶ **Interactive Full-Screen Charts:** Tap the **Expand** button under any chart or click the chart's fullscreen icon to open an interactive full-screen modal with mobile pinch-to-zoom and crosshair hover details.
+Explore the specialized tools built into the dashboard to navigate fast, monitor dip opportunities, and customize your experience:
 """,
         unsafe_allow_html=True,
     )
+    st.html(tools_guide_html)
 
 
 # ── Section 8: Frequently Asked Questions (FAQ) ──
@@ -1252,11 +1424,26 @@ with st.container(border=True):
 **Q: What are the main US stock market hours?**
 * All times are in **UK Time**: The official US market is open from **2:30 PM to 9:00 PM (UK Time)**. Before 2:30 PM is pre-market, and after 9:00 PM is post-market.
 
-**Q: Why does the Smart DCA Allocator give £0.00 to some of my selected stocks?**
+**Q: How does the "Sort By" dropdown menu help me find opportunities?**
+* The dropdown is organized alphabetically so you can quickly switch criteria. By default, it ranks by **Highest Conviction Score** (combining standard deviation discount, PEG multiple, and Wall Street backing). You can instantly switch to **Biggest Daily Dip** to spot flash sales today, **Lowest 2Y PEG** for the cheapest growth stocks, or **Deepest ATH Drawdown** for long-term turnaround plays.
+
+**Q: What is the difference between "Available to Invest" and "Cash to Deploy" in the Smart Investment Splitter?**
+* **Available to Invest** is your total cash balance (e.g., £1,000 sitting in your brokerage account). **Cash to Deploy** is the actual amount you choose to put to work today. Using the quick tranche presets (25%, 50%, 75%), you can invest a disciplined portion today while keeping dry powder reserved for potential lower dips tomorrow.
+
+**Q: What do the short definitions under each preset button mean?**
+* The micro-definitions remind you of the exact purpose of each preset so you never have to guess. For example, `25%` notes *"Invest a quarter; keep 75% cash for lower dips"*, while `Top 3 Conviction Stocks` notes *"Focus on 3 highest-rated stocks"*, and `Clear Selection` notes *"Reset to hand-pick stocks manually"*.
+
+**Q: Why does the Smart Investment Splitter give £0.00 to some of my selected stocks?**
 * This is the **🛡️ Valuation Guardrail** in action. If a stock currently has a Low Conviction Score (< 4.5) or is overextended in *Wait for Pullback*, the system protects your cash by giving it £0.00 and redirecting 100% of those funds into your highest-conviction bargain assets. If you ever want to force a token buy anyway, simply toggle off the Guardrail at the top of the calculator.
 
 **Q: Why does a stock say "Wait for Pullback" if Wall Street rates it a "Strong Buy"?**
 * Wall Street analyst targets look out **12 months into the future**, whereas the Valuation Radar tracks **current price stretch over 50 days**. Even if a company has great long-term prospects, buying when price is overextended (+1.5σ or higher) increases your risk of suffering a short-term correction. Be patient and wait for the pullback.
+
+**Q: How do Live Signal Alerts work and will I get spammed?**
+* Live Signal Alerts connect to your email via SMTP. When a watched stock crosses into Tier 1 (Standard DCA), Tier 2 (Deeply Oversold), or Tier 3 (Capitulation), an email is dispatched with the stock's price, discount, and corridor tier. An automated session deduplication cache tracks every dispatched signal so you are never spammed repeatedly for the same alert during the same trading session.
+
+**Q: Why is the Master Chart Guide in a collapsible box?**
+* On mobile phones, having a large static chart guide above the stock cards pushed all the cards way down the screen. Putting it inside an expandable box keeps the screen clean and immediately gives you access to the stock cards, while remaining just one tap away if you need a refresher on the corridor lines.
 
 **Q: What should I do if a stock triggers "Capitulation (-3.0σ)"?**
 * Capitulation (-3.0σ) is a rare, generational buying opportunity caused by severe panic selling or market corrections. However, never dump your entire cash reserve at once. Scale in with your first tranche, and look for daily price stabilization before deploying further capital.

@@ -21,6 +21,9 @@ from datetime import time as dt_time
 import time
 import requests
 import re
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 # ─────────────────────────────────────────────
 
@@ -199,7 +202,9 @@ st.markdown(
         .custom-tooltip-wrapper .custom-tooltip-box {{
             visibility: hidden;
             opacity: 0;
-            width: 230px;
+            width: max-content;
+            max-width: 85vw;
+            min-width: 200px;
             background-color: #0F172A;
             color: #F8FAFC;
             text-align: center;
@@ -216,6 +221,8 @@ st.markdown(
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.25), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
             transition: opacity 0.15s ease-in-out, visibility 0.15s ease-in-out;
             pointer-events: none;
+            white-space: normal;
+            word-wrap: break-word;
         }}
 
         /* Tooltip arrow pointer */
@@ -228,6 +235,22 @@ st.markdown(
             border-width: 5px;
             border-style: solid;
             border-color: #0F172A transparent transparent transparent;
+        }}
+
+        /* Mobile Viewport Adjustment: Prevent clipping off left edge */
+        @media (max-width: 640px) {{
+            .custom-tooltip-wrapper .custom-tooltip-box {{
+                left: 0 !important;
+                right: auto !important;
+                transform: none !important;
+                max-width: 85vw !important;
+                width: 220px !important;
+                text-align: left !important;
+            }}
+            .custom-tooltip-wrapper .custom-tooltip-box::after {{
+                left: 20px !important;
+                margin-left: 0 !important;
+            }}
         }}
 
         .custom-tooltip-wrapper:hover .custom-tooltip-box {{
@@ -331,9 +354,25 @@ st.markdown(
             border-radius: 10px !important;
         }}
 
+        div[class*="st-key-dca_allocator_card_wrapper"] details[open] {{
+            overflow: visible !important;
+        }}
+
         div[class*="st-key-dca_allocator_card_wrapper"] details[open] summary {{
             border-bottom: 1.5px solid #EAB308 !important;
             border-radius: 10px 10px 0 0 !important;
+        }}
+
+        /* Ensure Streamlit tooltips stay within mobile viewport and never clip */
+        div[data-testid="stTooltipContent"],
+        div[data-baseweb="tooltip"],
+        div[data-baseweb="popover"],
+        [data-testid="stTooltipContent"] div {{
+            max-width: 82vw !important;
+            word-wrap: break-word !important;
+            overflow-wrap: break-word !important;
+            white-space: normal !important;
+            box-sizing: border-box !important;
         }}
 
         div[class*="st-key-dca_allocator_card_wrapper"] details summary:hover {{
@@ -349,6 +388,26 @@ st.markdown(
             font-weight: 800 !important;
             font-size: 1.05rem !important;
             letter-spacing: -0.01em !important;
+        }}
+
+        /* Subtle pill styling for the (Click to Expand) hint */
+        div[class*="st-key-dca_allocator_card_wrapper"] details summary em {{
+            font-size: 0.78rem !important;
+            font-weight: 600 !important;
+            color: #713F12 !important;
+            font-style: normal !important;
+            margin-left: 8px !important;
+            padding: 2px 9px !important;
+            background: rgba(255, 255, 255, 0.45) !important;
+            border-radius: 9999px !important;
+            border: 1px solid rgba(161, 98, 7, 0.20) !important;
+            display: inline-block !important;
+            vertical-align: middle !important;
+            letter-spacing: normal !important;
+        }}
+
+        div[class*="st-key-dca_allocator_card_wrapper"] details[open] summary em {{
+            display: none !important;
         }}
 
         /* Caret / icon inside summary */
@@ -774,6 +833,79 @@ st.markdown(
             box-shadow: 0 3px 10px rgba(234, 179, 8, 0.40) !important;
         }}
 
+        /* ── DCA Target Preset Buttons: Refined Outline Pill Cards (Toned down from solid yellow) ── */
+        div[class*="st-key-dca_presets_container"] .stButton > button,
+        div[class*="st-key-dca_allocator_card_wrapper"] div[class*="st-key-btn_dca_"] button,
+        div[class*="st-key-btn_dca_"] button {{
+            background-color: #FFFFFF !important;
+            border: 1px solid #CBD5E1 !important;
+            color: #334155 !important;
+            -webkit-text-fill-color: #334155 !important;
+            font-size: 0.82rem !important;
+            font-weight: 600 !important;
+            border-radius: 8px !important;
+            padding: 6px 10px !important;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+            transition: all 0.15s ease-in-out !important;
+        }}
+        div[class*="st-key-dca_presets_container"] .stButton > button *,
+        div[class*="st-key-dca_allocator_card_wrapper"] div[class*="st-key-btn_dca_"] button *,
+        div[class*="st-key-btn_dca_"] button * {{
+            color: #334155 !important;
+            -webkit-text-fill-color: #334155 !important;
+            font-weight: 600 !important;
+        }}
+
+        /* Hover on selection presets: subtle warm glow feedback */
+        div[class*="st-key-dca_presets_container"] .stButton > button:hover,
+        div[class*="st-key-dca_allocator_card_wrapper"] div[class*="st-key-btn_dca_"] button:hover,
+        div[class*="st-key-btn_dca_"] button:hover {{
+            background-color: #FEF9C3 !important;
+            border-color: #FDE047 !important;
+            color: #0F172A !important;
+            -webkit-text-fill-color: #0F172A !important;
+            box-shadow: 0 2px 6px rgba(234, 179, 8, 0.20) !important;
+            transform: translateY(-1px) !important;
+        }}
+        div[class*="st-key-dca_presets_container"] .stButton > button:hover *,
+        div[class*="st-key-dca_allocator_card_wrapper"] div[class*="st-key-btn_dca_"] button:hover *,
+        div[class*="st-key-btn_dca_"] button:hover * {{
+            color: #0F172A !important;
+            -webkit-text-fill-color: #0F172A !important;
+        }}
+
+        /* Active click state */
+        div[class*="st-key-dca_presets_container"] .stButton > button:active,
+        div[class*="st-key-btn_dca_"] button:active {{
+            background-color: #FDE047 !important;
+            border-color: #EAB308 !important;
+            transform: translateY(0px) !important;
+        }}
+
+        /* DCA Clear Selection - Distinct Soft Reset Button with Gentle Red Hover */
+        div[class*="st-key-btn_dca_clear"] button {{
+            background-color: #F8FAFC !important;
+            border: 1px solid #E2E8F0 !important;
+            color: #64748B !important;
+            -webkit-text-fill-color: #64748B !important;
+        }}
+        div[class*="st-key-btn_dca_clear"] button * {{
+            color: #64748B !important;
+            -webkit-text-fill-color: #64748B !important;
+        }}
+        div[class*="st-key-btn_dca_clear"] button:hover {{
+            background-color: #FEE2E2 !important;
+            border-color: #FCA5A5 !important;
+            color: #DC2626 !important;
+            -webkit-text-fill-color: #DC2626 !important;
+            box-shadow: 0 2px 6px rgba(220, 38, 38, 0.18) !important;
+            transform: translateY(-1px) !important;
+        }}
+        div[class*="st-key-btn_dca_clear"] button:hover * {{
+            color: #DC2626 !important;
+            -webkit-text-fill-color: #DC2626 !important;
+        }}
+
         /* ── Segmented Control / Button Group (90-Day vs 1-Year Timeframe Toggle) ── */
         div[data-testid="stButtonGroup"],
         div[data-testid="stSegmentedControl"],
@@ -1064,6 +1196,32 @@ st.markdown(
             pointer-events: auto !important;
         }}
 
+        /* ── Full Valuation Chart Modal: Force Plotly Modebar & Panning Draglayer ── */
+        div[data-testid="stDialog"] div[data-testid="stPlotlyChart"] .modebar-container,
+        div[data-testid="stDialog"] div[data-testid="stPlotlyChart"] .modebar,
+        div[data-testid="stDialog"] div[data-testid="stPlotlyChart"] .modebar-btn,
+        div[role="dialog"] div[data-testid="stPlotlyChart"] .modebar-container,
+        div[role="dialog"] div[data-testid="stPlotlyChart"] .modebar,
+        div[role="dialog"] div[data-testid="stPlotlyChart"] .modebar-btn {{
+            display: flex !important;
+            visibility: visible !important;
+            pointer-events: auto !important;
+            width: auto !important;
+            height: auto !important;
+            opacity: 1 !important;
+        }}
+        div[data-testid="stDialog"] div[data-testid="stPlotlyChart"] .nsewdrag,
+        div[data-testid="stDialog"] div[data-testid="stPlotlyChart"] .draglayer,
+        div[data-testid="stDialog"] div[data-testid="stPlotlyChart"] .drag,
+        div[data-testid="stDialog"] div[data-testid="stPlotlyChart"] .plot-container svg.main-svg:first-child,
+        div[role="dialog"] div[data-testid="stPlotlyChart"] .nsewdrag,
+        div[role="dialog"] div[data-testid="stPlotlyChart"] .draglayer,
+        div[role="dialog"] div[data-testid="stPlotlyChart"] .drag,
+        div[role="dialog"] div[data-testid="stPlotlyChart"] .plot-container svg.main-svg:first-child {{
+            pointer-events: auto !important;
+            touch-action: none !important;
+        }}
+
         /* ── Smooth Scrolling for Anchor Jumps ── */
         html {{
             scroll-behavior: smooth !important;
@@ -1234,6 +1392,11 @@ st.markdown(
                 padding: 10px 8px !important;
                 border-radius: 12px !important;
                 overflow-y: auto !important;
+            }}
+
+            /* ── Hide Median Baseline Badge on Mobile for Clean Two-Badge Bar Header ── */
+            .median-baseline-badge {{
+                display: none !important;
             }}
         }}
 
@@ -2646,6 +2809,25 @@ def fetch_ticker_data(ticker: str) -> dict:
         result["z_90d"] = float((p_current - p_mid_90) / p_std_90) if p_std_90 and not np.isnan(p_std_90) and p_std_90 > 0 and p_current and not np.isnan(p_current) else np.nan
         result["z_1y"]  = float((p_current - p_mid_1y) / p_std_1y) if p_std_1y and not np.isnan(p_std_1y) and p_std_1y > 0 and p_current and not np.isnan(p_current) else np.nan
 
+    # ── 1-Year Price Moving Average (~252 trading days) & Deviation Formula ──
+    ma252_s = hist_full["Close"].rolling(252, min_periods=30).mean()
+    sma_1y_val = float(ma252_s.dropna().iloc[-1]) if len(ma252_s.dropna()) else (float(hist_full["Close"].tail(252).mean()) if len(hist_full) else np.nan)
+    
+    if sma_1y_val and not np.isnan(sma_1y_val) and sma_1y_val > 0 and current_price and not np.isnan(current_price):
+        diff_1y_price = ((current_price - sma_1y_val) / sma_1y_val) * 100.0
+        upside_1y_price = ((sma_1y_val / current_price) - 1.0) * 100.0
+    else:
+        diff_1y_price = np.nan
+        upside_1y_price = np.nan
+
+    result["sma_1y"] = sma_1y_val
+    result["price_sma_1y"] = sma_1y_val
+    result["price_mid_1y"] = sma_1y_val
+    result["diff_1y"] = diff_1y_price
+    result["upside_1y"] = upside_1y_price
+    if not pe_ok or ("fair_value_1y" not in result or result["fair_value_1y"] is None or np.isnan(result["fair_value_1y"])):
+        result["fair_value_1y"] = sma_1y_val
+
     return result
 
 
@@ -2698,6 +2880,54 @@ def badge_html(status: str) -> str:
         "Overvalued": "badge-overvalued",
     }.get(status, "badge-neutral")
     return f'<span class="badge {css}">● {status}</span>'
+
+
+def send_test_email(
+    smtp_server: str,
+    port: int,
+    sender_email: str,
+    app_password: str,
+    dest_email: str,
+) -> tuple[bool, str]:
+    """
+    Connects to the SMTP server and dispatches a test alert email.
+    Wrapped in a try/except block. Returns (success: bool, status_message: str).
+    """
+    server = (smtp_server or "").strip()
+    sender = (sender_email or "").strip()
+    pwd = (app_password or "").strip()
+    receiver = (dest_email or "").strip()
+    if not server or not sender or not pwd or not receiver:
+        return False, "Missing SMTP Server, Sender, Password, or Destination Email."
+
+    try:
+        port_int = int(port) if port else 587
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = "✅ Valuation Radar: Live Signal Alert Test"
+        msg["From"] = sender
+        msg["To"] = receiver
+
+        html_content = """
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 520px; border: 1px solid #E2E8F0; border-radius: 8px; padding: 20px; background-color: #FFFFFF;">
+          <h3 style="color: #0F172A; margin-top: 0;">✅ Test Alert: Valuation Radar Connected</h3>
+          <p style="color: #334155; line-height: 1.5;">Your email configuration is working successfully! Live tactical buy signals (DCA, Deeply Oversold, Capitulation) will be dispatched to this inbox.</p>
+          <div style="margin-top: 16px; padding-top: 10px; border-top: 1px solid #F1F5F9; font-size: 0.75rem; color: #94A3B8;">@theinvestingdean Valuation Radar Engine</div>
+        </div>
+        """
+        msg.attach(MIMEText(html_content, "html"))
+
+        if port_int == 465:
+            with smtplib.SMTP_SSL(server, port_int, timeout=12) as s:
+                s.login(sender, pwd)
+                s.sendmail(sender, receiver, msg.as_string())
+        else:
+            with smtplib.SMTP(server, port_int, timeout=12) as s:
+                s.starttls()
+                s.login(sender, pwd)
+                s.sendmail(sender, receiver, msg.as_string())
+        return True, ""
+    except Exception as ex:
+        return False, str(ex)
 
 
 def send_email_alert(
@@ -3090,55 +3320,14 @@ def render_dca_allocator_card(visible_data: dict, val_timeframe: str = "90-Day")
     to specify their available cash and select a targeted subset of active assets
     to accumulate based on their Conviction Scores and Valuation Corridors.
     """
-    with st.expander("**Smart DCA Allocator & Tranche Calculator**", icon=":material/calculate:", expanded=False):
-        st.markdown(
-            """
-            <div style="font-size: 0.90rem; color: #64748B; margin-bottom: 12px; line-height: 1.5;">
-                Deploy your cash with precision. Choose exactly which stocks you are currently accumulating from your watchlist.
-                Capital is weighted towards equities in the <b>Buy Zone</b> with the highest <b>⚡ Conviction Scores</b>.
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+    with st.expander("**Smart Investment Splitter** *(Click to Expand)*", icon=":material/calculate:", expanded=False):
+        st.info("💡 Got cash ready to deploy? Enter your budget below and this tool will instantly calculate exactly how to split it across your top discounted stocks.")
+
 
         valid_tickers = [tk for tk, d in visible_data.items() if not d.get("error")]
         if not valid_tickers:
             st.info("No active equities available to allocate.")
             return
-
-        c_top1, c_top2, c_top3, c_top4 = st.columns([1, 2, 2, 2])
-        with c_top1:
-            ccy_symbol = st.selectbox("Currency", options=["£", "$", "€"], index=0, key="dca_ccy")
-        with c_top2:
-            budget = st.number_input(
-                "Available Cash Budget",
-                min_value=10.0,
-                max_value=1_000_000.0,
-                value=500.0,
-                step=50.0,
-                format="%.2f",
-                key="dca_budget",
-            )
-        with c_top3:
-            strategy = st.radio(
-                "Cash Strategy",
-                options=["100% Fully Deployed", "Hold 25% Dry Powder (Cash Reserve)"],
-                index=0,
-                key="dca_strategy",
-                help="Hold 25% in cash reserve to capitalize on potential deeper dips into -2.2σ Deeply Oversold or -3.0σ Capitulation.",
-            )
-        with c_top4:
-            st.markdown("<div style='margin-top: 4px;'></div>", unsafe_allow_html=True)
-            guardrail = st.toggle(
-                "🛡️ Valuation Guardrail",
-                value=True,
-                key="dca_guardrail",
-                help="When enabled (recommended), automatically allocates £0 to any stock with a Low Conviction Score (< 4.5) or in 'Wait for Pullback', protecting your cash and directing funds strictly to undervalued bargains.",
-            )
-            if guardrail:
-                st.caption("🔒 **Active:** £0 to overbought / low conviction.")
-            else:
-                st.caption("🔓 **Disabled:** Token DCA to all selected.")
 
         # Quick preset selection helpers
         buy_zone_tickers = [tk for tk in valid_tickers if compute_status(visible_data[tk], timeframe=val_timeframe) == "Buy Zone"]
@@ -3153,39 +3342,142 @@ def render_dca_allocator_card(visible_data: dict, val_timeframe: str = "90-Day")
         if "dca_selected_stocks" not in st.session_state:
             st.session_state["dca_selected_stocks"] = sorted_by_conviction[:4] if len(sorted_by_conviction) >= 4 else sorted_by_conviction
 
-        st.markdown("<div style='font-size: 0.82rem; font-weight: 700; color: #475569; margin-top: 6px; margin-bottom: 4px;'>Quick Target Presets:</div>", unsafe_allow_html=True)
-        col_btn1, col_btn2, col_btn3, col_btn4 = st.columns(4)
-        if col_btn1.button("⚡ Top 3 Conviction", key="btn_dca_top3", use_container_width=True):
-            st.session_state["dca_selected_stocks"] = top3_conviction
-            st.rerun()
-        if col_btn2.button("🟢 All Buy Zone", key="btn_dca_buyzone", use_container_width=True):
-            st.session_state["dca_selected_stocks"] = buy_zone_tickers if buy_zone_tickers else top3_conviction
-            st.rerun()
-        if col_btn3.button("📋 Select All", key="btn_dca_select_all", use_container_width=True):
-            st.session_state["dca_selected_stocks"] = valid_tickers
-            st.rerun()
-        if col_btn4.button("🧹 Clear Selection", key="btn_dca_clear", use_container_width=True):
-            st.session_state["dca_selected_stocks"] = []
-            st.rerun()
+        # Sanitize session state against valid tickers
+        st.session_state["dca_selected_stocks"] = [tk for tk in st.session_state.get("dca_selected_stocks", []) if tk in valid_tickers]
 
-        chosen_defaults = [tk for tk in st.session_state.get("dca_selected_stocks", []) if tk in valid_tickers]
+        # ── 1. Cash Budget & Deployment Strategy ──
+        c_top1, c_top2, c_top3, c_top4 = st.columns([0.8, 1.8, 3.0, 1.6])
+        with c_top1:
+            ccy_symbol = st.selectbox("Currency", options=["£", "$", "€"], index=0, key="dca_ccy")
+        with c_top2:
+            budget = st.number_input(
+                "Available to Invest",
+                min_value=10.0,
+                max_value=1_000_000.0,
+                value=500.0,
+                step=50.0,
+                format="%.2f",
+                key="dca_budget",
+            )
+        with c_top3:
+            deploy_mode = st.segmented_control(
+                "Deploy Cash",
+                options=["25%", "50%", "75%", "100%", "Custom"],
+                default="100%",
+                selection_mode="single",
+                key="dca_deploy_mode",
+                help="Choose what portion of your available budget to deploy right now vs holding as cash reserve for future dips.",
+            )
+            if not deploy_mode:
+                deploy_mode = "100%"
+
+            if deploy_mode == "25%":
+                deploy_pct = 0.25
+            elif deploy_mode == "50%":
+                deploy_pct = 0.50
+            elif deploy_mode == "75%":
+                deploy_pct = 0.75
+            elif deploy_mode == "100%":
+                deploy_pct = 1.00
+            else:  # Custom
+                custom_val = st.slider(
+                    "Custom Deployment %",
+                    min_value=5,
+                    max_value=95,
+                    value=40,
+                    step=5,
+                    format="%d%%",
+                    key="dca_custom_pct",
+                    help="Fine-tune your exact deployment percentage.",
+                )
+                deploy_pct = custom_val / 100.0
+
+            deployed_cash = budget * deploy_pct
+            deploy_cash = deployed_cash
+            reserve_cash = budget - deployed_cash
+
+            st.caption(
+                f"💼 **Deploying {int(deploy_pct*100)}%:** {ccy_symbol}{deployed_cash:,.2f} &nbsp;•&nbsp; **Cash (Reserve):** {ccy_symbol}{reserve_cash:,.2f}"
+            )
+
+        with c_top4:
+            st.markdown("<div style='margin-top: 4px;'></div>", unsafe_allow_html=True)
+            guardrail = st.toggle(
+                "🛡️ Valuation Guardrail",
+                value=True,
+                key="dca_guardrail",
+                help="When enabled (recommended), automatically allocates £0 to any stock with a Low Conviction Score (< 4.5) or in 'Wait for Pullback', protecting your cash and directing funds strictly to undervalued bargains.",
+            )
+            if guardrail:
+                st.caption("🔒 **Active:** £0 to overbought / low conviction.")
+            else:
+                st.caption("🔓 **Disabled:** Token DCA to all selected.")
+
+        # ── 2. Target Stock Selection (Quick Presets & Custom Filter) ──
+        st.markdown("<div style='font-size: 0.82rem; font-weight: 700; color: #475569; margin-top: 10px; margin-bottom: 6px;'>Quick Target Presets:</div>", unsafe_allow_html=True)
+        with st.container(key="dca_presets_container"):
+            col_btn1, col_btn2, col_btn3, col_btn4 = st.columns(4)
+            with col_btn1:
+                if st.button(
+                    "⚡ Top 3 Conviction Stocks",
+                    key="btn_dca_top3",
+                    help="Selects the 3 stocks with the highest Conviction Scores on your active radar to focus deployment on top-tier fundamentals.",
+                    use_container_width=True,
+                ):
+                    st.session_state["dca_selected_stocks"] = top3_conviction
+                    st.toast(f"⚡ Selected Top 3 Conviction Stocks ({', '.join(top3_conviction)})", icon="🎯")
+                    st.rerun()
+                st.markdown("<div style='font-size: 0.72rem; color: #64748B; text-align: center; margin-top: -6px; margin-bottom: 8px;'>Focus on 3 highest-rated stocks</div>", unsafe_allow_html=True)
+
+            with col_btn2:
+                if st.button(
+                    "🟢 All Buy Zone Stocks",
+                    key="btn_dca_buyzone",
+                    help="Selects all stocks currently trading in the Buy Zone (below their moving average) for maximum value accumulation.",
+                    use_container_width=True,
+                ):
+                    target = buy_zone_tickers if buy_zone_tickers else top3_conviction
+                    st.session_state["dca_selected_stocks"] = target
+                    msg = f"🟢 Selected {len(target)} Buy Zone Stock(s)" if buy_zone_tickers else "⚡ No Buy Zone stocks found; selected Top Conviction instead"
+                    st.toast(msg, icon="🎯")
+                    st.rerun()
+                st.markdown("<div style='font-size: 0.72rem; color: #64748B; text-align: center; margin-top: -6px; margin-bottom: 8px;'>Target stocks trading at a discount</div>", unsafe_allow_html=True)
+
+            with col_btn3:
+                if st.button(
+                    "📋 Select All",
+                    key="btn_dca_select_all",
+                    help="Selects every active stock in your radar to split your cash budget across your entire watched portfolio.",
+                    use_container_width=True,
+                ):
+                    st.session_state["dca_selected_stocks"] = valid_tickers
+                    st.toast(f"📋 Selected all {len(valid_tickers)} watched stocks", icon="📋")
+                    st.rerun()
+                st.markdown("<div style='font-size: 0.72rem; color: #64748B; text-align: center; margin-top: -6px; margin-bottom: 8px;'>Split cash across all watched stocks</div>", unsafe_allow_html=True)
+
+            with col_btn4:
+                if st.button(
+                    "🧹 Clear Selection",
+                    key="btn_dca_clear",
+                    help="Clears all selected stocks so you can hand-pick specific accumulation targets from the list below.",
+                    use_container_width=True,
+                ):
+                    st.session_state["dca_selected_stocks"] = []
+                    st.toast("🧹 Cleared selection. Choose targets below.", icon="🧹")
+                    st.rerun()
+                st.markdown("<div style='font-size: 0.72rem; color: #64748B; text-align: center; margin-top: -6px; margin-bottom: 8px;'>Reset to hand-pick stocks manually</div>", unsafe_allow_html=True)
+
         target_stocks = st.multiselect(
-            "Active Accumulation Targets (Caveat Filter):",
+            "Select Stocks to Invest In:",
             options=valid_tickers,
-            default=chosen_defaults,
+            key="dca_selected_stocks",
             format_func=lambda x: f"{x}  ·  {clean_company_name(visible_data[x].get('shortName') or visible_data[x].get('name') or x)} (⚡ {visible_data[x].get('conviction_score', 5.0) or 5.0:.1f})",
-            help="Select only the specific stocks you want to put money into this round. All other watched stocks will be ignored.",
+            help="Choose which stocks receive cash, or use the quick presets above.",
         )
-        st.session_state["dca_selected_stocks"] = target_stocks
 
         if not target_stocks:
             st.warning("Please select at least 1 stock from your active radar to generate an allocation plan.")
             return
-
-        # Calculate allocation weights
-        hold_reserve = "25%" in strategy
-        deploy_cash = budget * 0.75 if hold_reserve else budget
-        reserve_cash = budget * 0.25 if hold_reserve else 0.0
 
         raw_weights = {}
         blocked_reasons = {}
@@ -3223,17 +3515,17 @@ def render_dca_allocator_card(visible_data: dict, val_timeframe: str = "90-Day")
         effective_reserve = budget if all_blocked else reserve_cash
 
         if all_blocked:
-            st.warning("🛡️ **Valuation Guardrail Active:** None of your selected accumulation targets currently qualify (all have Low Conviction < 4.5 or are in 'Wait for Pullback').<br><b>Recommended Action:</b> Hold 100% of your funds in Cash Dry Powder until better entry setups emerge, or temporarily toggle off the Valuation Guardrail above.", icon="🛡️")
+            st.warning("🛡️ **Valuation Guardrail Active:** None of your selected accumulation targets currently qualify (all have Low Conviction < 4.5 or are in 'Wait for Pullback').<br><b>Recommended Action:</b> Hold 100% of your funds in Cash Reserve until better entry setups emerge, or temporarily toggle off the Valuation Guardrail above.", icon="🛡️")
 
         # Summary KPIs
         st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
         kpi_c1, kpi_c2, kpi_c3, kpi_c4 = st.columns(4)
         with kpi_c1:
-            st.metric("Total Budget", f"{ccy_symbol}{budget:,.2f}")
+            st.metric("Available to Invest", f"{ccy_symbol}{budget:,.2f}")
         with kpi_c2:
-            st.metric("Deploying Now", f"{ccy_symbol}{effective_deploy:,.2f}")
+            st.metric("Deploying Cash", f"{ccy_symbol}{effective_deploy:,.2f}")
         with kpi_c3:
-            st.metric("Cash Dry Powder", f"{ccy_symbol}{effective_reserve:,.2f}", help="Reserved for deeper dips into -2.2σ or -3.0σ capitulation")
+            st.metric("Cash (Reserve)", f"{ccy_symbol}{effective_reserve:,.2f}", help="Cash held in reserve for deeper dips into -2.2σ or -3.0σ capitulation")
         with kpi_c4:
             if guardrail and blocked_count > 0:
                 st.metric("Active Targets", f"{approved_count} approved", help=f"{approved_count} stocks approved for buying; {blocked_count} on hold by Valuation Guardrail")
@@ -3264,34 +3556,34 @@ def render_dca_allocator_card(visible_data: dict, val_timeframe: str = "90-Day")
                 shares = 0.0
 
             if score >= 7.5:
-                sc_pill = f'<span style="background: #DCFCE7; color: #15803D; border: 1px solid #16A34A; padding: 2px 7px; border-radius: 6px; font-weight: 700; font-size: 0.78rem;">⚡ {score:.1f} / 10</span>'
+                sc_pill = f'<span style="background: #DCFCE7; color: #15803D; border: 1px solid #16A34A; padding: 2px 7px; border-radius: 6px; font-weight: 700; font-size: 0.78rem; white-space: nowrap; display: inline-block;">⚡ {score:.1f}/10</span>'
             elif score >= 4.5:
-                sc_pill = f'<span style="background: #FEF3C7; color: #D97706; border: 1px solid #FCD34D; padding: 2px 7px; border-radius: 6px; font-weight: 700; font-size: 0.78rem;">⚡ {score:.1f} / 10</span>'
+                sc_pill = f'<span style="background: #FEF3C7; color: #D97706; border: 1px solid #FCD34D; padding: 2px 7px; border-radius: 6px; font-weight: 700; font-size: 0.78rem; white-space: nowrap; display: inline-block;">⚡ {score:.1f}/10</span>'
             else:
-                sc_pill = f'<span style="background: #FEE2E2; color: #DC2626; border: 1px solid #FCA5A5; padding: 2px 7px; border-radius: 6px; font-weight: 700; font-size: 0.78rem;">⚡ {score:.1f} / 10</span>'
+                sc_pill = f'<span style="background: #FEE2E2; color: #DC2626; border: 1px solid #FCA5A5; padding: 2px 7px; border-radius: 6px; font-weight: 700; font-size: 0.78rem; white-space: nowrap; display: inline-block;">⚡ {score:.1f}/10</span>'
 
             if status == "Buy Zone":
-                st_pill = '<span class="badge badge-attractive">● Buy Zone</span>'
+                st_pill = '<span class="badge badge-attractive" style="white-space: nowrap; display: inline-block;">● Buy Zone</span>'
             elif status == "Standard DCA":
-                st_pill = '<span class="badge badge-neutral">● Standard DCA</span>'
+                st_pill = '<span class="badge badge-neutral" style="white-space: nowrap; display: inline-block;">● Standard DCA</span>'
             else:
-                st_pill = '<span class="badge badge-overvalued">● Wait for Pullback</span>'
+                st_pill = '<span class="badge badge-overvalued" style="white-space: nowrap; display: inline-block;">● Wait for Pullback</span>'
 
             # Execution Strategy text & row style
             if guardrail and raw_weights[tk] == 0.0:
                 row_style = "border-bottom: 1px solid #F1F5F9; font-size: 0.86rem; background-color: #FFFDFD;"
-                weight_display = '<span style="color: #94A3B8; font-weight: 500;">0.0%</span>'
-                alloc_display = f'<span style="color: #94A3B8; font-weight: 600;">{ccy_symbol}0.00</span>'
-                shares_display = '<span style="color: #94A3B8; font-weight: 500;">0.00 shs</span>'
+                weight_display = '<span style="color: #94A3B8; font-weight: 500; white-space: nowrap;">0.0%</span>'
+                alloc_display = f'<span style="color: #94A3B8; font-weight: 600; white-space: nowrap;">{ccy_symbol}0.00</span>'
+                shares_display = '<span style="color: #94A3B8; font-weight: 500; white-space: nowrap;">0.00 shs</span>'
                 if blocked_reasons.get(tk) == "overextended":
                     action_text = '<span style="color: #DC2626; font-weight: 700;">🛑 Hold Off:</span> Overextended (+1.5σ). Wait for pullback before buying.'
                 else:
                     action_text = f'<span style="color: #DC2626; font-weight: 700;">🛑 Hold Off:</span> Low Conviction ({score:.1f} < 4.5). Wait for setup to improve.'
             else:
                 row_style = "border-bottom: 1px solid #F1F5F9; font-size: 0.86rem;"
-                weight_display = f'<span style="font-weight: 600; color: #1E293B;">{pct*100:.1f}%</span>'
-                alloc_display = f'<span style="font-weight: 800; color: #0F172A; font-size: 0.95rem;">{ccy_symbol}{alloc_amt:,.2f}</span>'
-                shares_display = f'<span style="color: #475569; font-weight: 600;">~{shares:.2f} shs</span>'
+                weight_display = f'<span style="font-weight: 600; color: #1E293B; white-space: nowrap;">{pct*100:.1f}%</span>'
+                alloc_display = f'<span style="font-weight: 800; color: #0F172A; font-size: 0.95rem; white-space: nowrap;">{ccy_symbol}{alloc_amt:,.2f}</span>'
+                shares_display = f'<span style="color: #475569; font-weight: 600; white-space: nowrap;">~{shares:.2f} shs</span>'
                 if status == "Buy Zone":
                     action_text = "<b>Tranche 2:</b> Boosted accumulation (on sale)"
                 elif status == "Standard DCA":
@@ -3303,17 +3595,40 @@ def render_dca_allocator_card(visible_data: dict, val_timeframe: str = "90-Day")
 
             table_rows.append(f"""
             <tr style="{row_style}">
-                <td style="padding: 10px 8px; font-weight: 700; color: #0F172A;">{tk}<br><span style="font-weight: 400; font-size: 0.75rem; color: #64748B;">{company_name}</span></td>
-                <td style="padding: 10px 8px;">{st_pill}</td>
-                <td style="padding: 10px 8px;">{sc_pill}</td>
-                <td style="padding: 10px 8px; text-align: right;">{weight_display}</td>
-                <td style="padding: 10px 8px; text-align: right;">{alloc_display}</td>
-                <td style="padding: 10px 8px; text-align: right;">{shares_display}</td>
-                <td style="padding: 10px 8px; font-size: 0.78rem; color: #334155;">{action_text}</td>
+                <td style="padding: 10px 8px; font-weight: 700; color: #0F172A; white-space: nowrap;">{tk}<br><span style="font-weight: 400; font-size: 0.75rem; color: #64748B;">{company_name}</span></td>
+                <td style="padding: 10px 8px; white-space: nowrap;">{st_pill}</td>
+                <td style="padding: 10px 8px; white-space: nowrap;">{sc_pill}</td>
+                <td style="padding: 10px 8px; text-align: right; white-space: nowrap;">{weight_display}</td>
+                <td style="padding: 10px 8px; text-align: right; white-space: nowrap;">{alloc_display}</td>
+                <td style="padding: 10px 8px; text-align: right; white-space: nowrap;">{shares_display}</td>
+                <td style="padding: 10px 8px; font-size: 0.78rem; color: #334155; white-space: nowrap;">{action_text}</td>
             </tr>
             """)
 
-        html_table = f"""<div style="overflow-x: auto; margin-top: 14px; border: 1px solid #E2E8F0; border-radius: 8px; background: #FFFFFF;"><table style="width: 100%; border-collapse: collapse; text-align: left;"><thead><tr style="background-color: #F8FAFC; border-bottom: 2px solid #E2E8F0; font-size: 0.78rem; color: #475569; text-transform: uppercase; letter-spacing: 0.04em;"><th style="padding: 10px 8px;">Asset</th><th style="padding: 10px 8px;">Status</th><th style="padding: 10px 8px;">Conviction</th><th style="padding: 10px 8px; text-align: right;">Weight</th><th style="padding: 10px 8px; text-align: right;">Cash Allocation</th><th style="padding: 10px 8px; text-align: right;">Est. Shares</th><th style="padding: 10px 8px;">Execution Strategy</th></tr></thead><tbody>{''.join(table_rows)}</tbody></table></div>"""
+        # Append Total Row
+        total_weight_str = "100.0%" if (not all_blocked and total_weight > 0) else "0.0%"
+        total_cash_str = f"{ccy_symbol}{effective_deploy:,.2f}" if (not all_blocked and total_weight > 0) else f"{ccy_symbol}0.00"
+        table_rows.append(f"""
+        <tr style="background-color: #F8FAFC; border-top: 2px solid #CBD5E1; font-size: 0.88rem; font-weight: 800;">
+            <td style="padding: 11px 8px; font-weight: 900; color: #0F172A; letter-spacing: 0.05em; white-space: nowrap;">TOTAL</td>
+            <td style="padding: 11px 8px; white-space: nowrap;"></td>
+            <td style="padding: 11px 8px; white-space: nowrap;"></td>
+            <td style="padding: 11px 8px; text-align: right; color: #0F172A; font-weight: 900; white-space: nowrap;">{total_weight_str}</td>
+            <td style="padding: 11px 8px; text-align: right; color: #0F172A; font-weight: 900; font-size: 0.96rem; white-space: nowrap;">{total_cash_str}</td>
+            <td style="padding: 11px 8px; text-align: right; white-space: nowrap;"></td>
+            <td style="padding: 11px 8px; white-space: nowrap;"></td>
+        </tr>
+        """)
+
+        scroll_hint = """
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 14px; margin-bottom: 6px; flex-wrap: wrap; gap: 6px;">
+            <span style="font-size: 0.80rem; font-weight: 700; color: #334155; text-transform: uppercase; letter-spacing: 0.04em;">Tranche Breakdown</span>
+            <span style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; font-weight: 600; color: #475569; background: #F1F5F9; border: 1px solid #CBD5E1; padding: 2px 8px; border-radius: 6px;">
+                👉 Scroll right for Cash & Shares ➔
+            </span>
+        </div>
+        """
+        html_table = f"""{scroll_hint}<div style="overflow-x: auto; border: 1px solid #E2E8F0; border-radius: 8px; background: #FFFFFF; -webkit-overflow-scrolling: touch;"><table style="width: 100%; border-collapse: collapse; text-align: left; min-width: 660px;"><thead><tr style="background-color: #F8FAFC; border-bottom: 2px solid #E2E8F0; font-size: 0.78rem; color: #475569; text-transform: uppercase; letter-spacing: 0.04em;"><th style="padding: 10px 8px; white-space: nowrap;">Asset</th><th style="padding: 10px 8px; white-space: nowrap;">Status</th><th style="padding: 10px 8px; white-space: nowrap;">Conviction</th><th style="padding: 10px 8px; text-align: right; white-space: nowrap;">Weight</th><th style="padding: 10px 8px; text-align: right; white-space: nowrap;">Cash Allocation</th><th style="padding: 10px 8px; text-align: right; white-space: nowrap;">Est. Shares</th><th style="padding: 10px 8px; white-space: nowrap;">Execution Strategy</th></tr></thead><tbody>{''.join(table_rows)}</tbody></table></div>"""
         st.html(html_table)
 
 
@@ -3627,7 +3942,7 @@ def make_master_legend_html() -> str:
     Close, SMA 20, SMA 50, SMA 200, BB +2.0σ, BB -1.5σ, Overbought/Oversold zones.
     """
     return """
-    <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px 16px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); display: flex; flex-direction: column; gap: 8px;">
+    <div style="background-color: transparent; border: none; padding: 4px 0; margin-bottom: 4px; display: flex; flex-direction: column; gap: 8px;">
       <!-- Row 1: Title and Core Technical Lines -->
       <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px;">
         <div style="display: flex; align-items: center; gap: 8px;">
@@ -3742,30 +4057,45 @@ def make_summary_bar(all_data: dict, timeframe: str = "90-Day") -> go.Figure:
         status = compute_status(d, timeframe=timeframe)
         col    = STATUS_COLORS.get(status, MUTED_SLATE)
 
-        is_pe = bool(d.get("pe_mode"))
-        cur  = d.get("pe_current") if is_pe else d.get("price_current")
-        mid  = d.get("pe_mid_1y" if is_1y else "pe_mid_90d", d.get("pe_mid")) if is_pe else d.get("price_mid_1y" if is_1y else "price_mid_90d", d.get("price_mid"))
-        unit = "P/E" if is_pe else "Price"
-
-        pct = d.get("diff_1y" if is_1y else "diff_90d")
         price_now = d.get("current_price") or d.get("price_current")
-        fair_val = d.get("fair_value_1y" if is_1y else "fair_value_90d", d.get("fair_value_price"))
 
-        if pct is None or np.isnan(pct):
-            if cur is not None and mid is not None and not np.isnan(cur) and not np.isnan(mid) and mid != 0:
-                pct = (cur / mid - 1.0) * 100.0
-            elif price_now is not None and fair_val is not None and not np.isnan(price_now) and not np.isnan(fair_val) and fair_val != 0:
-                pct = ((price_now / fair_val) - 1.0) * 100.0
-                cur = price_now
-                mid = fair_val
-                unit = "Price"
-            else:
-                continue
+        if is_1y:
+            unit = "Price"
+            cur = price_now
+            mid = d.get("price_sma_1y") or d.get("price_mid_1y") or d.get("sma_1y")
+            if (mid is None or np.isnan(mid) or mid <= 0) and "hist" in d and len(d.get("hist", pd.DataFrame())) >= 20:
+                mid = float(d["hist"]["Close"].tail(252).mean())
+
+            pct = d.get("diff_1y")
+            if pct is None or np.isnan(pct):
+                if cur is not None and mid is not None and not np.isnan(cur) and not np.isnan(mid) and mid != 0:
+                    pct = ((cur - mid) / mid) * 100.0
+                else:
+                    continue
+        else:
+            is_pe = bool(d.get("pe_mode"))
+            cur  = d.get("pe_current") if is_pe else d.get("price_current")
+            mid  = d.get("pe_mid_90d", d.get("pe_mid")) if is_pe else d.get("price_mid_90d", d.get("price_mid"))
+            unit = "P/E" if is_pe else "Price"
+
+            pct = d.get("diff_90d")
+            fair_val = d.get("fair_value_90d", d.get("fair_value_price"))
+
+            if pct is None or np.isnan(pct):
+                if cur is not None and mid is not None and not np.isnan(cur) and not np.isnan(mid) and mid != 0:
+                    pct = (cur / mid - 1.0) * 100.0
+                elif price_now is not None and fair_val is not None and not np.isnan(price_now) and not np.isnan(fair_val) and fair_val != 0:
+                    pct = ((price_now / fair_val) - 1.0) * 100.0
+                    cur = price_now
+                    mid = fair_val
+                    unit = "Price"
+                else:
+                    continue
 
         # Display fallback for hover
         if cur is None or np.isnan(cur):
             cur = price_now if (price_now and not np.isnan(price_now)) else 0.0
-            mid = fair_val if (fair_val and not np.isnan(fair_val)) else 0.0
+            mid = d.get("fair_value_price", 0.0) if not is_1y else (d.get("price_sma_1y") or 0.0)
             unit = "Price"
 
         # Resolve clean company name
@@ -3883,53 +4213,6 @@ def make_summary_bar(all_data: dict, timeframe: str = "90-Day") -> go.Figure:
     fig.add_vline(x=-5, line=dict(color=COLOR_ATTRACTIVE, width=1.2, dash="dot"))
     fig.add_vline(x=5,  line=dict(color=COLOR_OVERVALUED, width=1.2, dash="dot"))
 
-    # Floating Threshold Badges positioned cleanly ABOVE the plot area (so bars never obscure them)
-    # Buy Zone (-5%): Anchored right of -5 so it extends cleanly to the left
-    fig.add_annotation(
-        x=-5,
-        y=1.03,
-        yref="paper",
-        text="<b>Buy Zone (-5%)</b>",
-        showarrow=False,
-        xanchor="right",
-        yanchor="bottom",
-        font=dict(size=9.5, color="#047857", family="sans-serif"),
-        bgcolor="#ECFDF5",
-        bordercolor="#A7F3D0",
-        borderwidth=1,
-        borderpad=4,
-    )
-    # Median Baseline (0%): Prominent badge centered right on the 0% line
-    fig.add_annotation(
-        x=0,
-        y=1.03,
-        yref="paper",
-        text="<b>Median Baseline (0%)</b>",
-        showarrow=False,
-        xanchor="center",
-        yanchor="bottom",
-        font=dict(size=9.5, color="#0F172A", family="sans-serif"),
-        bgcolor="#F8FAFC",
-        bordercolor="#94A3B8",
-        borderwidth=1.5,
-        borderpad=4,
-    )
-    # Pullback (+5%): Anchored left of +5 so it extends cleanly to the right
-    fig.add_annotation(
-        x=5,
-        y=1.03,
-        yref="paper",
-        text="<b>Pullback (+5%)</b>",
-        showarrow=False,
-        xanchor="left",
-        yanchor="bottom",
-        font=dict(size=9.5, color="#B91C1C", family="sans-serif"),
-        bgcolor="#FEF2F2",
-        bordercolor="#FECACA",
-        borderwidth=1,
-        borderpad=4,
-    )
-
     fig.update_layout(
         paper_bgcolor=CARD_BG,
         plot_bgcolor="#FFFFFF",
@@ -3958,8 +4241,8 @@ def make_summary_bar(all_data: dict, timeframe: str = "90-Day") -> go.Figure:
             categoryarray=labels,
             fixedrange=True,
         ),
-        margin=dict(l=10, r=40, t=46, b=40),
-        height=max(440, len(labels) * 28 + 70),
+        margin=dict(l=10, r=40, t=16, b=36),
+        height=max(420, len(labels) * 28 + 50),
     )
     return fig
 
@@ -4119,19 +4402,20 @@ with st.sidebar:
         help="Select 1 or 2 columns on desktop. Mobile automatically stacks into 1 full-width column for optimal viewing.",
     )
 
-    st.markdown("---")
+    sort_options = [
+        "Alphabetical (A–Z)",
+        "Best Value (Lowest Standard Deviation)",
+        "Biggest Daily Dip",
+        "Deepest ATH Drawdown",
+        "Highest 12M Analyst Upside",
+        "Highest Conviction Score",
+        "Lowest 2Y PEG",
+        "Lowest Wall Street Consensus",
+    ]
     sort_option = st.selectbox(
         "Sort By",
-        options=[
-            "Highest Conviction Score",
-            "Alphabetical",
-            "Best Value (Lowest Standard Deviation)",
-            "Highest 12M Analyst Upside",
-            "Biggest Daily Dip",
-            "Deepest ATH Drawdown",
-            "Lowest 2Y PEG",
-        ],
-        index=0,
+        options=sort_options,
+        index=sort_options.index("Highest Conviction Score"),
         help="Reorder stock cards based on quantitative criteria",
     )
 
@@ -4166,6 +4450,7 @@ with st.sidebar:
             type="password",
             placeholder="App-specific password",
         )
+        st.caption("ℹ️ Gmail requires a generated 16-character 'App Password' rather than your standard account password.")
         rcvr = st.text_input(
             "Destination Email",
             value=st.session_state.get("email_receiver", ""),
@@ -4176,18 +4461,14 @@ with st.sidebar:
             if not sender or not pwd or not rcvr:
                 st.error("Please enter Sender Email, App Password, and Destination Email.")
             else:
-                test_html = """
-                <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 500px; border: 1px solid #E2E8F0; border-radius: 8px; padding: 18px;">
-                  <h3 style="color: #0F172A; margin-top: 0;">✅ Test Alert: Valuation Radar Connected</h3>
-                  <p style="color: #334155;">Your email configuration is working! Live tactical buy signals will be sent to this address.</p>
-                  <div style="margin-top: 14px; font-size: 0.75rem; color: #94A3B8;">@theinvestingdean</div>
-                </div>
-                """
-                ok, msg = send_email_alert(smtp_srv, smtp_p, sender, pwd, rcvr, "Test Alert: Valuation Radar Connected", test_html)
+                with st.spinner("Connecting to SMTP server and sending test email..."):
+                    ok, err_msg = send_test_email(smtp_srv, smtp_p, sender, pwd, rcvr)
                 if ok:
-                    st.success("Test email sent! Check your inbox.")
+                    st.success("Test email sent successfully!")
                 else:
-                    st.error(msg)
+                    st.error("Connection failed. Check your App Password and SMTP settings.")
+                    if err_msg:
+                        st.caption(f"Error details: {err_msg}")
 
         dispatched_count = len(st.session_state.get("dispatched_alerts", set()))
         st.caption(f"🛡️ Deduplication cache: {dispatched_count} bar alerts dispatched this session.")
@@ -4408,7 +4689,7 @@ if sort_option == "Highest Conviction Score":
             return float(c)
         return -999.0
     ticker_list = sorted(ticker_list, key=get_conviction, reverse=True)
-elif sort_option == "Alphabetical":
+elif sort_option.startswith("Alphabetical"):
     ticker_list = sorted(ticker_list)
 elif sort_option == "Best Value (Lowest Standard Deviation)":
     def get_z_score(tk):
@@ -4427,6 +4708,13 @@ elif sort_option == "Highest 12M Analyst Upside":
             return upside
         return -999.0
     ticker_list = sorted(ticker_list, key=get_upside, reverse=True)
+elif sort_option == "Lowest Wall Street Consensus":
+    def get_consensus(tk):
+        c = visible[tk].get("recommendationMean") or visible[tk].get("consensus_mean")
+        if c is not None and not np.isnan(c) and c > 0:
+            return float(c)
+        return 999.0  # Missing or invalid consensus placed at bottom
+    ticker_list = sorted(ticker_list, key=get_consensus)
 elif sort_option == "Biggest Daily Dip":
     def get_daily_change(tk):
         reg_pct = visible[tk].get("reg_perf_pct")
@@ -4455,12 +4743,16 @@ def show_expanded_chart(ticker, fig):
     fig.update_layout(
         xaxis=dict(fixedrange=False),
         yaxis=dict(fixedrange=False),
-        dragmode="zoom",
+        dragmode="pan",
     )
     st.plotly_chart(
         fig,
         use_container_width=True,
-        config={"displayModeBar": True, "scrollZoom": True},
+        config={
+            "displayModeBar": True,
+            "scrollZoom": True,
+            "displaylogo": False,
+        },
     )
 
 with st.container(border=True, key="quick_find_container"):
@@ -4518,7 +4810,8 @@ if quick_find:
 
 # ── Master Chart Legend Bar (Consolidates Repeating Legends) ──
 if show_charts:
-    st.html(make_master_legend_html())
+    with st.expander("📊 **Master Chart Guide & Technical Indicators**", expanded=False):
+        st.html(make_master_legend_html())
 
 n_cols = cols_per_row
 

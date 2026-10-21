@@ -1978,28 +1978,36 @@ def normalize_analyst_target(ticker: str, live_price: float, tv_data: dict, raw_
 
 def compute_ytd_pct(hist: pd.DataFrame, current_price: float | None = None) -> float | None:
     """
-    Calculate Year-to-Date (YTD) percentage return.
-    Base price is the close of the last trading day of the previous calendar year.
-    Fallback to the first trading day of the current calendar year if previous year is unavailable.
+    Calculate strict calendar Year-to-Date (YTD) percentage return.
+    Dynamically filters the historical dataframe for the current calendar year,
+    finds the closing price of the first trading day of the current calendar year (ytd_start_price),
+    and calculates: ((current_price - ytd_start_price) / ytd_start_price) * 100.
     """
     if hist.empty or "Close" not in hist.columns:
         return None
     try:
-        latest_dt = hist.index[-1]
-        curr_year = latest_dt.year
-        prior_year_data = hist[hist.index.year < curr_year]
-        if not prior_year_data.empty:
-            base_price = float(prior_year_data["Close"].iloc[-1])
-        else:
-            curr_year_data = hist[hist.index.year == curr_year]
-            if not curr_year_data.empty:
-                base_price = float(curr_year_data["Close"].iloc[0])
-            else:
-                return None
+        if not isinstance(hist.index, pd.DatetimeIndex):
+            hist = hist.copy()
+            hist.index = pd.to_datetime(hist.index)
 
-        now_price = current_price if (current_price is not None and not np.isnan(current_price) and current_price > 0) else float(hist["Close"].iloc[-1])
-        if base_price > 0 and now_price > 0:
-            return ((now_price / base_price) - 1.0) * 100.0
+        current_year = datetime.now().year
+        ytd_df = hist[hist.index.year == current_year]
+        if ytd_df.empty or "Close" not in ytd_df.columns:
+            return None
+
+        ytd_start_price = float(ytd_df["Close"].iloc[0])
+        if ytd_start_price <= 0:
+            return None
+
+        if current_price is not None and not np.isnan(current_price) and current_price > 0:
+            curr_price = float(current_price)
+        else:
+            curr_price = float(ytd_df["Close"].iloc[-1])
+
+        if curr_price <= 0:
+            return None
+
+        return ((curr_price - ytd_start_price) / ytd_start_price) * 100.0
     except Exception:
         pass
     return None

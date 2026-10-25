@@ -316,6 +316,93 @@ st.markdown(
             box-sizing: border-box;
         }}
 
+        /* ── Branded Collapsible Section: Executive Market Highlights ── */
+        div[class*="st-key-executive_market_highlights"] {{
+            margin-top: 0.25rem !important;
+            margin-bottom: 1.25rem !important;
+        }}
+
+        div[class*="st-key-executive_market_highlights"] div[data-testid="stExpander"],
+        div[class*="st-key-executive_market_highlights"] .stExpander {{
+            border: none !important;
+            background: transparent !important;
+        }}
+
+        div[class*="st-key-executive_market_highlights"] details {{
+            background-color: #FFFFFF !important;
+            border: 1px solid #E2E8F0 !important;
+            border-left: 4px solid #EAB308 !important;
+            border-radius: 8px !important;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.02) !important;
+            overflow: hidden !important;
+            transition: all 0.2s ease !important;
+        }}
+
+        div[class*="st-key-executive_market_highlights"] details:hover {{
+            border-color: #CBD5E1 !important;
+            border-left-color: #EAB308 !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
+        }}
+
+        div[class*="st-key-executive_market_highlights"] details summary {{
+            background-color: #FFFFFF !important;
+            padding: 10px 16px !important;
+            border: none !important;
+            cursor: pointer !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            flex-direction: row-reverse !important;
+            transition: background-color 0.15s ease !important;
+        }}
+
+        div[class*="st-key-executive_market_highlights"] details summary:hover {{
+            background-color: #F8FAFC !important;
+        }}
+
+        div[class*="st-key-executive_market_highlights"] details[open] summary {{
+            border-bottom: 1px solid #E2E8F0 !important;
+        }}
+
+        div[class*="st-key-executive_market_highlights"] details summary p,
+        div[class*="st-key-executive_market_highlights"] details summary span,
+        div[class*="st-key-executive_market_highlights"] details summary strong {{
+            color: #0F172A !important;
+            font-weight: 800 !important;
+            font-size: 1.02rem !important;
+            letter-spacing: -0.01em !important;
+            margin: 0 !important;
+            line-height: 1.4 !important;
+        }}
+
+        div[class*="st-key-executive_market_highlights"] details summary em {{
+            font-size: 0.72rem !important;
+            font-weight: 700 !important;
+            color: #854D0E !important;
+            background-color: #FEF9C3 !important;
+            border: 1px solid #FDE047 !important;
+            padding: 2px 8px !important;
+            border-radius: 9999px !important;
+            font-style: normal !important;
+            margin-left: 8px !important;
+            display: inline-block !important;
+            vertical-align: middle !important;
+            white-space: nowrap !important;
+        }}
+
+        div[class*="st-key-executive_market_highlights"] details summary [data-testid="stIconMaterial"],
+        div[class*="st-key-executive_market_highlights"] details summary svg {{
+            color: #64748B !important;
+            fill: #64748B !important;
+            font-size: 1.25rem !important;
+        }}
+
+        /* Content inside expander */
+        div[class*="st-key-executive_market_highlights"] details > div:last-child {{
+            background-color: #FFFFFF !important;
+            padding: 14px 16px 16px 16px !important;
+        }}
+
         /* ── Branded Signature Yellow Expander: Smart DCA Allocator ── */
         div[class*="st-key-dca_allocator_card_wrapper"] {{
             margin-top: 0.75rem !important;
@@ -435,9 +522,8 @@ st.markdown(
             color: #1F2937 !important;
         }}
 
-        /* 1. Target master stock container wrappers, executive highlights, and top benchmark master card */
+        /* 1. Target master stock container wrappers and top benchmark master card */
         div[class*="st-key-stock_card_"],
-        div[class*="st-key-executive_market_highlights"],
         div[class*="st-key-top_benchmark_card"],
         div[data-testid="stVerticalBlockBorderWrapper"] {{
             background-color: #FFFFFF !important;
@@ -1440,7 +1526,6 @@ st.markdown(
             }}
             /* Card inner padding */
             div[class*="st-key-stock_card_"],
-            div[class*="st-key-executive_market_highlights"],
             div[class*="st-key-top_benchmark_card"],
             div[data-testid="stVerticalBlockBorderWrapper"] {{
                 padding: 14px 12px !important;
@@ -2951,6 +3036,41 @@ def fetch_ticker_data(ticker: str) -> dict:
     return result
 
 
+def is_mobile_client() -> bool:
+    """
+    Detects if the client is accessing the app from a mobile device using
+    HTTP headers passed to Streamlit (User-Agent, sec-ch-ua-mobile) or ?mobile=true query param.
+    """
+    try:
+        # Check explicit query param override first (useful for testing or direct mobile links)
+        qp_mobile = str(st.query_params.get("mobile", "")).lower()
+        if qp_mobile in ("1", "true", "yes"):
+            return True
+        if qp_mobile in ("0", "false", "no"):
+            return False
+
+        if hasattr(st, "context") and hasattr(st.context, "headers"):
+            headers = st.context.headers
+            # Modern Sec-CH-UA-Mobile client hint header (?1 = mobile, ?0 = desktop)
+            sec_mobile = str(headers.get("sec-ch-ua-mobile", ""))
+            if "?1" in sec_mobile:
+                return True
+            if "?0" in sec_mobile:
+                return False
+            # Standard User-Agent header inspection
+            ua = str(headers.get("user-agent", "")).lower()
+            if ua:
+                mobile_tokens = (
+                    "iphone", "android", "mobile", "ipod", "ipad",
+                    "blackberry", "iemobile", "opera mini", "silk", "phone", "webos"
+                )
+                if any(token in ua for token in mobile_tokens):
+                    return True
+    except Exception:
+        pass
+    return False
+
+
 def compute_status(data: dict, timeframe: str = "90-Day") -> str:
     """
     Classify equity into 'Buy Zone', 'Standard DCA', or 'Wait for Pullback' based on corridor median.
@@ -3357,71 +3477,63 @@ def render_executive_market_highlights(visible_data: dict, timeframe: str = "90-
     else:
         signals_html = '<div style="color: #64748B; font-size: 0.80rem; font-style: italic; margin-top: 4px;">No signals flashed in the last 7 days.</div>'
 
-    with st.container(border=True, key="executive_market_highlights"):
-        # Section Header
-        st.html(f"""
-        <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-left: 4px solid #EAB308; border-radius: 8px; padding: 10px 16px; margin: 0 0 14px 0; box-shadow: 0 1px 2px rgba(0,0,0,0.02); display: flex; justify-content: space-between; align-items: center;">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 1.02rem; font-weight: 800; color: #0F172A; letter-spacing: -0.01em;">Executive Market Highlights</span>
-            <span style="font-size: 0.72rem; font-weight: 700; color: #854D0E; background-color: #FEF9C3; border: 1px solid #FDE047; padding: 2px 8px; border-radius: 9999px;">{framework_badge_lbl}</span>
-          </div>
-        </div>
-        """)
-
-        # 4 Cards using native st.columns(4) for desktop grid and mobile vertical stacking
-        c1, c2, c3, c4 = st.columns(4)
-        with c1:
-            st.html(f"""
-            <div class="highlights-card" style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-left: 3px solid #EAB308; border-radius: 8px; padding: 12px 14px; min-height: 105px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between;">
-              <div>
-                <div style="font-size: 0.72rem; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Basket Breadth</div>
-                <div style="font-size: 0.86rem; color: #0F172A; font-weight: 600; line-height: 1.35;">
-                  <b>{count_overstretched} of {total_count}</b> assets (<b>{overstretched_pct:.0f}%</b>) &gt; +5% above average.
+    with st.container(key="executive_market_highlights"):
+        expander_label = f"**Executive Market Highlights** *{framework_badge_lbl}*"
+        with st.expander(expander_label, expanded=False):
+            # 4 Cards using native st.columns(4) for desktop grid and mobile vertical stacking
+            c1, c2, c3, c4 = st.columns(4)
+            with c1:
+                st.html(f"""
+                <div class="highlights-card" style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-left: 3px solid #EAB308; border-radius: 8px; padding: 12px 14px; min-height: 105px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between;">
+                  <div>
+                    <div style="font-size: 0.72rem; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Basket Breadth</div>
+                    <div style="font-size: 0.86rem; color: #0F172A; font-weight: 600; line-height: 1.35;">
+                      <b>{count_overstretched} of {total_count}</b> assets (<b>{overstretched_pct:.0f}%</b>) &gt; +5% above average.
+                    </div>
+                  </div>
+                  <div style="font-size: 0.75rem; color: #854D0E; font-weight: 600; margin-top: 6px; padding-top: 4px; border-top: 1px dashed rgba(226, 232, 240, 0.8);">• Bias: {breadth_desc}</div>
                 </div>
-              </div>
-              <div style="font-size: 0.75rem; color: #854D0E; font-weight: 600; margin-top: 6px; padding-top: 4px; border-top: 1px dashed rgba(226, 232, 240, 0.8);">• Bias: {breadth_desc}</div>
-            </div>
-            """)
-        with c2:
-            st.html(f"""
-            <div class="highlights-card" style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-left: 3px solid #10B981; border-radius: 8px; padding: 12px 14px; min-height: 105px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between;">
-              <div>
-                <div style="font-size: 0.72rem; font-weight: 700; color: #047857; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Top Value Opportunities</div>
-                <div class="custom-signals-scroll" style="max-height: 220px; overflow-y: auto; padding-right: 5px; display: flex; flex-direction: column; gap: 2px; margin-top: 2px;">
-                  {val_html}
+                """)
+            with c2:
+                st.html(f"""
+                <div class="highlights-card" style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-left: 3px solid #10B981; border-radius: 8px; padding: 12px 14px; min-height: 105px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between;">
+                  <div>
+                    <div style="font-size: 0.72rem; font-weight: 700; color: #047857; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Top Value Opportunities</div>
+                    <div class="custom-signals-scroll" style="max-height: 220px; overflow-y: auto; padding-right: 5px; display: flex; flex-direction: column; gap: 2px; margin-top: 2px;">
+                      {val_html}
+                    </div>
+                  </div>
+                  <div style="font-size: 0.70rem; color: #64748B; margin-top: 6px; padding-top: 4px; border-top: 1px dashed rgba(226, 232, 240, 0.8);">Deepest corridor discounts</div>
                 </div>
-              </div>
-              <div style="font-size: 0.70rem; color: #64748B; margin-top: 6px; padding-top: 4px; border-top: 1px dashed rgba(226, 232, 240, 0.8);">Deepest corridor discounts</div>
-            </div>
-            """)
-        with c3:
-            st.html(f"""
-            <div class="highlights-card" style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-left: 3px solid #EF4444; border-radius: 8px; padding: 12px 14px; min-height: 105px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between;">
-              <div>
-                <div style="font-size: 0.72rem; font-weight: 700; color: #B91C1C; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Most Overextended</div>
-                <div class="custom-signals-scroll" style="max-height: 220px; overflow-y: auto; padding-right: 5px; display: flex; flex-direction: column; gap: 2px; margin-top: 2px;">
-                  {over_html}
+                """)
+            with c3:
+                st.html(f"""
+                <div class="highlights-card" style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-left: 3px solid #EF4444; border-radius: 8px; padding: 12px 14px; min-height: 105px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between;">
+                  <div>
+                    <div style="font-size: 0.72rem; font-weight: 700; color: #B91C1C; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Most Overextended</div>
+                    <div class="custom-signals-scroll" style="max-height: 220px; overflow-y: auto; padding-right: 5px; display: flex; flex-direction: column; gap: 2px; margin-top: 2px;">
+                      {over_html}
+                    </div>
+                  </div>
+                  <div style="font-size: 0.70rem; color: #64748B; margin-top: 6px; padding-top: 4px; border-top: 1px dashed rgba(226, 232, 240, 0.8);">Furthest above corridor median</div>
                 </div>
-              </div>
-              <div style="font-size: 0.70rem; color: #64748B; margin-top: 6px; padding-top: 4px; border-top: 1px dashed rgba(226, 232, 240, 0.8);">Furthest above corridor median</div>
-            </div>
-            """)
-        with c4:
-            count_badge = f'<span style="font-size: 0.68rem; font-weight: 800; color: #4338CA; background: #EEF2FF; border: 1px solid #C7D2FE; border-radius: 9999px; padding: 1px 6px;">{len(unique_signals)}</span>' if unique_signals else ''
-            st.html(f"""
-            <div class="highlights-card" style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-left: 3px solid #6366F1; border-radius: 8px; padding: 12px 14px; min-height: 105px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between;">
-              <div>
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
-                  <span style="font-size: 0.72rem; font-weight: 700; color: #4338CA; text-transform: uppercase; letter-spacing: 0.05em;">Recent Tactical Signals</span>
-                  {count_badge}
+                """)
+            with c4:
+                count_badge = f'<span style="font-size: 0.68rem; font-weight: 800; color: #4338CA; background: #EEF2FF; border: 1px solid #C7D2FE; border-radius: 9999px; padding: 1px 6px;">{len(unique_signals)}</span>' if unique_signals else ''
+                st.html(f"""
+                <div class="highlights-card" style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-left: 3px solid #6366F1; border-radius: 8px; padding: 12px 14px; min-height: 105px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between;">
+                  <div>
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                      <span style="font-size: 0.72rem; font-weight: 700; color: #4338CA; text-transform: uppercase; letter-spacing: 0.05em;">Recent Tactical Signals</span>
+                      {count_badge}
+                    </div>
+                    <div class="custom-signals-scroll" style="max-height: 220px; overflow-y: auto; padding-right: 5px; display: flex; flex-direction: column; gap: 4px; margin-top: 2px;">
+                      {signals_html}
+                    </div>
+                  </div>
+                  <div style="font-size: 0.70rem; color: #64748B; margin-top: 6px; padding-top: 4px; border-top: 1px dashed rgba(226, 232, 240, 0.8);">TID Engine entries (last 7 days)</div>
                 </div>
-                <div class="custom-signals-scroll" style="max-height: 220px; overflow-y: auto; padding-right: 5px; display: flex; flex-direction: column; gap: 4px; margin-top: 2px;">
-                  {signals_html}
-                </div>
-              </div>
-              <div style="font-size: 0.70rem; color: #64748B; margin-top: 6px; padding-top: 4px; border-top: 1px dashed rgba(226, 232, 240, 0.8);">TID Engine entries (last 7 days)</div>
-            </div>
-            """)
+                """)
 
     # Check and dispatch live notifications for new tactical bar signals
     dispatched_now = check_and_dispatch_signal_alerts(visible_data, timeframe=timeframe)
@@ -4761,6 +4873,7 @@ with st.sidebar:
             st.session_state["val_timeframe_selector"] = "90-Day"
             st.query_params["watchlist"] = ",".join(DEFAULT_TICKERS.keys())
             st.query_params["timeframe"] = "90-Day"
+            st.session_state["show_charts"] = not is_mobile_client()
             st.rerun()
     with reset_col2:
         st.caption(f"{len(selected)} Active")
@@ -4773,7 +4886,13 @@ with st.sidebar:
     )
 
     st.markdown("---")
-    show_charts = st.toggle("Show Detail Charts", value=True)
+    if "show_charts" not in st.session_state:
+        st.session_state["show_charts"] = not is_mobile_client()
+    show_charts = st.toggle(
+        "Show Detail Charts",
+        key="show_charts",
+        help="Turn charts on or off. Defaults to ON on desktop and OFF on mobile to save vertical scrolling space.",
+    )
     cols_per_row = st.selectbox(
         "Columns per Row",
         options=[1, 2],
